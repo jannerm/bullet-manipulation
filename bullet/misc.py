@@ -28,6 +28,24 @@ def load_urdf(filepath, pos=[0,0,0], quat=[0,0,0,1], scale=1, rgba=None):
         p.changeVisualShape(body, -1, rgbaColor=rgba)
     return body
 
+def load_obj(filepathcollision, filepathvisual, pos=[0, 0, 0], quat=[0, 0, 0, 1], scale=1, rgba=None):
+    collisionid= p.createCollisionShape(p.GEOM_MESH, fileName=filepathcollision, meshScale=scale * np.array([1, 1, 1]))
+    visualid = p.createVisualShape(p.GEOM_MESH, fileName=filepathvisual, meshScale=scale * np.array([1, 1, 1]))
+    print(pos)
+    body = p.createMultiBody(0.05, collisionid, visualid)
+    p.resetBasePositionAndOrientation(body, pos, quat)
+    return body
+
+def load_sdf(filepath, pos=[0, 0, 0], quat=[0, 0, 0, 1], scale=1):
+    body = p.loadSDF(sdfFileName=filepath, globalScaling=scale) 
+    print(body, pos, quat, '***************')
+    count = 0
+    for i in body:
+        p.resetBasePositionAndOrientation(i, pos, quat)
+    return body
+
+     
+
 ############################
 #### rotation functions ####
 ############################
