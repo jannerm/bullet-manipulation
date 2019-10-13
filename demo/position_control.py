@@ -1,10 +1,12 @@
 import numpy as np
 import pdb
-
+import os
 import bullet
 import pygame
 from pygame.locals import QUIT, KEYDOWN, KEYUP
 import time
+import sys
+import random
 #import devices
 
 #space_mouse = devices.SpaceMouse()
@@ -16,17 +18,26 @@ bullet.setup()
 ## load meshes
 sawyer = bullet.load_urdf('sawyer_robot/sawyer_description/urdf/sawyer_xacro.urdf')
 table = bullet.load_urdf('table/table.urdf', [.75, -.2, -1], [0, 0, 0.707107, 0.707107], scale=1.0)
-duck = bullet.load_urdf('duck_vhacd.urdf', [.75, -.2, 0], [0, 0, 1, 0], scale=0.8)
-#a = bullet.load_urdf('/home/jonathan/Desktop/model/urdf/model.urdf', [.75, -.2, 0], [0, 0, 1, 0], scale=0.8)
-#duck = bullet.load_obj('duck_vhacd.obj', 'duck.obj',  [.75, -.2, 0], [0, 0, 1, 0], scale=0.8)
-#duck = bullet.load_urdf('/home/jonathan/Desktop/object/urdf/test.urdf', [.75, -.2, 0], [0, 0, 1, 0], scale=0.8)
-#lego = bullet.load_urdf('lego/lego.urdf', [.75, .2, 0], [0, 0, 1, 0], rgba=[1,0,0,1], scale=1.5)
-#furniture = bullet.load_obj('/home/jonathan/Desktop/ae3257e7e0dca9a4fc8569054682bff9/output.obj', '/home/jonathan/Desktop/ae3257e7e0dca9a4fc8569054682bff9/model.obj' , [.75, .2, 0], [1, 0, 0, 1], scale=0.3f
-fileName = '/home/jonathan/Desktop/plane/newsdf.sdf'
-#k = bullet.load_obj(fileName, fileName, [.75, .2, 0], [1, 0, 0, 1], scale=0.k = bullet.load_sdf(k = bullet.load_sdf('/home/jonathan/Desktop/1eccbbbf1503c888f691355a196da5f/models/newsdf.sdf', [.75, -.3, 0], [1, 0, 0, 1], scale=0.3)
-duck = bullet.load_sdf('/home/jonathan/Desktop/Projects/objects/5982f083a4a939607eee615e75bc3b77/newsdf.sdf', [.75, -.5, .2], [0, 0, 0, 1], scale=0.1)
-
+#duck = bullet.load_urdf('duck_vhacd.urdf', [.75, -.2, 0], [0, 0, 1, 0], scale=0.8)
 end_effector = bullet.get_index_by_attribute(sawyer, 'link_name', 'right_l6')
+
+def loadRandom(fileName, numObjects):
+    objects = []
+    for root, dirs, files in os.walk(fileName, topdown=False):
+        for name in dirs:
+            objects.append(name)
+    
+    while(numObjects != 0 and len(objects) != 0):
+        objectNumber = random.randrange(len(objects))
+        f = open('{0}/{1}/scale.txt'.format(fileName, objects[objectNumber]), 'r')
+        next_object = '{0}/{1}/model.obj'.format(fileName, objects[objectNumber])
+        bullet.load_obj(next_object, next_object, [.75, random.uniform(-.7, .3), 1], [0, 0, 1, 0], scale=float(f.readline()))
+        numObjects -= 1
+        objects.pop(objectNumber)
+        f.close()
+
+loadRandom('bowl_vhacd', 3)
+
 pos = np.array([0.5, 0, 0])
 theta =  np.array([0.7071,0.7071,0,0])
 bullet.position_control(sawyer, end_effector, pos, theta)
