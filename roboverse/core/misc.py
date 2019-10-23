@@ -254,7 +254,7 @@ def load_random_objects(filePath, number):
         objectName = path[-1]
         obj = load_obj(filePath+'/ShapeNetCore_vhacd/{0}/{1}/model.obj'.format(dirName, objectName),
             filePath+'/ShapeNetCore.v2/{0}/{1}/models/model_normalized.obj'.format(dirName, objectName),
-            [positions[count][0], positions[count][1], 0], [0, 0, 1, 0], scale=random.uniform(0.5, 1) * scaling['{0}/{1}'.format(dirName, objectName)])
+            [positions[count][0], positions[count][1], 0.1], [0, 0, 1, 0], scale=random.uniform(0.5, 1) * scaling['{0}/{1}'.format(dirName, objectName)])
         object_ids.append(obj)
         count += 1
     return object_ids
