@@ -15,6 +15,7 @@ import pybullet_data as pdata
 
 def connect():
     clid = p.connect(p.SHARED_MEMORY)
+
     if (clid < 0):
         p.connect(p.GUI)
 
@@ -220,7 +221,7 @@ def load_random_objects(filePath, number):
         for d in dirs:
             for modelroot, modeldirs, modelfiles in os.walk(os.path.join(root, d)):
                 for md in modeldirs:
-                    objects.append(os.path.join(modelroot, md))
+                    objects.append((modelroot[-8:], md))
                 break
         break
     try:
@@ -250,12 +251,13 @@ def load_random_objects(filePath, number):
     object_ids = []
     count = 0
     for i in chosen_objects:
-        path = objects[i].split('/')
-        dirName = path[-2]
-        objectName = path[-1]
-        obj = load_obj(filePath+'/ShapeNetCore_vhacd/{0}/{1}/model.obj'.format(dirName, objectName),
-            filePath+'/ShapeNetCore.v2/{0}/{1}/models/model_normalized.obj'.format(dirName, objectName),
-            [positions[count][0], positions[count][1], 0], [0, 0, 1, 0], scale=random.uniform(0.5, 1) * scaling['{0}/{1}'.format(dirName, objectName)])
+        path = objects[i]
+        dirName = path[0]
+        objectName = path[1]
+        entry = dirName + '/' + objectName
+        obj = load_obj(filePath+'/ShapeNetCore_vhacd/{0}/model.obj'.format(entry),
+            filePath+'/ShapeNetCore.v2/{0}/models/model_normalized.obj'.format(entry),
+            [positions[count][0], positions[count][1], 0], [0, 0, 1, 0], scale=random.uniform(0.5, 1) * scaling[entry])
         object_ids.append(obj)
         count += 1
     return object_ids
