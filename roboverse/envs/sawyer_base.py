@@ -98,12 +98,14 @@ class SawyerBaseEnv(gym.Env):
 
     def _format_action(self, *action):
         if len(action) == 1:
-            delta_pos, gripper = action[0][:-1], action[0][-1]
+            delta_pos, gripper, delta = action[0][:-5], action[0][-5], action[0][-4:]
         elif len(action) == 2:
             delta_pos, gripper = action[0], action[1]
+        elif len(action) == 3:
+            delta_pos, gripper, delta = action[0], action[1], action[2]            
         else:
             raise RuntimeError('Unrecognized action: {}'.format(action))
-        return np.array(delta_pos), gripper
+        return np.array(delta_pos), gripper, delta
 
     def get_observation(self):
         observation = bullet.get_sim_state(*self._state_query)
@@ -111,10 +113,11 @@ class SawyerBaseEnv(gym.Env):
 
 
     def step(self, *action):
-        delta_pos, gripper = self._format_action(*action)
+        delta_pos, gripper, theta = self._format_action(*action)
         pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
         pos += delta_pos * self._action_scale
         gripper = 1 if gripper > 0.5 else 0
+        self.theta = theta
         self._current_gripper_target = gripper
         
         self._simulate(pos, self.theta, gripper)
