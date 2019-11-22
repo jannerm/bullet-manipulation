@@ -1,6 +1,6 @@
-for i in {1..20}
+for i in {1..3}
 do
-	python3 randomized_scripted_grasping.py --video_save_directory videos --data_save_directory trajectories --num_trajectories 100 &
+	python3 randomized_scripted_grasping.py --video_save_directory videos --data_save_directory trajectories --num_trajectories 500 &
 	sleep 2
 done
 wait
