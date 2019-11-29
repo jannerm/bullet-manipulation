@@ -47,7 +47,7 @@ duck = loader(PDATA_PATH, 'duck_vhacd.urdf',
               scale=0.8)
 
 lego = loader(PDATA_PATH, 'lego/lego.urdf',
-              pos=[.75, 0.05, -.3],
+              pos=[.75, 0.12, -.3],
               quat=[0, 0, 1, 0],
               rgba=[1, 0, 0, 1],
               scale=1.2)

@@ -5,7 +5,7 @@ from roboverse.envs.widow_base import WidowBaseEnv
 
 class WidowGraspOneEnv(WidowBaseEnv):
 
-    def __init__(self, goal_pos=(.7, 0,.1), *args, **kwargs):
+    def __init__(self, goal_pos=(.75, 0.0,-0.25), *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._goal_pos = goal_pos
 

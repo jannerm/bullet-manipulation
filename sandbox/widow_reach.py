@@ -26,34 +26,10 @@ for i in range(1000):
 
     xyz_diff = object_pos - ee_pos
     xy_diff = xyz_diff[:2]
-    xy_goal_diff = (env._goal_pos - object_pos)[:2]
 
-    if np.linalg.norm(xyz_diff) > 0.042:
-        action = object_pos - ee_pos
-        action *= 3.0
-        grip=0.
-        print('Approaching')
-    elif o[3] > 0.05:
-        # o[3] is gripper tip distance
-        action = np.zeros((3,))
-        grip=0.8
-        print('Grasping')
-    elif np.linalg.norm(xy_goal_diff) > 0.02:
-        action = env._goal_pos - object_pos
-        grip=1.
-        action *= 3.0
-        action[2] /= 10
-        print('Moving')
-    elif info['object_goal_distance'] > 0.01:
-        action = env._goal_pos - object_pos
-        grip = 1.
-        action *= 3.0
-        print('Lifting')
-    else:
-        action = np.zeros((3,))
-        grip=1.
-        print('Holding')
-
+    action = env._goal_pos - np.array(ee_pos)
+    grip=1
+   
     
 
     action = np.append(action, [grip])
@@ -68,6 +44,7 @@ for i in range(1000):
     print(o[3])
     print(r)
     print('object to goal: {}'.format(info['object_goal_distance']))
+    print(env._goal_pos, ee_pos)
     print('object to gripper: {}'.format(info['object_gripper_distance']))
     episode_reward += r
 
