@@ -25,6 +25,11 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
         'id': 'WidowBase-v0',
         'entry_point': ('roboverse.envs.widow_base:WidowBaseEnv'),
     },
+    {
+        'id': 'WidowGraspOne-v0',
+        'entry_point': ('roboverse.envs.widow_grasp:WidowGraspOneEnv'),
+        'kwargs': {'max_force': 100, 'action_scale': 0.05}
+    }
 )
 
 PROJECTION_ENVIRONMENT_SPECS = tuple(

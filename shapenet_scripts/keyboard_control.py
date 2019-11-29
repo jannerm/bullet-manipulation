@@ -46,7 +46,7 @@ pressed_keys = {
 }
 
 
-env = roboverse.make('WidowBase-v0', gui=True)
+env = roboverse.make('WidowGraspOne-v0', gui=True)
 env.reset()
 pygame.init()
 screen = pygame.display.set_mode((100, 100))
@@ -83,4 +83,4 @@ while True:
             elif new_action[1] == 'gripper':
                 gripper = new_action[0]
     action = np.concatenate((0.5 * dx, 0.2 * dtheta), axis=0)
-    obs, reward, done, info = env.step(0.5 *  dx, gripper)
+    obs, reward, done, info = env.step(0.2 *  dx, gripper)

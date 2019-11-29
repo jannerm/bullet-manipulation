@@ -8,40 +8,45 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--save_video", action="store_true")
 args = parser.parse_args()
 
-env = roboverse.make('SawyerGraspOne-v0', gui=True)
+env = roboverse.make('WidowGraspOne-v0', gui=True)
 obj_key = 'lego'
 num_grasps = 0
 
 env.reset()
 # target_pos += np.random.uniform(low=-0.05, high=0.05, size=(3,))
 images = []
-target_pos = env.get_object_midpoint(obj_key)
 
-target_pos[0] += -0.02
-target_pos[1] += 0.00
-target_pos[2] += -0.03
+print(env.get_end_effector_pos())
 
-for i in range(50):
+episode_reward = 0.
+
+for i in range(1000):
     ee_pos = env.get_end_effector_pos()
+    object_pos = env.get_object_midpoint(obj_key)
 
-    if i < 25:
-        action = target_pos - ee_pos
-        action[2] = 0.
-        action *= 3.0
+    xyz_diff = object_pos - ee_pos
+    xy_diff = xyz_diff[:2]
+
+    if np.linalg.norm(xyz_diff) > 0.04:
+        action = object_pos - ee_pos
+        action *= 5.0
         grip=0.
-    elif i < 35:
-        action = target_pos - ee_pos
-        action[2] -= 0.03
-        action *= 3.0
-        action[2] *= 2.0
-        grip=0.
-    elif i < 42:
+        print('Approaching')
+    elif o[3] > 0.04:
+        # o[3] is gripper tip distance
         action = np.zeros((3,))
-        grip=0.5
+        grip=0.8
+        print('Grasping')
+    elif info['object_goal_distance'] > 0.02:
+        action = env._goal_pos - object_pos
+        grip=1.
+        print('Moving')
     else:
         action = np.zeros((3,))
-        action[2] = 1.0
         grip=1.
+        print('Holding')
+
+    
 
     action = np.append(action, [grip])
 
@@ -51,9 +56,14 @@ for i in range(50):
 
     time.sleep(0.05)
     o, r, d, info = env.step(action)
-    # print(action)
-    # print(o)
+    print(action)
+    print(o[3])
+    print(r)
+    print('object to goal: {}'.format(info['object_goal_distance']))
+    print('object to gripper: {}'.format(info['object_gripper_distance']))
+    episode_reward += r
 
+print('Episode reward: {}'.format(episode_reward))
 object_pos = env.get_object_midpoint(obj_key)
 if object_pos[2] > -0.1:
     num_grasps += 1

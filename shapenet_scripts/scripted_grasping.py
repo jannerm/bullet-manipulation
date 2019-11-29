@@ -8,7 +8,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--save_video", action="store_true")
 args = parser.parse_args()
 
-env = roboverse.make('SawyerGraspOne-v0', gui=True)
+env = roboverse.make('WidowGraspOne-v0', gui=True)
 obj_key = 'lego'
 num_grasps = 0
 
@@ -54,8 +54,8 @@ for i in range(50):
 
     time.sleep(0.05)
     o, r, d, info = env.step(action)
-    # print(action)
-    # print(o)
+    print(action)
+    print(o)
     print(r)
     print('object to goal: {}'.format(info['object_goal_distance']))
     print('object to gripper: {}'.format(info['object_gripper_distance']))

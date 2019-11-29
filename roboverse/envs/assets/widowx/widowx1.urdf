@@ -26,7 +26,7 @@
   
   <link name="arm_base_link">
      <visual>
-        <origin xyz="0 0 0" rpy="0 3.14159 0" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
            <mesh filename="meshes/base_link.stl"/>
         </geometry>
@@ -211,19 +211,19 @@
   <!-- joints -->
  
   <joint name="joint_1" type="revolute">
-     <origin xyz="0 0 -0.125" rpy="0 3.14159 0" />
+     <origin xyz="0 0 0.125" rpy="0 0 0" />
      <parent link="arm_base_link" />
      <child link="shoulder_link" />
      <axis xyz="0 0 1" />
-     <limit  effort="0" velocity="0.785" />
+     <limit lower="-2.617" upper="2.617" effort="0" velocity="0.785" />
   </joint>
   <joint name="joint_2" type="revolute">
-     <!--origin xyz="0.04825 0 0.14203" rpy="0 -1.5 0" /-->
+     <!--origin xyz="0.04825 0 0.14203" rpy="0 0 0" /-->
      <origin xyz="0 0 0" rpy="0 0 0" />
      <parent link="shoulder_link" />
      <child link="biceps_link" />
      <axis xyz="0 1 0" />
-     <limit lower="-1.571" upper="0" effort="0" velocity="1.571" />
+     <limit lower="-1.571" upper="1.571" effort="0" velocity="1.571" />
   </joint>
   <joint name="joint_3" type="revolute">
      <origin xyz="0.04825 0 0.14203" rpy="0 1.5707963268 0" />
@@ -268,11 +268,11 @@
      <limit lower="0" upper="0.027" effort="0" velocity="0.5" />
   </joint>
   <joint name="gripper_prismatic_joint_2" type="prismatic">
-     <origin xyz="0 0.027 0" rpy="0 0 0" />
+     <origin xyz="0 0 0" rpy="0 0 0" />
      <parent link="gripper_rail_link" />
      <child link="gripper_2_link" />
      <mimic joint="gripper_prismatic_joint_1" />
-     <axis xyz="0 -1 0" />
+     <axis xyz="0 1 0" />
      <limit lower="0" upper="0.027" effort="0" velocity="0.5" />
   </joint>
 

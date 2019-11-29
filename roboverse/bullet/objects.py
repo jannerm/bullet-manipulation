@@ -30,7 +30,8 @@ PDATA_PATH = pdata.getDataPath()
 ## robots
 
 sawyer = loader(ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro.urdf')
-widow = loader(ASSET_PATH, 'widowx/widowx.urdf', pos=[0.3, 0, 0.1])
+widow = loader(ASSET_PATH, 'widowx/widowx.urdf', pos=[0.7, 0, 0.1])
+#pos=[0.7, 0, 0.1]
 
 
 ## pybullet_data objects
@@ -46,7 +47,7 @@ duck = loader(PDATA_PATH, 'duck_vhacd.urdf',
               scale=0.8)
 
 lego = loader(PDATA_PATH, 'lego/lego.urdf',
-              pos=[.75, .2, -.3],
+              pos=[.75, 0.05, -.3],
               quat=[0, 0, 1, 0],
               rgba=[1, 0, 0, 1],
               scale=1.2)
