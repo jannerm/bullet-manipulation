@@ -13,9 +13,9 @@ class WidowGraspOneEnv(WidowBaseEnv):
     def _load_meshes(self):
         super()._load_meshes()
         self._objects = {
-            'lego': bullet.objects.lego(),
-            'bowl':   load_single_object('36ca3b684dbb9c159599371049c32d38',
-                                         [.75, -0.10, -.28], quat=[0, 0, 0, 1],scale=0.5)[0]
+            'lego': bullet.objects.duck(),
+            #'bowl':   load_single_object('36ca3b684dbb9c159599371049c32d38',
+                                         #[.75, -0.10, -.28], quat=[0, 0, 0, 1],scale=0.5)[0]
 
         }
 

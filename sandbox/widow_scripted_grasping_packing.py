@@ -19,8 +19,9 @@ images = []
 print(env.get_end_effector_pos())
 
 episode_reward = 0.
+holding = False
 
-for i in range(100):
+for i in range(1000):
     ee_pos = env.get_end_effector_pos()
     object_pos = env.get_object_midpoint(obj_key)
 
@@ -28,32 +29,39 @@ for i in range(100):
     xy_diff = xyz_diff[:2]
     xy_goal_diff = (env._goal_pos - object_pos)[:2]
 
-    if np.linalg.norm(xyz_diff) > 0.042:
+    if np.linalg.norm(xyz_diff) > 0.042 and not holding:
         action = object_pos - ee_pos
         action *= 3.0
         grip=0.
         print('Approaching')
-    elif o[3] > 0.05:
+    elif o[3] > 0.05 and not holding:
         # o[3] is gripper tip distance
         action = np.zeros((3,))
         grip=0.8
         print('Grasping')
-    elif np.linalg.norm(xy_goal_diff) > 0.02:
+    elif np.linalg.norm(xy_goal_diff) > 0.02 and not holding:
         action = env._goal_pos - object_pos
         grip=1.
         action *= 3.0
         action[2] /= 10
         print('Moving')
-    elif info['object_goal_distance'] > 0.01:
+    elif info['object_goal_distance'] > 0.01 and not holding:
         action = env._goal_pos - object_pos
         grip = 1.
         action *= 3.0
         print('Lifting')
+    elif np.linalg.norm((env.get_object_midpoint('bowl') - object_pos)[:2]) > 0.02:
+        action = env.get_object_midpoint('bowl') - object_pos
+        grip = 1.
+        action *= 1.0
+        action[2] = 0
+        print("Moving to Bowl")
+        holding = True
     else:
         action = np.zeros((3,))
-        grip=1.
+        grip=0.
         holding = True
-        print('Holding')
+        print('Dropping')
 
 
     
