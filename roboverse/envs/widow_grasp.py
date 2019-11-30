@@ -1,18 +1,22 @@
 import roboverse.bullet as bullet
 import numpy as np
 from roboverse.envs.widow_base import WidowBaseEnv
+from roboverse.utils.shapenet_utils import load_single_object
 
 
 class WidowGraspOneEnv(WidowBaseEnv):
 
-    def __init__(self, goal_pos=(.75, 0.0,-0.25), *args, **kwargs):
+    def __init__(self, goal_pos=(.75, 0.0,-0.26), *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._goal_pos = goal_pos
 
     def _load_meshes(self):
         super()._load_meshes()
         self._objects = {
-            'lego': bullet.objects.lego()
+            'lego': bullet.objects.lego(),
+            'bowl':   load_single_object('36ca3b684dbb9c159599371049c32d38',
+                                         [.75, -0.10, -.28], quat=[0, 0, 0, 1],scale=0.5)[0]
+
         }
 
     def get_reward(self, observation):

@@ -47,7 +47,7 @@ duck = loader(PDATA_PATH, 'duck_vhacd.urdf',
               scale=0.8)
 
 lego = loader(PDATA_PATH, 'lego/lego.urdf',
-              pos=[.75, 0.12, -.3],
+              pos=[.75, 0.13, -.3],
               quat=[0, 0, 1, 0],
               rgba=[1, 0, 0, 1],
               scale=1.2)
@@ -56,15 +56,15 @@ lego = loader(PDATA_PATH, 'lego/lego.urdf',
 ## custom objects
 
 bowl = loader(ASSET_PATH, 'objects/bowl/bowl.urdf',
-              pos=[.75, 0, -.3],
-              scale=0.25)
+              pos=[.75, -0.1, -.3],
+              scale=0.05)
 
 lid = loader(ASSET_PATH, 'objects/bowl/lid.urdf',
               pos=[.75, 0, -.3],
               scale=0.25)
 
 cube = loader(ASSET_PATH, 'objects/cube/cube.urdf',
-              pos=[.75, -.4, -.3],
+              pos=[.75, -.1, -.3],
               scale=0.05)
 
 spam = loader(ASSET_PATH, 'objects/spam/spam.urdf',
