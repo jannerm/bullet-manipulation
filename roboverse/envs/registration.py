@@ -21,13 +21,19 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
     {
         'id': 'SawyerSoup-v0',
         'entry_point': ('roboverse.envs.sawyer_soup:SawyerSoupEnv'),
-    }, {
+    },
+    {
         'id': 'WidowBase-v0',
         'entry_point': ('roboverse.envs.widow_base:WidowBaseEnv'),
     },
     {
-        'id': 'WidowGraspOne-v0',
-        'entry_point': ('roboverse.envs.widow_grasp:WidowGraspOneEnv'),
+        'id': 'WidowGraspDownwardsOne-v0',
+        'entry_point': ('roboverse.envs.widow_grasp_downwards:WidowGraspDownwardsOneEnv'),
+        'kwargs': {'max_force': 100, 'action_scale': 0.05}
+    },
+    {
+        'id': 'WidowGraspUpwardsOne-v0',
+        'entry_point': ('roboverse.envs.widow_grasp_upwards:WidowGraspUpwardsOneEnv'),
         'kwargs': {'max_force': 100, 'action_scale': 0.05}
     }
 )

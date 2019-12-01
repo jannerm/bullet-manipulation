@@ -8,7 +8,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--save_video", action="store_true")
 args = parser.parse_args()
 
-env = roboverse.make('WidowGraspOne-v0', gui=True)
+env = roboverse.make('WidowGraspDownwardsOne-v0', gui=True)
 obj_key = 'lego'
 num_grasps = 0
 
@@ -28,7 +28,7 @@ for i in range(100):
     xy_diff = xyz_diff[:2]
     xy_goal_diff = (env._goal_pos - object_pos)[:2]
 
-    if np.linalg.norm(xyz_diff) > 0.042:
+    if np.linalg.norm(xyz_diff) > 0.03:
         action = object_pos - ee_pos
         action *= 3.0
         grip=0.
@@ -57,7 +57,6 @@ for i in range(100):
 
 
     
-
     action = np.append(action, [grip])
 
     if args.save_video:

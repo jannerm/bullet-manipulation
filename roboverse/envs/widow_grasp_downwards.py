@@ -4,18 +4,18 @@ from roboverse.envs.widow_base import WidowBaseEnv
 from roboverse.utils.shapenet_utils import load_single_object
 
 
-class WidowGraspOneEnv(WidowBaseEnv):
+class WidowGraspDownwardsOneEnv(WidowBaseEnv):
 
-    def __init__(self, goal_pos=(.75, 0.0,-0.26), *args, **kwargs):
+    def __init__(self, goal_pos=(.7, 0.0,-0.26), *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._goal_pos = goal_pos
 
     def _load_meshes(self):
         super()._load_meshes()
         self._objects = {
-            'lego': bullet.objects.duck(),
-            #'bowl':   load_single_object('36ca3b684dbb9c159599371049c32d38',
-                                         #[.75, -0.10, -.28], quat=[0, 0, 0, 1],scale=0.5)[0]
+            'lego': bullet.objects.lego(),
+            'bowl':   load_single_object('36ca3b684dbb9c159599371049c32d38',
+                                         [.7, -0.1, -.28], quat=[0, 0, 0, 1],scale=0.5)[0]
 
         }
 

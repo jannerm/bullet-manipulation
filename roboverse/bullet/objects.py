@@ -30,7 +30,8 @@ PDATA_PATH = pdata.getDataPath()
 ## robots
 
 sawyer = loader(ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro.urdf')
-widow = loader(ASSET_PATH, 'widowx/widowx.urdf', pos=[0.7, 0, 0.1])
+widow_downwards = loader(ASSET_PATH, 'widowx/widowxdownwards.urdf', pos=[0.7, 0, 0.1])
+widow = loader(ASSET_PATH, 'widowx/widowx.urdf', pos=[0.7, 0, -0.4])
 #pos=[0.7, 0, 0.1]
 
 
@@ -47,10 +48,10 @@ duck = loader(PDATA_PATH, 'duck_vhacd.urdf',
               scale=0.8)
 
 lego = loader(PDATA_PATH, 'lego/lego.urdf',
-              pos=[.75, 0.13, -.3],
+              pos=[.85, 0.1, -.3],
               quat=[0, 0, 1, 0],
               rgba=[1, 0, 0, 1],
-              scale=1.2)
+              scale=1.)
 
 
 ## custom objects
@@ -71,5 +72,3 @@ spam = loader(ASSET_PATH, 'objects/spam/spam.urdf',
               pos=[.75, -.4, -.3],
               deg=[90,0,-90],
               scale=0.025)
-
-

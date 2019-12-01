@@ -8,7 +8,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--save_video", action="store_true")
 args = parser.parse_args()
 
-env = roboverse.make('WidowGraspOne-v0', gui=True)
+env = roboverse.make('WidowGraspDownwardsOne-v0', gui=True)
 obj_key = 'lego'
 num_grasps = 0
 
