@@ -169,6 +169,10 @@
   <link name="gripper_aux_link">
   </link>
   <link name="gripper_1_link">
+     <contact>
+      <lateral_friction value="3.0"/>
+      <spinning_friction value="3.0"/>
+    </contact>
      <visual>
         <origin xyz="0 -0.0007 0" rpy="0 0 1.57" />
         <geometry>
@@ -189,6 +193,10 @@
      </inertial>
   </link>
   <link name="gripper_2_link">
+     <contact>
+      <lateral_friction value="3.0"/>
+      <spinning_friction value="3.0"/>
+    </contact>
      <visual>
         <origin xyz="0 0.0007 0" rpy="0 0 -1.57" />
         <geometry>

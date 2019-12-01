@@ -54,7 +54,7 @@ for i in range(1000):
             action = np.array([math.sin(a), -math.cos(a), 0])
         grip = 0
         print('Rotating')
-    elif np.linalg.norm(xyz_diff) > 0.042 and not holding:
+    elif np.linalg.norm(xyz_diff) > 0.05 and not holding:
         action = object_pos - ee_pos
         action /= np.linalg.norm(object_pos - ee_pos)
         action /= 3
@@ -65,7 +65,7 @@ for i in range(1000):
         # o[3] is gripper tip distance
         action = np.zeros((3,))
         action[2] = -0.01
-        grip=0.8
+        grip=1.0
         print('Grasping')
     elif env._goal_pos[2] - object_pos[2] > 0.01 and not holding:
         action = env._goal_pos - object_pos
@@ -82,13 +82,14 @@ for i in range(1000):
             action = -np.array([math.sin(a), -math.cos(a), 0])
         else:
             action = np.array([math.sin(a), -math.cos(a), 0])
-        action[2] = 0.05
+        action[2] = 0.02
+        action *= 1.0
         grip = 1.0
         print('Rotating')
     elif np.linalg.norm((bowl_pos - object_pos)[:2]) > 0.02:
         action = bowl_pos - object_pos
         grip = 1.0
-        action *= 2.0
+        action *= 3.0
         action[2] = 0.05
         holding = True
         rotate_bowl = True

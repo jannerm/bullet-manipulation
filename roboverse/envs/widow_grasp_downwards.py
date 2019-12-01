@@ -15,7 +15,7 @@ class WidowGraspDownwardsOneEnv(WidowBaseEnv):
         self._objects = {
             'lego': bullet.objects.lego(),
             'bowl':   load_single_object('36ca3b684dbb9c159599371049c32d38',
-                                         [.7, -0.1, -.28], quat=[0, 0, 0, 1],scale=0.5)[0]
+                                         [.7, -0.12, -.28], quat=[0, 0, 0, 1],scale=0.5)[0]
 
         }
 
