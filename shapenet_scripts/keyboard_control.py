@@ -3,6 +3,7 @@ import sys
 import numpy as np 
 import pygame
 from pygame.locals import QUIT, KEYDOWN, KEYUP
+import time
 
 
 #Dictionary mapping keyboard commands to actions
@@ -46,7 +47,7 @@ pressed_keys = {
 }
 
 
-env = roboverse.make('WidowGraspDownwardsOne-v0', gui=True)
+env = roboverse.make('SawyerGraspOne-v0', gui=True)
 env.reset()
 pygame.init()
 screen = pygame.display.set_mode((100, 100))
@@ -67,6 +68,7 @@ while True:
                 pressed_keys[pressed] = True
             elif pressed == 'r':
                 env.reset()
+                gripper = 0
         if event.type == KEYUP:
             released = chr(event.dict['key'])
             if released in pressed_keys.keys():
