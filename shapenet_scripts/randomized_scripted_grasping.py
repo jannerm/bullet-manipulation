@@ -16,9 +16,10 @@ parser.add_argument("--gui", dest="gui", action="store_true", default=False)
 args = parser.parse_args()
 timestamp = roboverse.utils.timestamp()
 data_save_path = os.path.join(__file__, "../..", 'data',
-                              args.data_save_directory, timestamp)
+                              args.data_save_directory)
 data_save_path = os.path.abspath(data_save_path)
-video_save_path = os.path.join(data_save_path, "videos")
+video_save_path = os.path.join(data_save_path, timestamp, "videos")
+trajectory_save_path = os.path.join(data_save_path, "trajectories")
 
 env = roboverse.make('SawyerGraspOne-v0', gui=args.gui)
 object_name = 'lego'
@@ -32,6 +33,8 @@ act_dim = env.action_space.shape[0]
 
 if not os.path.exists(data_save_path):
     os.makedirs(data_save_path)
+if not os.path.exists(trajectory_save_path):
+    os.makedirs(trajectory_save_path)
 if not os.path.exists(video_save_path) and args.video_save_frequency > 0:
     os.makedirs(video_save_path)
 
@@ -91,5 +94,5 @@ for j in tqdm(range(args.num_trajectories)):
                        save_all=True, duration=100, loop=0)
 
 params = env.get_params()
-pool.save(params, data_save_path,
+pool.save(params, trajectory_save_path,
           '{}_pool_{}.pkl'.format(timestamp, pool.size))
