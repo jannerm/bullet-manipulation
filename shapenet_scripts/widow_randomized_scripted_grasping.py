@@ -48,6 +48,14 @@ for j in tqdm(range(args.num_trajectories)):
     target_pos = env.get_object_midpoint(object_name)
     offset = np.random.uniform(low=-0.05, high=0.05, size=(3,))
     offset[2] = np.random.uniform(low=-0.01, high=0.05, size=(1,))
+    starting_pos = np.array(env.get_end_effector_pos())
+    starting_pos[0] = np.random.uniform(low=-0.01, high=0.01, size=(1,))
+
+    for i in range(20):
+        action = np.random.uniform(low=-0.5, high=0.5, size=(3,))
+        grip = 0
+        action = np.append(action, [grip])
+        env.step(action)
     target_pos += offset
     # the object is initialized above the table, so let's compensate for it
     images = []
