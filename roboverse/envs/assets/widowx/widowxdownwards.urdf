@@ -170,8 +170,8 @@
   </link>
   <link name="gripper_1_link">
     <contact>
-      <lateral_friction value="1.5"/>
-      <spinning_friction value="2.0"/>
+      <lateral_friction value="1.0"/>
+      <spinning_friction value="1.0"/>
     </contact>
      <visual>
         <origin xyz="0 -0.0007 0" rpy="0 0 1.57" />
@@ -194,8 +194,8 @@
   </link>
   <link name="gripper_2_link">
     <contact>
-      <lateral_friction value="1.5"/>
-      <spinning_friction value="2.0"/>
+      <lateral_friction value="1.0"/>
+      <spinning_friction value="1.0"/>
     </contact>
      <visual>
         <origin xyz="0 0.0007 0" rpy="0 0 -1.57" />

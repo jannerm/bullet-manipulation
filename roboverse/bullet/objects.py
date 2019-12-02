@@ -3,6 +3,8 @@ import pdb
 
 import pybullet as p
 import pybullet_data as pdata
+import numpy as np
+import math
 
 from roboverse.bullet.misc import (
   load_urdf,
@@ -47,8 +49,9 @@ duck = loader(PDATA_PATH, 'duck_vhacd.urdf',
               deg=[0,0,0],
               scale=0.8)
 
+x = 1.5
 lego = loader(PDATA_PATH, 'lego/lego.urdf',
-              pos=[.65, 0.1, -.3],
+              pos=np.array([0.7, 0, -.3]) + np.array([math.cos(x), math.sin(x), 0]) * .15,
               quat=[0, 0, 1, 0],
               rgba=[1, 0, 0, 1],
               scale=1.)

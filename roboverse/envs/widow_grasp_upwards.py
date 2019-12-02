@@ -6,7 +6,7 @@ from roboverse.utils.shapenet_utils import load_single_object
 
 class WidowGraspUpwardsOneEnv(WidowBaseEnv):
 
-    def __init__(self, goal_pos=(.7, 0.0,-0.26), *args, **kwargs):
+    def __init__(self, goal_pos=(.7, -0.1,-0.26), *args, **kwargs):
         kwargs['downwards'] = False
         super().__init__(*args, **kwargs)
         self._goal_pos = goal_pos
@@ -15,8 +15,8 @@ class WidowGraspUpwardsOneEnv(WidowBaseEnv):
         super()._load_meshes()
         self._objects = {
             'lego': bullet.objects.lego(),
-            'bowl':   load_single_object('36ca3b684dbb9c159599371049c32d38',
-                                         [.9, 0, -.28], quat=[0, 0, 0, 1],scale=0.5)[0]
+            #'bowl':   load_single_object('36ca3b684dbb9c159599371049c32d38',
+                                         #[.9, 0, -.28], quat=[0, 0, 0, 1],scale=0.5)[0]
 
         }
 

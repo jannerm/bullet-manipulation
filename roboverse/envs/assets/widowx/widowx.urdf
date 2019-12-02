@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <robot name="widowx" xmlns:xacro="http://ros.org/wiki/xacro">
- 
+
 	<material name="yellow">
 		<color rgba="0.15 0.15 0.15 1.0"/>
 	</material>
@@ -21,9 +21,9 @@
 	<material name="greyish">
 		<color rgba="0.75 0.75 0.75 1.0"/>
 	</material>
-	
-	
-  
+
+
+
   <link name="arm_base_link">
      <visual>
         <origin xyz="0 0 0" rpy="0 0 0" />
@@ -170,8 +170,8 @@
   </link>
   <link name="gripper_1_link">
      <contact>
-      <lateral_friction value="3.0"/>
-      <spinning_friction value="3.0"/>
+      <lateral_friction value="1.0"/>
+      <spinning_friction value="1.0"/>
     </contact>
      <visual>
         <origin xyz="0 -0.0007 0" rpy="0 0 1.57" />
@@ -194,8 +194,8 @@
   </link>
   <link name="gripper_2_link">
      <contact>
-      <lateral_friction value="3.0"/>
-      <spinning_friction value="3.0"/>
+      <lateral_friction value="1.0"/>
+      <spinning_friction value="1.0"/>
     </contact>
      <visual>
         <origin xyz="0 0.0007 0" rpy="0 0 -1.57" />
@@ -217,7 +217,7 @@
      </inertial>
   </link>
   <!-- joints -->
- 
+
   <joint name="joint_1" type="revolute">
      <origin xyz="0 0 0.125" rpy="0 0 0" />
      <parent link="arm_base_link" />

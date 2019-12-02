@@ -6,9 +6,10 @@ from roboverse.utils.shapenet_utils import load_single_object
 
 class WidowGraspDownwardsOneEnv(WidowBaseEnv):
 
-    def __init__(self, goal_pos=(.7, 0.0,-0.26), *args, **kwargs):
+    def __init__(self, goal_pos=(.7, 0.15, -0.20), *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._goal_pos = goal_pos
+        self._reward_type = 'sparse'
 
     def _load_meshes(self):
         super()._load_meshes()
@@ -19,12 +20,19 @@ class WidowGraspDownwardsOneEnv(WidowBaseEnv):
 
         }
 
-    def get_reward(self, observation):
-        object_pos = self.get_object_midpoint('lego')
-        if object_pos[2] > -0.1:
-            reward = 1
+    def get_reward(self, info):
+        if self._reward_type == 'sparse':
+            if info['object_goal_distance'] < 0.1:
+                reward = 1
+            else:
+                reward = 0
+        elif self._reward_type == 'shaped':
+            reward = -1 * (4 * info['object_goal_distance']
+                           + info['object_gripper_distance'])
+            reward = max(reward, self._reward_min)
         else:
-            reward = 0
+            raise NotImplementedError
+
         return reward
 
     def step(self, *action):
