@@ -52,11 +52,11 @@ for j in tqdm(range(args.num_trajectories)):
     starting_pos[0] = np.random.uniform(low=-0.01, high=0.01, size=(1,))
 
     for i in range(20):
-        action = np.random.uniform(low=-0.5, high=0.5, size=(3,))
+        action = np.random.uniform(low=-0.8, high=0.8, size=(3,))
         grip = 0
         action = np.append(action, [grip])
         env.step(action)
-    for i in range(10):
+    for i in range(50):
         env.step([0, 0, 0, 0])
     target_pos += offset
     # the object is initialized above the table, so let's compensate for it
