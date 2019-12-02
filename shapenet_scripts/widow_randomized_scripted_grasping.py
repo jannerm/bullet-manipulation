@@ -56,6 +56,8 @@ for j in tqdm(range(args.num_trajectories)):
         grip = 0
         action = np.append(action, [grip])
         env.step(action)
+    for i in range(10):
+        env.step([0, 0, 0, 0])
     target_pos += offset
     # the object is initialized above the table, so let's compensate for it
     images = []
