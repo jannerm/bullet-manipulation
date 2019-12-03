@@ -47,7 +47,7 @@ pressed_keys = {
 }
 
 
-env = roboverse.make('SawyerGraspOne-v0', gui=True)
+env = roboverse.make('WidowGraspDownwardsOne-v0', gui=True)
 env.reset()
 pygame.init()
 screen = pygame.display.set_mode((100, 100))
