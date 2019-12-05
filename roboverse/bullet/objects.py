@@ -51,7 +51,7 @@ duck = loader(PDATA_PATH, 'duck_vhacd.urdf',
 
 x = 1.5
 lego = loader(PDATA_PATH, 'lego/lego.urdf',
-              pos=np.array([0.75, 0.2, -.3]) #+ np.array([math.cos(x), math.sin(x), 0]) * .15,
+              pos=np.array([0.75, 0.2, -.3]), #+ np.array([math.cos(x), math.sin(x), 0]) * .15,
               quat=[0, 0, 1, 0],
               rgba=[1, 0, 0, 1],
               scale=1.2)
