@@ -16,9 +16,10 @@ parser.add_argument("--gui", dest="gui", action="store_true", default=False)
 args = parser.parse_args()
 timestamp = roboverse.utils.timestamp()
 data_save_path = os.path.join(__file__, "../..", 'data',
-                              args.data_save_directory, timestamp)
+                              args.data_save_directory)
 data_save_path = os.path.abspath(data_save_path)
-video_save_path = os.path.join(data_save_path, "videos")
+video_save_path = os.path.join(data_save_path, timestamp, "videos")
+trajectory_save_path = os.path.join(data_save_path, "trajectories")
 
 env = roboverse.make('SawyerGraspOne-v0', gui=args.gui)
 object_name = 'lego'
@@ -32,11 +33,13 @@ act_dim = env.action_space.shape[0]
 
 if not os.path.exists(data_save_path):
     os.makedirs(data_save_path)
+if not os.path.exists(trajectory_save_path):
+    os.makedirs(trajectory_save_path)
 if not os.path.exists(video_save_path) and args.video_save_frequency > 0:
     os.makedirs(video_save_path)
 
 
-pool = roboverse.utils.DemoPool()
+pool = roboverse.utils.TrajectoryPool()
 
 for j in tqdm(range(args.num_trajectories)):
     env.reset()
@@ -45,6 +48,7 @@ for j in tqdm(range(args.num_trajectories)):
     # the object is initialized above the table, so let's compensate for it
     target_pos[2] += -0.05
     images = []
+    trajectory = roboverse.utils.Trajectory()
 
     for i in range(args.num_timesteps):
         ee_pos = env.get_end_effector_pos()
@@ -76,8 +80,9 @@ for j in tqdm(range(args.num_trajectories)):
 
         observation = env.get_observation()
         next_state, reward, done, info = env.step(action)
-        pool.add_sample(observation, action, next_state, reward, done)
+        trajectory.add_sample(observation, action, next_state, reward, done)
 
+    pool.add_trajectory(trajectory)
     object_pos = env.get_object_midpoint(object_name)
     if info['object_goal_distance'] < 0.05:
         num_grasps += 1
@@ -89,5 +94,5 @@ for j in tqdm(range(args.num_trajectories)):
                        save_all=True, duration=100, loop=0)
 
 params = env.get_params()
-pool.save(params, data_save_path,
+pool.save(params, trajectory_save_path,
           '{}_pool_{}.pkl'.format(timestamp, pool.size))

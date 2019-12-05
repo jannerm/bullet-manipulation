@@ -1,34 +1,40 @@
 import roboverse.bullet as bullet
 import numpy as np
-from roboverse.envs.sawyer_base import SawyerBaseEnv
+from roboverse.envs.widow_base import WidowBaseEnv
+from roboverse.utils.shapenet_utils import load_single_object
 
 
-class SawyerGraspOneEnv(SawyerBaseEnv):
+class WidowGraspDownwardsOneEnv(WidowBaseEnv):
 
-    def __init__(self,
-                 goal_pos=(0.75, 0.2, -0.1),
-                 reward_type='shaped',
-                 reward_min=-2.5,
-                 *args,
-                 **kwargs
-                 ):
-        """
-        Grasping env with a single object
-        :param goal_pos: xyz coordinate of desired goal
-        :param reward_type: one of 'shaped', 'sparse'
-        :param reward_min: minimum possible reward per timestep
-        """
+    def __init__(self, goal_pos=(.7, 0.15, -0.20), *args, **kwargs):
+        kwargs['downwards'] = True
         super().__init__(*args, **kwargs)
         self._goal_pos = goal_pos
-        self._reward_type = reward_type
-        self._reward_min = reward_min
-        self.dt = 0.1
+        self._reward_type = 'sparse'
 
     def _load_meshes(self):
         super()._load_meshes()
         self._objects = {
-            'lego': bullet.objects.lego()
+            'lego': bullet.objects.lego(),
+            'bowl':   load_single_object('36ca3b684dbb9c159599371049c32d38',
+                                         [.7, -0.12, -.28], quat=[0, 0, 0, 1],scale=0.5)[0]
+
         }
+
+    def get_reward(self, info):
+        if self._reward_type == 'sparse':
+            if info['object_goal_distance'] < 0.1:
+                reward = 1
+            else:
+                reward = 0
+        elif self._reward_type == 'shaped':
+            reward = -1 * (4 * info['object_goal_distance']
+                           + info['object_gripper_distance'])
+            reward = max(reward, self._reward_min)
+        else:
+            raise NotImplementedError
+
+        return reward
 
     def step(self, *action):
         delta_pos, gripper = self._format_action(*action)
@@ -57,22 +63,6 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
             'object_gripper_distance': object_gripper_distance
         }
         return info
-
-    def get_reward(self, info):
-
-        if self._reward_type == 'sparse':
-            if info['object_goal_distance'] < 0.1:
-                reward = 1
-            else:
-                reward = 0
-        elif self._reward_type == 'shaped':
-            reward = -1*(4*info['object_goal_distance']
-                         + info['object_gripper_distance'])
-            reward = max(reward, self._reward_min)
-        else:
-            raise NotImplementedError
-
-        return reward
 
     def get_observation(self):
         left_tip_pos = bullet.get_link_state(
