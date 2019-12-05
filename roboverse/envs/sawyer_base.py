@@ -3,38 +3,14 @@ from roboverse.envs.robot_base import RobotBaseEnv
 
 
 class SawyerBaseEnv(RobotBaseEnv):
-    def __init__(self,
-                 img_dim=256,
-                 gui=False,
-                 action_scale=.2,
-                 action_repeat=10,
-                 timestep=1. / 120,
-                 solver_iterations=150,
-                 gripper_bounds=[-1, 1],
-                 pos_init=[0.5, 0, 0],
-                 pos_high=[1, .4, .25],
-                 pos_low=[.4, -.6, -.36],
-                 max_force=1000.,
-                 visualize=True,
-                 ):
-
-        super().__init__(img_dim,
-                         gui,
-                         action_scale,
-                         action_repeat,
-                         timestep,
-                         solver_iterations,
-                         gripper_bounds,
-                         pos_init,
-                         pos_high,
-                         pos_low,
-                         max_force,
-                         visualize)
-
+    def __init__(self, *args, **kwargs):
         self._id = 'SawyerBaseEnv'
         self._robot_name = 'sawyer'
         self._gripper_joint_name = ('right_gripper_l_finger_joint', 'right_gripper_r_finger_joint')
         self._gripper_range = range(20, 25)
+
+        super().__init__(*args, **kwargs)
+
 
         self._r_limits = {}
         self._l_limits = {}

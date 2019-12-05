@@ -20,6 +20,7 @@ class RobotBaseEnv(gym.Env, Serializable):
                  pos_low=[.4, -.6, -.36],
                  max_force=1000.,
                  visualize=True,
+                 downwards=False
                  ):
 
         self._gui = gui
@@ -85,7 +86,6 @@ class RobotBaseEnv(gym.Env, Serializable):
 
         bullet.reset()
         self._load_meshes()
-
         # Allow the objects to settle down after they are dropped in sim
         for _ in range(50):
             bullet.step()
@@ -201,5 +201,3 @@ class RobotBaseEnv(gym.Env, Serializable):
 
     def convert_to_active_observation(self, obs):
         return obs
-
-

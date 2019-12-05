@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <robot name="widowx" xmlns:xacro="http://ros.org/wiki/xacro">
-
+ 
 	<material name="yellow">
 		<color rgba="0.15 0.15 0.15 1.0"/>
 	</material>
@@ -21,12 +21,12 @@
 	<material name="greyish">
 		<color rgba="0.75 0.75 0.75 1.0"/>
 	</material>
-
-
-
+	
+	
+  
   <link name="arm_base_link">
      <visual>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0 0 0" rpy="0 3.14159 0" />
         <geometry>
            <mesh filename="meshes/base_link.stl"/>
         </geometry>
@@ -169,7 +169,7 @@
   <link name="gripper_aux_link">
   </link>
   <link name="gripper_1_link">
-     <contact>
+    <contact>
       <lateral_friction value="1.0"/>
       <spinning_friction value="1.0"/>
     </contact>
@@ -193,7 +193,7 @@
      </inertial>
   </link>
   <link name="gripper_2_link">
-     <contact>
+    <contact>
       <lateral_friction value="1.0"/>
       <spinning_friction value="1.0"/>
     </contact>
@@ -217,23 +217,21 @@
      </inertial>
   </link>
   <!-- joints -->
-
+ 
   <joint name="joint_1" type="revolute">
-     <origin xyz="0 0 0.125" rpy="0 0 0" />
+     <origin xyz="0 0 -0.125" rpy="0 3.14159 0" />
      <parent link="arm_base_link" />
      <child link="shoulder_link" />
      <axis xyz="0 0 1" />
      <limit  effort="0" velocity="0.785" />
-     #lower="-2.617" upper="2.617"
   </joint>
   <joint name="joint_2" type="revolute">
-     <!--origin xyz="0.04825 0 0.14203" rpy="0 0 0" /-->
+     <!--origin xyz="0.04825 0 0.14203" rpy="0 -1.5 0" /-->
      <origin xyz="0 0 0" rpy="0 0 0" />
      <parent link="shoulder_link" />
      <child link="biceps_link" />
      <axis xyz="0 1 0" />
-     <limit  lower="-1.571" upper="1.571" effort="0" velocity="1.571" />
-     #lower="-1.571" upper="1.571"
+     <limit lower="-1.571" upper="0" effort="0" velocity="1.571" />
   </joint>
   <joint name="joint_3" type="revolute">
      <origin xyz="0.04825 0 0.14203" rpy="0 1.5707963268 0" />
@@ -241,8 +239,6 @@
      <child link="forearm_link" />
      <axis xyz="0 1 0" />
      <limit lower="-1.571" upper="1.571" effort="0" velocity="1.571" />
-      #lower="-1.571" upper="1.571"
-
   </joint>
   <joint name="joint_4" type="revolute">
      <origin xyz="0 0 0.14203" rpy="0 0 0" />
@@ -288,6 +284,5 @@
      <axis xyz="0 -1 0" />
      <limit lower="0" upper="0.027" effort="0" velocity="0.5" />
   </joint>
-
 
 </robot>
