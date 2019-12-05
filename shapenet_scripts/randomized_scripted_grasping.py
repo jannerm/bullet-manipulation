@@ -6,9 +6,9 @@ from PIL import Image
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--data_save_directory", type=str)
-parser.add_argument("--num_trajectories", type=int, default=2000)
-parser.add_argument("--num_timesteps", type=int, default=50)
+parser.add_argument("-d", "--data-save-directory", type=str)
+parser.add_argument("--num-trajectories", type=int, default=2000)
+parser.add_argument("--num-timesteps", type=int, default=50)
 parser.add_argument("--video_save_frequency", type=int,
                     default=0, help="Set to zero for no video saving")
 parser.add_argument("--gui", dest="gui", action="store_true", default=False)
@@ -39,7 +39,7 @@ if not os.path.exists(video_save_path) and args.video_save_frequency > 0:
     os.makedirs(video_save_path)
 
 
-pool = roboverse.utils.DemoPool()
+pool = roboverse.utils.TrajectoryPool()
 
 for j in tqdm(range(args.num_trajectories)):
     env.reset()

@@ -1,6 +1,7 @@
-import roboverse
+from roboverse.envs.sawyer_reach import SawyerReachEnv
+import roboverse.bullet
 import sys
-import numpy as np 
+import numpy as np
 import pygame
 from pygame.locals import QUIT, KEYDOWN, KEYUP
 import time
@@ -8,10 +9,10 @@ import time
 
 #Dictionary mapping keyboard commands to actions
 char_to_action = {
-    'w': (np.array([-1, 0, 0]), 'x'),
-    'a': (np.array([0, -1, 0]), 'x'),
-    's': (np.array([1, 0, 0]), 'x'),
-    'd': (np.array([0, 1, 0]), 'x'),
+    'w': (np.array([0, -1, 0]), 'x'),
+    'a': (np.array([1, 0, 0]), 'x'),
+    's': (np.array([0, 1, 0]), 'x'),
+    'd': (np.array([-1, 0, 0]), 'x'),
     'q': (np.array([1, -1, 0]), 'x'),
     'e': (np.array([-1, -1, 0]), 'x'),
     'z': (np.array([1, 1, 0]), 'x'),
@@ -20,7 +21,7 @@ char_to_action = {
     'j': (np.array([0, 0, -1]), 'x'),
     'h': (np.array([1, 0, 0, 0]), 'theta'),
     'l': (np.array([-1, 0, 0, 0]), 'theta'),
-    'c': (np.array([0, 0, 0, 0]), 'theta'), 
+    'c': (np.array([0, 0, 0, 0]), 'theta'),
     'u': (0, 'gripper'),
     'i': (1, 'gripper'),
     'r': 'reset'
@@ -57,7 +58,7 @@ gripper = 0
 while True:
     dx = np.array([0, 0, 0])
     dtheta = np.array([0, 0, 0, 0])
-    
+
     #record key presses
     for event in pygame.event.get():
         if event.type == QUIT:
@@ -73,7 +74,7 @@ while True:
             released = chr(event.dict['key'])
             if released in pressed_keys.keys():
                 pressed_keys[released] = False
-    
+
     #take actions corresponding to key presses
     for i in pressed_keys.items():
         if i[1]:

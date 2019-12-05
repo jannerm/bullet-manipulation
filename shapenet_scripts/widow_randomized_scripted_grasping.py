@@ -41,7 +41,7 @@ if not os.path.exists(video_save_path) and args.video_save_frequency > 0:
     os.makedirs(video_save_path)
 
 
-pool = roboverse.utils.DemoPool()
+pool = roboverse.utils.TrajectoryPool()
 
 for j in tqdm(range(args.num_trajectories)):
     env.reset()

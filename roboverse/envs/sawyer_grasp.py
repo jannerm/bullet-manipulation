@@ -76,9 +76,9 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
 
     def get_observation(self):
         left_tip_pos = bullet.get_link_state(
-            self._robot_id, 'right_gripper_l_finger_joint', keys='pos')
+            self._robot_id, self._gripper_joint_name[0], keys='pos')
         right_tip_pos = bullet.get_link_state(
-            self._robot_id, 'right_gripper_r_finger_joint', keys='pos')
+            self._robot_id, self._gripper_joint_name[1], keys='pos')
         left_tip_pos = np.asarray(left_tip_pos)
         right_tip_pos = np.asarray(right_tip_pos)
 
