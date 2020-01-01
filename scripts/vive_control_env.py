@@ -30,66 +30,107 @@ home_dir = os.path.dirname(curr_dir)
 pklPath = home_dir + '/data'
 trajectories = []
 image_data = []
-num_of_sample = 2
+num_of_sample = 5
 
-for i in range(num_of_sample):
-	env.reset()
-	target_pos = env.get_object_midpoint('duck')
-	target_pos += np.random.uniform(low=-0.05, high=0.05, size=(3,))
-	images = []
-	trajectory = []
+ORIENTATION_ENABLED = True
 
-	while True:
+data = []
 
-		ee_pos = env.get_end_effector_pos()
-		grasping_data = []
-		grasping_data.append(env.get_observation())
+for i in range(num_of_sample): # number of runs for human to demonstrate
+    o = env.reset()
+    target_pos = env.get_object_midpoint('duck')
+    target_pos += np.random.uniform(low=-0.05, high=0.05, size=(3,))
+    images = []
 
-		events = p.getVREvents()
+    traj = dict(
+        observations=[o],
+        actions=[],
+        rewards=[],
+        next_observations=[],
+        terminals=[],
+        agent_infos=[],
+        env_infos=[],
+    )
 
-		if events:
-			e = events[0]
-		else:
-			continue
+    accept = True
+    start = False
+    while True:
 
-		# Detect change in button, and change trigger state
-		if e[BUTTONS][33] & p.VR_BUTTON_WAS_TRIGGERED:
-			trigger = 1
-		if e[BUTTONS][33] & p.VR_BUTTON_WAS_RELEASED:
-			trigger = 0
+        ee_pos = env.get_end_effector_pos()
 
-		if e[0] != controllers[0]:
-			break
+        traj["observations"].append(env.get_observation())
 
-		# pass controller position and orientation into the environment
-		cont_pos = e[POSITION]
-		cont_orient = e[ORIENTATION]
+        events = p.getVREvents()
 
-		action = [cont_pos[0] - ee_pos[0], cont_pos[1] - ee_pos[1], cont_pos[2] - ee_pos[2]]
-		grip = trigger
+        if events:
+            e = events[0]
+        else:
+            continue
 
-		action = np.append(action, [grip])
-		action = np.append(action, list(cont_orient))
-		#action = np.append(action, [grip])
-		img = env.render()
-		images.append(np.uint8(img))
+        if e[BUTTONS][32] & p.VR_BUTTON_WAS_TRIGGERED:
+            accept = False
+            break
 
-		next_state, reward, done, info = env.step(action)
-		grasping_data.append(next_state)
-		grasping_data.append(action)
-		grasping_data.append(reward)
-		grasping_data.append(done)
-		trajectory.append(grasping_data)
+        if e[BUTTONS][2] & p.VR_BUTTON_WAS_TRIGGERED:
+            accept = False
+            break
 
-		object_pos = env.get_object_midpoint('duck')
+        # Detect change in button, and change trigger state
+        if e[BUTTONS][33] & p.VR_BUTTON_WAS_TRIGGERED:
+            trigger = 1
+        if e[BUTTONS][33] & p.VR_BUTTON_WAS_RELEASED:
+            trigger = 0
 
-		if object_pos[2] > -0.1:
-			num_grasps += 1
-			break
+        if e[0] != controllers[0]:
+            break
 
-	print(trajectory)
-	trajectories.append(trajectory)
+        # pass controller position and orientation into the environment
+        cont_pos = e[POSITION]
+        cont_orient = bullet.deg_to_quat([180, 0, 0])
+        if ORIENTATION_ENABLED:
+            cont_orient = e[ORIENTATION]
+            cont_orient = list(cont_orient)
+            #cont_orient = bullet.quat_to_deg(cont_orient)
+            #cont_orient = list(cont_orient)
+            #cont_orient[0] = 180 + cont_orient[0]
+            #cont_orient[1] = 180 + cont_orient[1]
+            #cont_orient = bullet.deg_to_quat(cont_orient)
 
+        action = [cont_pos[0] - ee_pos[0], cont_pos[1] - ee_pos[1], cont_pos[2] - ee_pos[2]]
+        grip = trigger
+
+        action = np.append(action, [grip])
+        action = np.append(action, cont_orient)
+
+        img = env.render()
+        images.append(np.uint8(img))
+
+        # action is now delta_position, grip (boolean) and orientation
+        next_state, reward, done, info = env.step(action)
+        print(next_state, reward, done, info)
+        traj["next_observations"].append(next_state)
+        traj["actions"].append(action)
+        traj["rewards"].append(reward)
+        traj["terminals"].append(done)
+        traj["agent_infos"].append(info)
+        traj["env_infos"].append(info)
+
+        object_pos = env.get_object_midpoint('duck')
+
+        if object_pos[2] > -0.1 + 0.3:
+            num_grasps += 1
+            break
+
+    if accept:
+        print("accept trajectory")
+        print(traj)
+        data.append(traj)
+    else:
+        print(traj)
+        print("discarded trajectory")
+
+path = "~/vr_demos.npy"
+np.save(path, data)
 
 #print('Num attempts: {}'.format(j))
 print('Num grasps: {}'.format(num_grasps))

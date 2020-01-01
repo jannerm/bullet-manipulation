@@ -19,7 +19,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
 
     def get_reward(self, observation):
         object_pos = self.get_object_midpoint('duck')
-        if object_pos[2] > -0.1:
+        if object_pos[2] > -0.1 + 0.3:
             reward = 1
         else:
             reward = 0

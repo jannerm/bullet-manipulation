@@ -12,7 +12,7 @@ class SawyerBaseEnv(gym.Env):
     def __init__(self,
                  img_dim=256,
                  render=False,
-                 action_scale=.1,
+                 action_scale=1,
                  action_repeat=4,
                  timestep=1./120,
                  solver_iterations=150,

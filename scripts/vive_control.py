@@ -4,7 +4,8 @@ import pybullet as p
 import roboverse
 import roboverse.bullet as bullet
 import math
-
+from roboverse.bullet.misc import load_urdf, load_obj, load_random_objects
+import os
 # connect to the VR server (by p.SHARED_MEMORY)
 bullet.connect()
 bullet.setup()
@@ -18,6 +19,9 @@ BUTTONS = 6
 
 # set the environment
 env = roboverse.make('SawyerGraspOne-v0', render=True)
+curr_dir = os.path.dirname(os.path.abspath(__file__))
+object_path = os.path.join(curr_dir, '../roboverse/envs/assets/ShapeNetCore')
+load_random_objects(object_path, 4)
 
 # directly control sawyer robot for now; will create wrapper in env later
 sawyer = env._sawyer
@@ -53,7 +57,9 @@ while True:
 		cont_pos = e[POSITION]
 
 
-		cont_orient = p.getQuaternionFromEuler([0, -math.pi, 0]) 
+		cont_orient = e[ORIENTATION]#p.getQuaternionFromEuler([0, -math.pi, 0]) #e[ORIENTATION]#p.getQuaternionFromEuler([0, -math.pi, 0])#e[ORIENTATION]
+		#p.getQuaternionFromEuler([0, -math.pi, 0]) #e[ORIENTATION]#
+		#p.getQuaternionFromEuler([0, -math.pi, 0]) #e[ORIENTATION]#
 		#e[ORIENTATION]
 
 		# use sawyer_ik function to update the changes in simulation
