@@ -1,14 +1,11 @@
 import os
 import sys
 from roboverse.bullet.ik import sawyer_ik, position_control
-from roboverse.bullet.misc import load_urdf, load_obj, load_random_objects
+from roboverse.bullet.misc import load_urdf, load_obj
 from roboverse.bullet.queries import get_index_by_attribute, get_link_state
 import numpy as np
 import pybullet as p
-import pybullet_data
-from gym import spaces
 from roboverse.envs.sawyer_reach import SawyerReachEnv
-import roboverse.core
 import pygame
 from pygame.locals import QUIT, KEYDOWN, KEYUP
 import json

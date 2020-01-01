@@ -79,7 +79,7 @@ def position_control(body, link, pos, theta, damping=1e-3):
 
 
 def sawyer_ik(body, link, pos, theta, gripper, damping=1e-3,
-              gripper_bounds=(0,1), arm_vel_mult=3, gripper_vel_mult=10, discrete_gripper=True):
+              gripper_bounds=(-1,1), arm_vel_mult=3, gripper_vel_mult=10, discrete_gripper=True):
     gripper_state = get_gripper_state(body, gripper, gripper_bounds, discrete_gripper)
     #### ik
     ik_solution = ik(body, link, pos, theta, damping)
@@ -96,6 +96,17 @@ def sawyer_ik(body, link, pos, theta, gripper, damping=1e-3,
     #### apply velocities
     velocity_control(body, joints, velocities)
 
+def sawyer_position_ik(body, link, pos, theta, gripper, damping=1e-3,
+                       gripper_bounds=(-1,1), discrete_gripper=True, max_force=1000.):
+    gripper_state = get_gripper_state(body, gripper, gripper_bounds, discrete_gripper)
+    #### ik
+    ik_solution = ik(body, link, pos, theta, damping)
+    ik_solution[-2:] = gripper_state
+    joints, current = get_joint_positions(body)
+    #### position control
+    forces = [max_force for _ in range(len(joints))]
+    p.setJointMotorControlArray(body, joints, p.POSITION_CONTROL, targetPositions=ik_solution, forces=forces)
+
 def step_ik(body=0):
     '''
         enforces joint limits for gripper fingers
@@ -107,7 +118,9 @@ def step_ik(body=0):
         pos = np.clip(pos, low, high)
         p.resetJointState(body, joint, pos)
 
-## gripper
+#################
+#### gripper ####
+#################
 
 def get_gripper_state(body, gripper, gripper_bounds, discrete_gripper):
     l_limits, r_limits = _get_gripper_limits(body)
