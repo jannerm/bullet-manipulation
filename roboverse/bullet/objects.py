@@ -35,17 +35,17 @@ sawyer = loader(ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro.u
 ## pybullet_data objects
 
 table = loader(PDATA_PATH, 'table/table.urdf',
-               pos=[.75, -.2, -1],
+               pos=[.75-1, -.2, -1 + 0.3],
                quat=[0, 0, 0.707107, 0.707107],
                scale=1.0)
 
 duck = loader(PDATA_PATH, 'duck_vhacd.urdf',
-              pos=[.75, -.4, -.3],
+              pos=[.75-1, -.4, 0 + 0.3],
               deg=[0,0,0],
               scale=0.8)
 
 lego = loader(PDATA_PATH, 'lego/lego.urdf',
-              pos=[.75, .2, -.3],
+              pos=[.75-1, -.2, 0.3],
               quat=[0, 0, 1, 0],
               rgba=[1, 0, 0, 1],
               scale=1.2)

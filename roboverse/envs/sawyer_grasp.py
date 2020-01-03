@@ -6,7 +6,7 @@ from roboverse.envs.sawyer_base import SawyerBaseEnv
 class SawyerGraspOneEnv(SawyerBaseEnv):
 
     def __init__(self,
-                 goal_pos=(0.75, 0.2, -0.1),
+                 goal_pos=(.75-1, -.2, 0.4),#(0.75, 0.2, -0.1),
                  reward_type='shaped',
                  reward_min=-2.5,
                  randomize=True,
@@ -30,9 +30,9 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         self._randomize = randomize
         self._observation_mode = observation_mode
 
-        self._object_position_low = (.65, .10, -.36)
-        self._object_position_high = (.8, .25, -.36)
-        self._fixed_object_position = (.75, .2, -.36)
+        self._object_position_low = (.65-1, .10, 0.3)
+        self._object_position_high = (.8-1, .25, 0.3)
+        self._fixed_object_position = (.75-1, 0.2, 0.3)#(.75, .2, -.36)
 
         self.obs_img_dim = obs_img_dim
         self._view_matrix_obs = bullet.get_view_matrix(
@@ -52,14 +52,14 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         else:
             object_position = self._fixed_object_position
         self._objects = {
-            'lego': bullet.objects.lego(pos=object_position)
+            'lego': bullet.objects.lego()#bullet.objects.lego(pos=object_position)
         }
 
     def step(self, *action):
         delta_pos, gripper = self._format_action(*action)
         pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
         pos += delta_pos * self._action_scale
-        pos = np.clip(pos, self._pos_low, self._pos_high)
+        #pos = np.clip(pos, self._pos_low, self._pos_high)
 
         self._simulate(pos, self.theta, gripper)
         if self._visualize: self.visualize_targets(pos)
@@ -101,6 +101,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         elif self._reward_type == 'shaped':
             reward = -1*(4*info['object_goal_distance']
                          + info['object_gripper_distance'])
+            print("calculated reward: ", reward)
             reward = max(reward, self._reward_min)
         else:
             raise NotImplementedError

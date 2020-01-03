@@ -11,7 +11,7 @@ class SawyerBaseEnv(gym.Env, Serializable):
     def __init__(self,
                  img_dim=256,
                  gui=False,
-                 action_scale=.2,
+                 action_scale=1,
                  action_repeat=10,
                  timestep=1./120,
                  solver_iterations=150,
@@ -99,7 +99,7 @@ class SawyerBaseEnv(gym.Env, Serializable):
         self.theta = bullet.deg_to_quat([180, 0, 0])
         bullet.position_control(self._sawyer, self._end_effector, self._prev_pos, self.theta)
         # self._reset_hook(self)
-        for _ in  range(3):
+        for _ in range(3):
             self.step([0.,0.,0.,-1])
         return self.get_observation()
 
@@ -144,14 +144,12 @@ class SawyerBaseEnv(gym.Env, Serializable):
 
     def _format_action(self, *action):
         if len(action) == 1:
-            delta_pos, gripper, delta = action[0][:-5], action[0][-5], action[0][-4:]
+            delta_pos, gripper = action[0][:-1], action[0][-1]
         elif len(action) == 2:
             delta_pos, gripper = action[0], action[1]
-        elif len(action) == 3:
-            delta_pos, gripper, delta = action[0], action[1], action[2]            
         else:
             raise RuntimeError('Unrecognized action: {}'.format(action))
-        return np.array(delta_pos), gripper, delta
+        return np.array(delta_pos), gripper
 
     def get_observation(self):
         observation = bullet.get_sim_state(*self._state_query)
@@ -161,15 +159,8 @@ class SawyerBaseEnv(gym.Env, Serializable):
         delta_pos, gripper, theta = self._format_action(*action)
         pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
         pos += delta_pos * self._action_scale
-<<<<<<< HEAD
-        gripper = 1 if gripper > 0.5 else 0
-        self.theta = theta
-        self._current_gripper_target = gripper
-        
-=======
         pos = np.clip(pos, self._pos_low, self._pos_high)
 
->>>>>>> avi-master
         self._simulate(pos, self.theta, gripper)
         if self._visualize: self.visualize_targets(pos)
 
