@@ -55,6 +55,11 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
             'lego': bullet.objects.lego(pos=object_position)
         }
 
+        # set goal_pos to be directly above the randomized position 
+        # of lego, rather than a fixed position
+        self._goal_pos = np.copy(object_position)
+        self._goal_pos[2] = self._goal_pos[2] + 0.2
+
     def step(self, *action):
         delta_pos, gripper = self._format_action(*action)
         pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
@@ -79,10 +84,13 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
             object_pos - end_effector_pos)
         gripper_goal_distance = np.linalg.norm(
             self._goal_pos - end_effector_pos)
+        object_goal_distance_z = max(self._goal_pos[2] - object_pos[2], 0)
+
         info = {
             'object_goal_distance': object_goal_distance,
             'object_gripper_distance': object_gripper_distance,
-            'gripper_goal_distance': gripper_goal_distance
+            'gripper_goal_distance': gripper_goal_distance,
+            'object_goal_distance_z': object_goal_distance_z
         }
         return info
 
@@ -100,6 +108,10 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
                 reward = 0
         elif self._reward_type == 'shaped':
             reward = -1*(4*info['object_goal_distance']
+                         + info['object_gripper_distance'])
+            reward = max(reward, self._reward_min)
+        elif self._reward_type == 'grasp_only':
+            reward = -1*(4*info['object_goal_distance_z']
                          + info['object_gripper_distance'])
             reward = max(reward, self._reward_min)
         else:
