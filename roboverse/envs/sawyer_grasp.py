@@ -22,7 +22,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         :param reward_type: one of 'shaped', 'sparse'
         :param reward_min: minimum possible reward per timestep
         :param randomize: whether to randomize the object position or not
-        :param observation_mode: state, pixel, pixel_debug
+        :param observation_mode: state, pixels, pixels_debug
         :param obs_img_dim: image dimensions for the observations
         """
         self._goal_pos = np.asarray(goal_pos)
@@ -30,7 +30,6 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         self._reward_min = reward_min
         self._randomize = randomize
         self._observation_mode = observation_mode
-
         self._object_position_low = (.65, .10, -.36)
         self._object_position_high = (.8, .25, -.36)
         self._fixed_object_position = (.75, .2, -.36)
@@ -43,6 +42,10 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
             self.obs_img_dim, self.obs_img_dim)
 
         self.dt = 0.1
+
+        if observation_mode == 'pixels':
+            self._initial_image = None
+
         super().__init__(*args, **kwargs)
 
     def _load_meshes(self):
@@ -61,6 +64,11 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         self._objects = {
             'lego': bullet.objects.lego(pos=object_position)
         }
+
+    def reset(self):
+        if self._observation_mode == 'pixels':
+            self._initial_image = None
+        return super().reset()
 
     def step(self, *action):
         delta_pos, gripper = self._format_action(*action)
@@ -142,10 +150,16 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         elif self._observation_mode == 'pixels':
             image_observation = self.render_obs()
             # image_observation = np.zeros((48, 48, 3), dtype=np.uint8)
+
+            if self._initial_image is None:
+                self._initial_image = np.copy(image_observation)
+            image_observation_concat = np.concatenate(
+                (image_observation, self._initial_image), axis=2)
+
             observation = {
                 'state': np.concatenate(
                     (end_effector_pos, gripper_tips_distance)),
-                'image': image_observation
+                'image': image_observation_concat
             }
         elif self._observation_mode == 'pixels_debug':
             # This mode passes in all the true state information + images
@@ -165,4 +179,5 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         else:
             raise NotImplementedError
 
+        assert observation is not None
         return observation

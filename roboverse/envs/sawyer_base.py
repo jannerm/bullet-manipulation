@@ -100,7 +100,15 @@ class SawyerBaseEnv(gym.Env, Serializable):
         bullet.position_control(self._sawyer, self._end_effector, self._prev_pos, self.theta)
         # self._reset_hook(self)
         for _ in  range(3):
-            self.step([0.,0.,0.,-1])
+            action = [0., 0., 0., -1]
+            delta_pos, gripper = self._format_action(action)
+            pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
+            pos += delta_pos * self._action_scale
+            pos = np.clip(pos, self._pos_low, self._pos_high)
+            self._simulate(pos, self.theta, gripper)
+            # if self._visualize: self.visualize_targets(pos)
+            self._prev_pos = bullet.get_link_state(self._sawyer,
+                                                   self._end_effector, 'pos')
         return self.get_observation()
 
     # def set_reset_hook(self, fn=lambda env: None):
