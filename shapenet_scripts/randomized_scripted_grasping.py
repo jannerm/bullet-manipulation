@@ -21,7 +21,8 @@ def scripted_non_markovian(env, pool, render_images):
 
     for i in range(args.num_timesteps):
         ee_pos = env.get_end_effector_pos()
-
+        if i == 0:
+            print("initial end effector pos: ", ee_pos)
         if i < 25:
             action = target_pos - ee_pos
             action[2] = 0.
@@ -65,17 +66,28 @@ def scripted_markovian(env, pool, render_images):
         target_pos[2] += np.random.uniform(low=-0.02, high=0.02, size=(1,))
     else:
         target_pos = env.get_object_midpoint(OBJECT_NAME)
-        target_pos[:2] += np.random.uniform(low=-0.05, high=0.05, size=(2,))
-        target_pos[2] += np.random.uniform(low=-0.01, high=0.01, size=(1,))
-
+        #target_pos[:2] += np.random.uniform(low=-0.05, high=0.05, size=(2,))
+        #target_pos[2] += np.random.uniform(low=-0.01, high=0.01, size=(1,))
+        #target_pos[2] += 0.05 #np.random.uniform(low=-0.01, high=0.01, size=(1,))
     # the object is initialized above the table, so let's compensate for it
     # target_pos[2] += -0.01
     images = []
     grip_open = -1
     grip_close = 1
+    traj = dict(
+        observations=[],
+        actions=[],
+        rewards=[],
+        next_observations=[],
+        terminals=[],
+        agent_infos=[],
+        env_infos=[],
+    )
 
     for i in range(args.num_timesteps):
         ee_pos = env.get_end_effector_pos()
+        if i == 0:
+            print("initial end effector pos: ", ee_pos)
         xyz_diff = target_pos - ee_pos
         xy_diff = xyz_diff[:2]
         # print(observation[3])
@@ -84,32 +96,32 @@ def scripted_markovian(env, pool, render_images):
             gripper_tip_distance = observation['state'][3]
         else:
             gripper_tip_distance = observation[3]
-
-        if np.linalg.norm(xyz_diff) > 0.02 and gripper_tip_distance > 0.025:
+        grip = 0
+        if env.get_info()['gripper_goal_distance'] > 0.02 and gripper_tip_distance > 0.025:
             action = target_pos - ee_pos
             action *= 5.0
             if np.linalg.norm(xy_diff) > 0.05:
                 action[2] *= 0.5
-            grip = grip_open
+            #grip = grip_open
             # print('Approaching')
-        elif gripper_tip_distance > 0.025:
+        #elif gripper_tip_distance > 0.025:
             # o[3] is gripper tip distance
-            action = np.zeros((3,))
-            if grip == grip_open:
-                grip = 0.
-            else:
-                grip = grip_close
+        #    action = np.zeros((3,))
+            #if grip == grip_open:
+            #    grip = 0.
+            #else:
+            #    grip = grip_close
             # print('Grasping')
-        elif info['gripper_goal_distance'] > 0.01:
-            action = env._goal_pos - ee_pos
-            action *= 5.0
-            grip = grip_close
+        elif env.get_info()['gripper_goal_distance'] > 0.01:
+            action = target_pos - ee_pos #env._goal_pos - ee_pos
+            #action *= 5.0
+            #grip = grip_close
             # print('Moving')
         else:
             action = np.zeros((3,))
-            grip = grip_close
+            #grip = grip_close
             # print('Holding')
-
+        action[1] = 0
         action = np.append(action, [grip])
         action += np.random.normal(scale=args.noise_std)
         action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
@@ -123,9 +135,18 @@ def scripted_markovian(env, pool, render_images):
         pool.add_sample(observation, action, next_state, reward, done)
         # time.sleep(0.2)
         observation = next_state
+        traj["observations"].append(observation)
+        next_state, reward, done, info = env.step(action)
+        traj["next_observations"].append(next_state)
+        traj["actions"].append(action)
+        traj["rewards"].append(reward)
+        traj["terminals"].append(done)
+        traj["agent_infos"].append(info)
+        traj["env_infos"].append(info)
 
-    success = info['object_goal_distance'] < 0.05
-    return success, images
+    success = info['object_gripper_distance'] < 0.05
+    #success = info['object_goal_distance'] < 0.05
+    return success, images, traj
 
 
 def main(args):
@@ -147,7 +168,7 @@ def main(args):
     num_grasps = 0
     pool = roboverse.utils.DemoPool()
     success_pool = roboverse.utils.DemoPool()
-
+    all_trajs = []
     for j in tqdm(range(args.num_trajectories)):
         render_images = args.video_save_frequency > 0 and \
                         j % args.video_save_frequency == 0
@@ -155,11 +176,11 @@ def main(args):
         if args.non_markovian:
             success, images = scripted_non_markovian(env, pool, render_images)
         else:
-            success, images = scripted_markovian(env, pool, render_images)
+            success, images, traj = scripted_markovian(env, pool, render_images)
 
         if success:
             num_grasps += 1
-            print('Num grasps: {}'.format(num_grasps))
+            print('Num Reaches: {}'.format(num_grasps))
             top = pool._size
             bottom = top - args.num_timesteps
             for i in range(bottom, top):
@@ -170,6 +191,7 @@ def main(args):
                     pool._fields['rewards'][i],
                     pool._fields['terminals'][i]
                 )
+            all_trajs.append(traj)
         if render_images:
             images[0].save('{}/{}.gif'.format(video_save_path, j),
                            format='GIF', append_images=images[1:],
@@ -181,7 +203,8 @@ def main(args):
     success_pool.save(params, data_save_path,
                       '{}_pool_{}_success_only.pkl'.format(
                           timestamp, pool.size))
-
+    path = "/home/huihanl/bm-new/reaching_success_fixed_{}.npy".format(timestamp)
+    np.save(path, all_trajs)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

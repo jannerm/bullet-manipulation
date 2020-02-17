@@ -26,7 +26,6 @@ class DemoPool:
 	def size(self):
 		return self._size
 
-
 	def add_sample(self, *arrays):
 		if self._size:
 			self._add(arrays)
@@ -66,6 +65,18 @@ class DemoPool:
 	def _prune(self):
 		for key in self._keys:
 			self._fields[key] = self._fields[key][:self._size]
+
+	def reduce_size(self, desired_size):
+		self._size = desired_size
+		self._pointer = desired_size
+		for key in self._keys:
+			self._fields[key] = self._fields[key][:desired_size]
+
+	def merge(self, other_pool):
+		fields = other_pool.get_samples()
+		for i in range(other_pool.size()):
+			arrays = [fields[key][i] for key in self._keys]
+			self.add_sample(arrays[0], arrays[1], arrays[2], arrays[3], arrays[4])
 
 	def get_samples(self):
 		self._prune()
