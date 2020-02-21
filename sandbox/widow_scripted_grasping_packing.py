@@ -33,10 +33,10 @@ for i in range(1000):
     xy_diff = xyz_diff[:2]
     xy_goal_diff = (env._goal_pos - object_pos)[:2]
 
-    if abs(utils.utils.angle(object_pos[:2], np.array([0.7, 0])) - utils.utils.angle(ee_pos[:2], np.array([0.7, 0]))) > 0.1\
+    if abs(utils.angle(object_pos[:2], np.array([0.7, 0])) - utils.angle(ee_pos[:2], np.array([0.7, 0]))) > 0.1\
             and not holding and not rotate_object:
-        a = utils.utils.angle(ee_pos[:2], np.array([0.7, 0]))
-        diff = utils.utils.angle(object_pos[:2], np.array([0.7, 0])) - utils.utils.angle(ee_pos[:2], np.array([0.7, 0]))
+        a = utils.angle(ee_pos[:2], np.array([0.7, 0]))
+        diff = utils.angle(object_pos[:2], np.array([0.7, 0])) - utils.angle(ee_pos[:2], np.array([0.7, 0]))
         diff = diff - 2 * math.pi if diff > 2 * math.pi else diff + 2 * math.pi if diff < 0 else diff
         print(diff, 'asdfasfda')
         if diff > math.pi:
@@ -67,10 +67,10 @@ for i in range(1000):
         action[1] = 0
         action *= 3.0
         print('Lifting')
-    elif abs(utils.utils.angle(bowl_pos[:2], np.array([0.7, 0])) - utils.utils.angle(ee_pos[:2], np.array([0.7, 0]))) > 0.1\
+    elif abs(utils.angle(bowl_pos[:2], np.array([0.7, 0])) - utils.angle(ee_pos[:2], np.array([0.7, 0]))) > 0.1\
             and not holding and not rotate_bowl:
-        a = utils.utils.angle(ee_pos[:2], np.array([0.7, 0]))
-        diff = utils.utils.angle(bowl_pos[:2], np.array([0.7, 0])) - utils.utils.angle(ee_pos[:2], np.array([0.7, 0]))
+        a = utils.angle(ee_pos[:2], np.array([0.7, 0]))
+        diff = utils.angle(bowl_pos[:2], np.array([0.7, 0])) - utils.angle(ee_pos[:2], np.array([0.7, 0]))
         diff = diff - 2 * math.pi if diff > 2 * math.pi else diff + 2 * math.pi if diff < 0 else diff
         if diff > math.pi:
             action = np.array([math.sin(a), -math.cos(a), 0])
@@ -80,7 +80,7 @@ for i in range(1000):
         action /= 2.0
         grip = 1.0
         print('Rotating')
-    elif np.linalg.norm((bowl_pos - object_pos)[:2]) > 0.01:
+    elif np.linalg.norm((bowl_pos - object_pos)[:2]) > 0.03:
         action = bowl_pos - object_pos
         grip = 1.0
         action *= 3.0
@@ -88,6 +88,7 @@ for i in range(1000):
         holding = True
         rotate_bowl = True
         print("Moving to Bowl")
+        print("bowl_pos - object_pos", bowl_pos - object_pos)
     else:
         action = np.zeros((3,))
         grip=0.
