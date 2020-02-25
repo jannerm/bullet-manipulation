@@ -75,3 +75,11 @@ spam = loader(ASSET_PATH, 'objects/spam/spam.urdf',
               pos=[.75, -.4, -.3],
               deg=[90,0,-90],
               scale=0.025)
+
+box = loader(ASSET_PATH, 'objects/box/box.urdf',
+                pos=[.75, -0.1, -.3],
+                scale=0.5)
+
+hinge = loader(ASSET_PATH, 'objects/hinge/hinge.urdf',
+                pos=[.75, -0.1, -.3],
+                scale=0.5)
