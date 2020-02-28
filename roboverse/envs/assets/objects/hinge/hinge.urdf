@@ -110,7 +110,7 @@
     <parent link="hinge"/>
     <child link="lid"/>
     <axis xyz="0 1 0"/>
-    <limit effort="100" lower="0" upper="1" velocity="100"/>
+    <limit effort="50" lower="0" upper="1" velocity="50"/>
   </joint>
 
   <joint name="handle_joint" type="fixed">

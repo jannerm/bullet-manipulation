@@ -24,6 +24,10 @@ def angle(p0, p1):
         angle_radians -= 2 * math.pi
     return angle_radians
 
+def true_angle_diff(theta):
+    """theta is before the absolute value is applied"""
+    return min(abs(theta), abs(theta - 2 * np.pi))
+
 class DemoPool:
 
     def __init__(self, max_size=1e6):

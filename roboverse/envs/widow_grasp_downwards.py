@@ -16,13 +16,13 @@ class WidowGraspDownwardsOneEnv(WidowBaseEnv):
         super()._load_meshes()
         self._objects = {
             'lego': bullet.objects.lego(),
-            'box': load_single_object('48862d7ed8b28f5425ebd1cd0b422e32',
-                                        [.7, -0.15, -.28], quat=[1, 1, 1, 1], scale=1)[0],
-            'box1': load_single_object('48862d7ed8b28f5425ebd1cd0b422e32',
-                                        [.7, -0.35, -.28], quat=[1, 1, 1, 1], scale=1)[0],
-            'bowl': load_single_object('36ca3b684dbb9c159599371049c32d38',
-                                         [.7, -0.35, 0], quat=[1, 1, 1, 1],scale=0.7)[0],
-
+            # 'box': load_single_object('48862d7ed8b28f5425ebd1cd0b422e32',
+            #                             [.7, -0.15, -.28], quat=[1, 1, 1, 1], scale=1)[0],
+            # 'box1': load_single_object('48862d7ed8b28f5425ebd1cd0b422e32',
+            #                             [.7, -0.35, -.28], quat=[1, 1, 1, 1], scale=1)[0],
+            # 'bowl': load_single_object('36ca3b684dbb9c159599371049c32d38',
+            #                              [.7, -0.35, 0], quat=[1, 1, 1, 1],scale=0.7)[0],
+            'box': bullet.objects.box(),
         }
 
     def get_reward(self, info):
