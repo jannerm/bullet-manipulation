@@ -16,19 +16,20 @@ env.reset()
 # target_pos += np.random.uniform(low=-0.05, high=0.05, size=(3,))
 images = []
 
-print(env.get_end_effector_pos())
 
 episode_reward = 0.
 
 for i in range(50):
     ee_pos = env.get_end_effector_pos()
     object_pos = env.get_object_midpoint(obj_key)
-
+    print(object_pos)
     xyz_diff = object_pos - ee_pos
     xy_diff = xyz_diff[:2]
     if np.linalg.norm(xyz_diff) > 0.02:
         action = object_pos - ee_pos
         action *= 5.0
+        if np.linalg.norm(xy_diff) > 0.05:
+            action[2] *= 0.5
         grip=0.
         print('Approaching')
     elif o[3] > 0.03:
@@ -54,6 +55,8 @@ for i in range(50):
 
     time.sleep(0.05)
     o, r, d, info = env.step(action)
+
+    env.render_obs()
     print(action)
     print(o)
     print(r)
