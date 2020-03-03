@@ -41,3 +41,23 @@ save_success_only_path = os.path.join(data_directory, 'combined_success_only_{0}
 with open(save_success_only_path, 'wb+') as fp:
     pickle.dump(fields_success_only, fp)
     print('saved to {}'.format(save_success_only_path))
+
+# WidowX Version:
+# args.data_directory = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', args.data_directory)
+# args.output_directory = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', args.output_directory)
+
+# trajectories = []
+# timestamp = roboverse.utils.timestamp()
+
+# for root, dirs, files in os.walk(args.data_directory):
+#     for f in files:
+#         if "pool" in f:
+#             with open(os.path.join(args.data_directory, f), 'rb') as fp:
+#                 t = pickle.load(fp)
+#             trajectories.extend(t)
+
+# if not os.path.exists(args.output_directory):
+#     os.makedirs(args.output_directory)
+
+# with open(os.path.join(args.output_directory, 'data_{0}.pkl'.format(timestamp)), 'wb+') as fp:
+#     pickle.dump(trajectories, fp)

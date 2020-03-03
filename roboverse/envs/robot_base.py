@@ -5,27 +5,23 @@ import pdb
 import roboverse.bullet as bullet
 from roboverse.envs.serializable import Serializable
 
-# From Avi-Master
-# class SawyerBaseEnv(gym.Env, Serializable):
-#     def __init__(self,
-#                  img_dim=256,
-#                  gui=False,
-#                  action_scale=.2,
-#                  action_repeat=10,
-#                  timestep=1./120,
-#                  solver_iterations=150,
-#                  gripper_bounds=[-1,1],
-#                  pos_init=[0.5, 0, 0],
-#                  pos_high=[1,.4,.25],
-#                  pos_low=[.4,-.6,-.36],
-#                  max_force=1000.,
-#                  visualize=True,
-#                  ):
 
-class SawyerBaseEnv(RobotBaseEnv):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
+class RobotBaseEnv(gym.Env, Serializable):
+    def __init__(self,
+                 img_dim=256,
+                 gui=False,
+                 action_scale=.2,
+                 action_repeat=10,
+                 timestep=1. / 120,
+                 solver_iterations=150,
+                 gripper_bounds=[-1, 1],
+                 pos_init=[0.5, 0, 0],
+                 pos_high=[1, .4, .25],
+                 pos_low=[.4, -.6, -.36],
+                 max_force=1000.,
+                 visualize=True,
+                 downwards=False
+                 ):
 
         self._gui = gui
         self._action_scale = action_scale
@@ -38,21 +34,19 @@ class SawyerBaseEnv(RobotBaseEnv):
         self._pos_high = pos_high
         self._max_force = max_force
         self._visualize = visualize
-        self._id = 'SawyerBaseEnv'
-        self._robot_name = 'sawyer'
-        self._gripper_joint_name = ('right_gripper_l_finger_joint', 'right_gripper_r_finger_joint')
-        self._gripper_range = range(20, 25)
+        self._img_dim = img_dim
 
         bullet.connect_headless(self._gui)
-        # self.set_reset_hook()
+
+    def _setup_environment(self):
+        #self.set_reset_hook()
         self._set_spaces()
 
-        self._img_dim = img_dim
         self._view_matrix = bullet.get_view_matrix()
         self._projection_matrix = bullet.get_projection_matrix(self._img_dim, self._img_dim)
 
     def get_params(self):
-        labels = ['_action_scale', '_action_repeat', 
+        labels = ['_action_scale', '_action_repeat',
                   '_timestep', '_solver_iterations',
                   '_gripper_bounds', '_pos_low', '_pos_high', '_id']
         params = {label: getattr(self, label) for label in labels}
@@ -61,7 +55,7 @@ class SawyerBaseEnv(RobotBaseEnv):
     @property
     def parallel(self):
         return False
-    
+
     def check_params(self, other):
         params = self.get_params()
         assert set(params.keys()) == set(other.keys())
@@ -72,8 +66,8 @@ class SawyerBaseEnv(RobotBaseEnv):
                 )
                 raise RuntimeError(message)
 
-    # def get_constructor(self):
-    #     return lambda: self.__class__(*self.args_, **self.kwargs_)
+    #def get_constructor(self):
+        #return lambda: self.__class__(*self.args_, **self.kwargs_)
 
     def _set_spaces(self):
         act_dim = 4
@@ -81,7 +75,8 @@ class SawyerBaseEnv(RobotBaseEnv):
         act_high = np.ones(act_dim) * act_bound
         self.action_space = gym.spaces.Box(-act_high, act_high)
 
-        obs = self.reset()
+        self._format_state_query()
+        obs = self.get_observation()
         observation_dim = len(obs)
         obs_bound = 100
         obs_high = np.ones(observation_dim) * obs_bound
@@ -91,37 +86,33 @@ class SawyerBaseEnv(RobotBaseEnv):
 
         bullet.reset()
         self._load_meshes()
-
         # Allow the objects to settle down after they are dropped in sim
         for _ in range(50):
             bullet.step()
 
-        self._end_effector = bullet.get_index_by_attribute(
-            self._sawyer, 'link_name', 'gripper_site')
         self._format_state_query()
 
         bullet.setup_headless(self._timestep, solver_iterations=self._solver_iterations)
 
         self._prev_pos = np.array(self._pos_init)
         self.theta = bullet.deg_to_quat([180, 0, 0])
-        bullet.position_control(self._sawyer, self._end_effector, self._prev_pos, self.theta)
-        # self._reset_hook(self)
-        for _ in  range(3):
-            self.step([0.,0.,0.,-1])
+        bullet.position_control(self._robot_id, self._end_effector, self._prev_pos, self.theta)
+        self.open_gripper()
+        #self._reset_hook(self)
         return self.get_observation()
 
-    # def set_reset_hook(self, fn=lambda env: None):
-    #     self._reset_hook = fn
+    #def set_reset_hook(self, fn=lambda env: None):
+        #self._reset_hook = fn
 
     def open_gripper(self, act_repeat=10):
-        delta_pos = [0,0,0]
+        delta_pos = [0, 0, 0]
         gripper = 0
         for _ in range(act_repeat):
             self.step(delta_pos, gripper)
 
     def get_body(self, name):
-        if name == 'sawyer':
-            return self._sawyer
+        if name == self._robot_name:
+            return self._robot_id
         else:
             return self._objects[name]
 
@@ -129,24 +120,18 @@ class SawyerBaseEnv(RobotBaseEnv):
         return bullet.get_midpoint(self._objects[object_key])
 
     def get_end_effector_pos(self):
-        return bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
+        return bullet.get_link_state(self._robot_id, self._end_effector, 'pos')
 
     def _load_meshes(self):
-        self._sawyer = bullet.objects.sawyer()
-        self._table = bullet.objects.table()
-        self._objects = {}
-        self._sensors = {}
-        self._workspace = bullet.Sensor(self._sawyer,
-            xyz_min=self._pos_low, xyz_max=self._pos_high,
-            visualize=False, rgba=[0,1,0,.1])
+        pass
 
     def _format_state_query(self):
         ## position and orientation of body root
-        bodies = [v for k,v in self._objects.items() if not bullet.has_fixed_root(v)]
+        bodies = [v for k, v in self._objects.items() if not bullet.has_fixed_root(v)]
         ## position and orientation of link
-        links = [(self._sawyer, self._end_effector)]
+        links = [(self._robot_id, self._end_effector)]
         ## position and velocity of prismatic joint
-        joints = [(self._sawyer, None)]
+        joints = [(self._robot_id, None)]
         self._state_query = bullet.format_sim_query(bodies, links, joints)
 
     def _format_action(self, *action):
@@ -164,7 +149,7 @@ class SawyerBaseEnv(RobotBaseEnv):
 
     def step(self, *action):
         delta_pos, gripper = self._format_action(*action)
-        pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
+        pos = bullet.get_link_state(self._robot_id, self._end_effector, 'pos')
         pos += delta_pos * self._action_scale
         pos = np.clip(pos, self._pos_low, self._pos_high)
 
@@ -174,22 +159,22 @@ class SawyerBaseEnv(RobotBaseEnv):
         observation = self.get_observation()
         reward = self.get_reward(observation)
         done = self.get_termination(observation)
-        self._prev_pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
+        self._prev_pos = bullet.get_link_state(self._robot_id, self._end_effector, 'pos')
         return observation, reward, done, {}
 
     def _simulate(self, pos, theta, gripper):
         for _ in range(self._action_repeat):
             bullet.sawyer_position_ik(
-                self._sawyer, self._end_effector, 
-                pos, self.theta, 
-                gripper, gripper_bounds=self._gripper_bounds, 
-                discrete_gripper=False, max_force=self._max_force
+                self._robot_id, self._end_effector,
+                pos, self.theta,
+                gripper, self._gripper_joint_name, gripper_bounds=self._gripper_bounds,
+                discrete_gripper=True, max_force=self._max_force
             )
-            bullet.step_ik()
+            bullet.step_ik(self._gripper_range)
 
     def render(self, mode='rgb_array'):
-        img, depth, segmentation = bullet.render(
-            self._img_dim, self._img_dim, self._view_matrix, self._projection_matrix)
+        img, depth, segmentation = bullet.render(self._img_dim, self._img_dim, self._view_matrix,
+                                                 self._projection_matrix)
         return img
 
     def get_termination(self, observation):
@@ -214,6 +199,7 @@ class SawyerBaseEnv(RobotBaseEnv):
         prevents always needing a gym adapter in softlearning
         @TODO : remove need for this method
     '''
+
     def convert_to_active_observation(self, obs):
         return obs
 
