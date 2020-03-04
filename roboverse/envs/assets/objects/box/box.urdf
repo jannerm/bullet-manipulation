@@ -112,7 +112,7 @@
     <inertial>
       <origin rpy="0 0 0" xyz="-0.5 -0.5 0"/>
       <mass value=".25"/>
-      <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+      <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1"/>
     </inertial>
     <visual>
       <origin rpy="0 0 0" xyz="-0.5 -0.5 0"/>
@@ -135,16 +135,16 @@
     <contact_cfm value="0.0"/>
     <contact_erp value="1.0"/> -->
     <!-- <contact>
-      <lateral_friction value="10.0"/>
-      <spinning_friction value="10.0"/>
+      <lateral_friction value="100.0"/>
+      <spinning_friction value="0.0"/>
     </contact> -->
     <inertial>
-      <origin rpy="0 1.57 0" xyz="0.4 -0.3 0.35"/>
+      <origin rpy="0 1.57 0" xyz="0.4 -0.8 0.3"/>
       <mass value=".1"/>
       <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
     </inertial>
     <visual>
-      <origin rpy="0 1.57 0" xyz="0.4 -0.3 0.35"/>
+      <origin rpy="0 1.57 0" xyz="0.4 -0.8 0.3"/>
       <geometry>
         <!-- <box size="0.5 0.1 .2"/> -->
         <cylinder radius="0.05" length="0.6"/>
@@ -156,12 +156,12 @@
       <material name="orange"/>
     </visual>
     <collision>
-      <origin rpy="0 1.57 0" xyz="0.4 -0.3 0.35"/>
+      <origin rpy="0 1.57 0" xyz="0.4 -0.8 0.3"/>
       <geometry>
         <!-- <box size="0.5 0.1 .2"/> -->
         <cylinder radius="0.05" length="0.6"/>
       </geometry>
-      <!-- <contact_coefficients mu="100.0" kp="0.01" kd="2"/> -->
+      <!-- <contact_coefficients mu="-100.0" kp="0.01" kd="2"/> -->
     </collision>
   </link>
 
@@ -176,9 +176,14 @@
     <child link="lid"/>
     <axis rpy="0 0 0" xyz="1 0 0"/>
     <limit effort="100" lower="-3" upper="0" velocity="100"/>
+    <dynamics damping="0.0" friction=".1"/>
   </joint>
 
   <joint name="handle_r_joint" type="fixed">
+    <!-- <contact>
+      <lateral_friction value="100.0"/>
+      <spinning_friction value="0.0"/>
+    </contact> -->
     <origin rpy="0 0 0" xyz="-0.8 0 -0.1"/>
     <parent link="lid"/>
     <child link="handle_r"/>

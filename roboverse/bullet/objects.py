@@ -52,10 +52,10 @@ duck = loader(PDATA_PATH, 'duck_vhacd.urdf',
 
 x = 1.5
 lego = loader(PDATA_PATH, 'lego/lego.urdf',
-              pos=np.array([0.8, -.3, -.3]) + np.array([math.cos(x), math.sin(x), 0]) * .15,
+              pos=np.array([0.6, -.3, -.3]) + np.array([math.cos(x), math.sin(x), 0]) * .15,
               quat=[0, 0, 1, 0],
               rgba=[1, 0, 0, 1],
-              scale=1.)
+              scale=0.8)
 
 
 ## custom objects
@@ -78,8 +78,9 @@ spam = loader(ASSET_PATH, 'objects/spam/spam.urdf',
               scale=0.025)
 
 box = loader(ASSET_PATH, 'objects/box/box.urdf',
-                pos=[0.85, 0, -.35],
-                scale=0.2)
+                # pos=[0.85, 0, -.35],
+                pos=[0.8, 0, -.35],
+                scale=0.15)
 
 hinge = loader(ASSET_PATH, 'objects/hinge/hinge.urdf',
                 pos=[.75, -0.1, -.3],

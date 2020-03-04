@@ -28,6 +28,8 @@ def angle(p0, p1):
 
 def true_angle_diff(theta):
     """theta is before the absolute value is applied"""
+    print("abs(theta)", abs(theta))
+    print("abs(theta - 2 * np.pi)", abs(theta - 2 * np.pi))
     return min(abs(theta), abs(theta - 2 * np.pi))
 
 class DemoPool:

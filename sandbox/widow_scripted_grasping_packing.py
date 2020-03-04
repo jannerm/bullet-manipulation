@@ -48,10 +48,10 @@ for i in range(1000):
     handle_l_pos = handle_r_pos
     _, x, y = (handle_l_pos - lid_joint_pos) # y -> x, z -> y
     door_angle = np.arctan2(y, -x)
-    opened = abs(door_angle - (np.pi / 2)) < 0.1
+    opened = abs(door_angle - (np.pi / 2)) < 0.45
     if opened:
         break
-    lost_handle_grip = o[3] < 0.05 and np.linalg.norm(xyz_diff) > 0.1 and door_angle > 0.1
+    lost_handle_grip = o[3] < 0.05 and np.linalg.norm(xyz_diff) > 0.07 and door_angle > 0.1
     handle_pos = handle_r_pos
     object_pos = handle_pos if not opened else lego_pos
     print("lost_handle_grip", lost_handle_grip)
@@ -78,7 +78,7 @@ for i in range(1000):
     elif not opened and grip:
         # need some maths here.
         # Calculate angle.
-        action = np.array([0, y/4, -x/4])
+        action = np.array([0, y/5, -x/5])
         if lost_handle_grip:# lost grip on object:
             print("Lost grip on object")
             # make it approach and pick up object again
@@ -186,7 +186,7 @@ for i in range(1000):
     lego_dropped = np.linalg.norm(box_pos - object_pos) < 0.03
     if lego_dropped:
         break
-
+    print("utils.true_angle_diff(base_angle_diff)", utils.true_angle_diff(base_angle_diff))
     if utils.true_angle_diff(base_angle_diff) > 0.1 \
             and not holding and not rotate_object:
         a = utils.angle(ee_pos[:2], np.array([0.7, 0]))
@@ -215,13 +215,15 @@ for i in range(1000):
         grip=1.0
         print('Grasping')
     elif env._goal_pos[2] - object_pos[2] > 0.01 and not holding:
+        # Something wrong with this condition.
         action = env._goal_pos - object_pos
         grip = 1.0
         action[0] = 0
         action[1] = 0
         action *= 3.0
         print('Lifting')
-    elif abs(utils.angle(box_pos[:2], np.array([0.7, 0])) - utils.angle(ee_pos[:2], np.array([0.7, 0]))) > 0.1\
+    elif utils.true_angle_diff(
+            abs(utils.angle(box_pos[:2], np.array([0.7, 0])) - utils.angle(ee_pos[:2], np.array([0.7, 0])))) > 0.1\
             and not holding and not rotate_bowl:
         a = utils.angle(ee_pos[:2], np.array([0.7, 0]))
         diff = utils.angle(box_pos[:2], np.array([0.7, 0])) - utils.angle(ee_pos[:2], np.array([0.7, 0]))
@@ -233,7 +235,7 @@ for i in range(1000):
         action[2] = 0.02
         action /= 2.0
         grip = 1.0
-        print('Rotating')
+        print('Rotating1')
     elif np.linalg.norm((box_pos - object_pos)[:2]) > 0.03:
         action = np.array([1, 1, 1]) * (box_pos - object_pos)
         grip = 1.0
