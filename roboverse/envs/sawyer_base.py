@@ -81,7 +81,6 @@ class SawyerBaseEnv(gym.Env, Serializable):
         self.observation_space = gym.spaces.Box(-obs_high, obs_high)
 
     def reset(self):
-
         bullet.reset()
         self._load_meshes()
 
@@ -125,6 +124,8 @@ class SawyerBaseEnv(gym.Env, Serializable):
         return bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
 
     def _load_meshes(self):
+        import pdb;
+        pdb.set_trace()
         self._sawyer = bullet.objects.sawyer()
         self._table = bullet.objects.table()
         self._objects = {}

@@ -1,6 +1,6 @@
 import time
 import numpy as np
-import roboverse as rv
+from .. import roboverse as rv
 
 num_steps = 100
 num_processes = 1

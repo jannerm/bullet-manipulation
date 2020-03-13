@@ -27,6 +27,14 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
         'id': 'SawyerSoup-v0',
         'entry_point': ('roboverse.envs.sawyer_soup:SawyerSoupEnv'),
     },
+    {
+        'id': 'SawyerReachMultiObj-v0',
+        'entry_point': ('roboverse.envs.sawyer_reach:SawyerReachEnvMultiObj'),
+    },
+    {
+        'id': 'PointMassReach-v0',
+        'entry_point': ('roboverse.envs.pointmass:pointMassEnvObject'),
+    },
 )
 
 PROJECTION_ENVIRONMENT_SPECS = tuple(
@@ -54,6 +62,7 @@ def register_bullet_environments():
     gym_ids = tuple(
         environment_spec['id']
         for environment_spec in  BULLET_ENVIRONMENT_SPECS)
+
 
     return gym_ids
 

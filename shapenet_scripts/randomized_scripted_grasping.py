@@ -3,6 +3,12 @@ from tqdm import tqdm
 import os
 import argparse
 
+
+import os,sys,inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0,parentdir)
+
 import roboverse
 import skvideo.io
 
@@ -155,6 +161,10 @@ def scripted_markovian_reaching(env, pool, render_images):
         action += np.random.normal(scale=args.noise_std)
         action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
 
+        # from PIL import Image
+        # img = Image.fromarray(observation['image'])
+        # import pdb; pdb.set_trace()
+
         if render_images:
             img = observation['image']
             images.append(img)
@@ -166,16 +176,21 @@ def scripted_markovian_reaching(env, pool, render_images):
         observation = next_state
 
     success = info['object_gripper_distance'] < 0.03
+    print(" info['object_gripper_distance']", info['object_gripper_distance'])
+    print("success: ", success)
     return success, images
 
 
 def main(args):
-
     timestamp = roboverse.utils.timestamp()
     data_save_path = os.path.join(__file__, "../..", 'data',
                                   args.data_save_directory, timestamp)
     data_save_path = os.path.abspath(data_save_path)
     video_save_path = os.path.join(data_save_path, "videos")
+
+    image_save_path = os.path.join(data_save_path, "images")
+
+
     if not os.path.exists(data_save_path):
         os.makedirs(data_save_path)
     if not os.path.exists(video_save_path) and args.video_save_frequency > 0:
@@ -190,6 +205,7 @@ def main(args):
     success_pool = roboverse.utils.DemoPool()
 
     for j in tqdm(range(args.num_trajectories)):
+        print("-------------------traj begins------------------------")
         render_images = args.video_save_frequency > 0 and \
                         j % args.video_save_frequency == 0
 
@@ -199,6 +215,13 @@ def main(args):
             else:
                 success, images = scripted_markovian_grasping(env, pool, render_images)
         elif args.env == 'SawyerReach-v0':
+            success, images = scripted_markovian_reaching(env, pool, render_images)
+        elif args.env == 'SawyerReachMultiObj-v0':
+            if j % 10 == 0:
+                env.change_obj(np.random.randint(0, 3))
+            print("cur obj index: ", env.cur_obj_index)
+            success, images = scripted_markovian_reaching(env, pool, render_images)
+        elif args.env == 'PointMassReach-v0':
             success, images = scripted_markovian_reaching(env, pool, render_images)
         else:
             raise NotImplementedError
@@ -216,18 +239,43 @@ def main(args):
                     pool._fields['rewards'][i],
                     pool._fields['terminals'][i]
                 )
+
+            ### only save images when success
+            new_image_save_path = os.path.join(image_save_path, str(num_success))
+            for i in range(len(images)):
+                if not os.path.exists(new_image_save_path):
+                    os.makedirs(new_image_save_path)
+                import imageio;
+                print('{}/t_{}.png'.format(new_image_save_path, i))
+                imageio.imwrite(
+                    '{}/t_{}.png'.format(new_image_save_path, i), images[i])
+
+        # if render_images:
+        #     filename = '{}/{}.mp4'.format(video_save_path, j)
+        #     writer = skvideo.io.FFmpegWriter(
+        #         filename,
+        #         inputdict={"-r": "10"},
+        #         outputdict={
+        #             '-vcodec': 'libx264',
+        #         })
+        #     num_frames = len(images)
+        #     import imageio; imageio.imwrite('file_name.jpg', images[0])
+        #     import pdb; pdb.set_trace()
+        #     for i in range(num_frames):
+        #         writer.writeFrame(images[i])
+        #     writer.close()
+
+
         if render_images:
-            filename = '{}/{}.mp4'.format(video_save_path, j)
-            writer = skvideo.io.FFmpegWriter(
-                filename,
-                inputdict={"-r": "10"},
-                outputdict={
-                    '-vcodec': 'libx264',
-                })
-            num_frames = len(images)
-            for i in range(num_frames):
-                writer.writeFrame(images[i])
-            writer.close()
+            new_image_save_path = os.path.join(image_save_path, str(j))
+            for i in range(len(images)):
+                import pdb; pdb.set_trace()
+                if not os.path.exists(new_image_save_path):
+                    os.makedirs(new_image_save_path)
+                import imageio;
+                print('{}/t_{}.png'.format(new_image_save_path, i))
+                imageio.imwrite(
+                    '{}/t_{}.png'.format(new_image_save_path, i), images[i])
 
     params = env.get_params()
     pool.save(params, data_save_path,
@@ -240,7 +288,8 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-e", "--env", type=str, choices=('SawyerGraspOne-v0',
-                                                          'SawyerReach-v0'))
+                                                          'SawyerReach-v0', 'SawyerReachMultiObj-v0',
+                                                          'PointMassReach-v0'))
     parser.add_argument("-d", "--data-save-directory", type=str)
     parser.add_argument("-n", "--num-trajectories", type=int, default=2000)
     parser.add_argument("-p", "--num-parallel-threads", type=int, default=1)

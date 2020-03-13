@@ -62,6 +62,9 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
             'lego': bullet.objects.lego(pos=object_position)
         }
 
+        self._objects_list = ['lego']
+        self.cur_obj_index = 0
+
     def step(self, *action):
         delta_pos, gripper = self._format_action(*action)
         pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
@@ -79,7 +82,8 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         return observation, reward, done, info
 
     def get_info(self):
-        object_pos = np.asarray(self.get_object_midpoint('lego'))
+        object_pos = np.asarray(self.get_object_midpoint(self._objects_list[self.cur_obj_index]))
+        # print("index: ", self.cur_obj_index, "pos: ", object_pos)
         object_goal_distance = np.linalg.norm(object_pos - self._goal_pos)
         end_effector_pos = self.get_end_effector_pos()
         object_gripper_distance = np.linalg.norm(
@@ -132,8 +136,8 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         end_effector_pos = self.get_end_effector_pos()
 
         if self._observation_mode == 'state':
-            object_info = bullet.get_body_info(self._objects['lego'],
-                                               quat_to_deg=False)
+            object_info = bullet.get_body_info(self._objects[self._objects_list[self.cur_obj_index]],
+                                               quat_to_deg=False)      ##changed from lego
             object_pos = object_info['pos']
             object_theta = object_info['theta']
             observation = np.concatenate(
@@ -151,7 +155,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
             # This mode passes in all the true state information + images
             image_observation = self.render_obs()
 
-            object_info = bullet.get_body_info(self._objects['lego'],
+            object_info = bullet.get_body_info(self._objects[self._objects_list[self.cur_obj_index]],
                                                quat_to_deg=False)
             object_pos = object_info['pos']
             object_theta = object_info['theta']

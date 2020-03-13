@@ -1,7 +1,14 @@
 import os
 import argparse
+
+
+
+
+# import sys
+# sys.path.append("~/Desktop/bullet-manipulation")
+
 import numpy as np
-import roboverse as rv
+from ..  import roboverse as rv
 import pdb
 
 parser = argparse.ArgumentParser()

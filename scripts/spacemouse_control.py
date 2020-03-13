@@ -1,4 +1,4 @@
-import roboverse as rv
+from .. import roboverse as rv
 
 spacemouse = rv.devices.SpaceMouse()
 env = rv.make('SawyerLift2d-v0', gui=True)
