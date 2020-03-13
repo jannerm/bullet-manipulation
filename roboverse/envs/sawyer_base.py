@@ -6,25 +6,26 @@ import roboverse.bullet as bullet
 from roboverse.envs.serializable import Serializable
 
 # From Avi-Master
-# class SawyerBaseEnv(gym.Env, Serializable):
-#     def __init__(self,
-#                  img_dim=256,
-#                  gui=False,
-#                  action_scale=.2,
-#                  action_repeat=10,
-#                  timestep=1./120,
-#                  solver_iterations=150,
-#                  gripper_bounds=[-1,1],
-#                  pos_init=[0.5, 0, 0],
-#                  pos_high=[1,.4,.25],
-#                  pos_low=[.4,-.6,-.36],
-#                  max_force=1000.,
-#                  visualize=True,
-#                  ):
+class SawyerBaseEnv(gym.Env, Serializable):
+    def __init__(self,
+                 img_dim=256,
+                 gui=False,
+                 action_scale=.2,
+                 action_repeat=10,
+                 timestep=1./120,
+                 solver_iterations=150,
+                 gripper_bounds=[-1,1],
+                 pos_init=[0.5, 0, 0],
+                 pos_high=[1,.4,.25],
+                 pos_low=[.4,-.6,-.36],
+                 max_force=1000.,
+                 visualize=True,
+                 ):
 
-class SawyerBaseEnv(RobotBaseEnv):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+# From WidowX
+# class SawyerBaseEnv(RobotBaseEnv):
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
 
 
         self._gui = gui

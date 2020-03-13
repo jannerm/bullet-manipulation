@@ -123,7 +123,11 @@ def step_ik(gripper_range=range(20, 25), body=0):
 #################
 
 def get_gripper_state(body, gripper, gripper_bounds, discrete_gripper, gripper_name):
-    l_limits, r_limits = _get_gripper_limits(body, *gripper_name)
+    if gripper_name:
+        l_limits, r_limits = _get_gripper_limits(body, *gripper_name)
+    else:
+        l_limits, r_limits = _get_gripper_limits(body)
+
     if discrete_gripper:
         return _get_discrete_gripper_state(gripper, gripper_bounds, l_limits, r_limits)
     else:

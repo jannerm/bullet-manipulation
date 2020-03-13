@@ -24,6 +24,7 @@ for root, dirs, files in os.walk(data_directory):
     for f in files:
         if "pool" in f:
             with open(os.path.join(root, f), 'rb') as fp:
+                print("fp", fp)
                 trajectories = pickle.load(fp)
             if 'success_only' in f:
                 for key in keys:

@@ -99,12 +99,20 @@ def get_view_matrix(target_pos=[.75, -.2, 0], distance=0.9,
 
 def get_projection_matrix(height, width, fov=60, near_plane=0.1, far_plane=2):
     aspect = width / height
+    # print("aspect", aspect)
     projection_matrix = p.computeProjectionMatrixFOV(fov, aspect, near_plane, far_plane)
+    # print("projection_matrix_get", projection_matrix)
     return projection_matrix
 
 def render(height, width, view_matrix, projection_matrix, 
            shadow=1, light_direction=[1,1,1], renderer=p.ER_BULLET_HARDWARE_OPENGL, gaussian_width=5):
     ## ER_BULLET_HARDWARE_OPENGL
+    # print("width", width)
+    # print("height", height)
+    # view_matrix = np.reshape(np.array(view_matrix), (1, 4, 4))
+    # projection_matrix = np.reshape(np.array(projection_matrix), (1, 4, 4))
+    # print("view_matrix", view_matrix)
+    # print("projection_matrix", projection_matrix)
     img_tuple = p.getCameraImage(width,
                                  height,
                                  view_matrix,
@@ -113,6 +121,10 @@ def render(height, width, view_matrix, projection_matrix,
                                  lightDirection=light_direction,
                                  renderer=renderer)
     _, _, img, depth, segmentation = img_tuple
+    # raise NotImplementedError
+    # import ipdb; ipdb.set_trace()
+    # print("len(img)", len(img))
+    img = np.reshape(np.array(img), (48, 48, 4))
     img = img[:,:,:-1]
     if gaussian_width > 0:
         img = cv2.GaussianBlur(img, (gaussian_width, gaussian_width), 0)

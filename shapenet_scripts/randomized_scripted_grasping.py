@@ -2,24 +2,9 @@ import numpy as np
 from tqdm import tqdm
 import os
 import argparse
+
 import roboverse
 import skvideo.io
-
-object_name = 'lego'
-num_grasps = 0
-image_data = []
-
-obs_dim = env.observation_space.shape
-assert(len(obs_dim) == 1)
-obs_dim = obs_dim[0]
-act_dim = env.action_space.shape[0]
-
-if not os.path.exists(data_save_path):
-    os.makedirs(data_save_path)
-if not os.path.exists(trajectory_save_path):
-    os.makedirs(trajectory_save_path)
-if not os.path.exists(video_save_path) and args.video_save_frequency > 0:
-    os.makedirs(video_save_path)
 
 OBJECT_NAME = 'lego'
 EPSILON = 0.05
@@ -62,11 +47,13 @@ def scripted_non_markovian_grasping(env, pool, render_images):
         if render_images:
             img = env.render()
             images.append(img)
+            # WidowX: images.append(Image.fromarray(np.uint8(img)))
 
         observation = env.get_observation()
         next_state, reward, done, info = env.step(action)
-        pool.add_sample(observation, action, next_state, reward, done)
+        trajectory.add_sample(observation, action, next_state, reward, done)
 
+    pool.add_trajectory(trajectory)
     success = info['object_goal_distance'] < 0.05
     return success, images
 
@@ -209,7 +196,7 @@ def main(args):
         render_images = args.video_save_frequency > 0 and \
                         j % args.video_save_frequency == 0
 
-        if args.env == 'SawyerReachOne-v0':
+        if args.env == 'SawyerGraspOne-v0':
             if args.non_markovian:
                 success, images = scripted_non_markovian_grasping(env, pool, render_images)
             else:
@@ -217,6 +204,7 @@ def main(args):
         elif args.env == 'SawyerReach-v0':
             success, images = scripted_markovian_reaching(env, pool, render_images)
         else:
+            print("args.env", args.env)
             raise NotImplementedError
 
         if success:
@@ -273,11 +261,7 @@ if __name__ == "__main__":
                         action="store_true", default=False)
     parser.add_argument("-o", "--observation-mode", type=str, default='pixels',
                         choices=('state', 'pixels', 'pixels_debug'))
-        trajectory.add_sample(observation, action, next_state, reward, done)
 
-    pool.add_trajectory(trajectory)
-    object_pos = env.get_object_midpoint(object_name)
-    if info['object_goal_distance'] < 0.05:
-        num_grasps += 1
-        print('Num grasps: {}'.format(num_grasps))
+    args = parser.parse_args()
+    print("args.env", args.env)
     main(args)
