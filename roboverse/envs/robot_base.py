@@ -20,7 +20,6 @@ class RobotBaseEnv(gym.Env, Serializable):
                  pos_low=[.4, -.6, -.36],
                  max_force=1000.,
                  visualize=True,
-                 downwards=False
                  ):
 
         self._gui = gui
