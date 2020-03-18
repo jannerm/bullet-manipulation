@@ -14,7 +14,7 @@ class WidowBaseEnv(RobotBaseEnv):
         self._gripper_joint_name = ('gripper_prismatic_joint_1', 'gripper_prismatic_joint_2')
         self._gripper_range = range(7, 9)
         self.downwards = kwargs.get('downwards')
-        kwargs.remove('downwards')
+        del kwargs['downwards']
         
         super().__init__(*args, **kwargs)
 
