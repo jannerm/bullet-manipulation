@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--save_video", action="store_true")
 args = parser.parse_args()
 
-env = roboverse.make('WidowGraspDownwardsOne-v0', gui=True)
+env = roboverse.make('WidowBoxPackingOne-v0', gui=True)
 obj_key = 'lego'
 num_grasps = 0
 
@@ -45,9 +45,8 @@ for i in range(1000):
     print("box_pos", box_pos)
 
     # Door angle calc
-    handle_l_pos = handle_r_pos
-    _, x, y = (handle_l_pos - lid_joint_pos) # y -> x, z -> y
-    door_angle = np.arctan2(y, -x)
+    _, x, y = (handle_r_pos - lid_joint_pos) # y -> x, z -> y
+    door_angle = np.arctan2(y, -x) # equivalent to env.get_door_angle()
     opened = abs(door_angle - (np.pi / 2)) < 0.375
     if opened:
         break
@@ -170,9 +169,7 @@ for i in range(1000):
     print("box_pos", box_pos)
 
     # Door angle calc
-    handle_l_pos = handle_r_pos
-    _, x, y = (handle_l_pos - lid_joint_pos) # y -> x, z -> y
-    door_angle = np.arctan2(y, -x)
+    door_angle = env.get_door_angle()
     opened = abs(door_angle - (np.pi / 2)) < 0.11
     lost_handle_grip = False # it will never lose grip of the lego
     handle_pos = handle_r_pos
@@ -291,9 +288,7 @@ for i in range(1000):
     print("box_pos", box_pos)
 
     # Door angle calc
-    handle_l_pos = handle_r_pos
-    _, x, y = (handle_l_pos - lid_joint_pos) # y -> x, z -> y
-    door_angle = np.arctan2(y, -x)
+    door_angle = env.get_door_angle()
     print("door_angle", door_angle)
     opened = abs(door_angle - (np.pi / 2)) < 0.11
     lost_handle_grip = False # it will never lose grip of the lego
