@@ -4,6 +4,7 @@ import pdb
 
 import roboverse.bullet as bullet
 from roboverse.envs.serializable import Serializable
+from roboverse.envs.robot_base import RobotBaseEnv
 
 # From WidowX
 class SawyerBaseEnv(RobotBaseEnv):
@@ -11,17 +12,17 @@ class SawyerBaseEnv(RobotBaseEnv):
         super().__init__(*args, **kwargs)
 
 
-        self._gui = gui
-        self._action_scale = action_scale
-        self._action_repeat = action_repeat
-        self._timestep = timestep
-        self._solver_iterations = solver_iterations
-        self._gripper_bounds = gripper_bounds
-        self._pos_init = pos_init
-        self._pos_low = pos_low
-        self._pos_high = pos_high
-        self._max_force = max_force
-        self._visualize = visualize
+        # self._gui = gui
+        # self._action_scale = action_scale
+        # self._action_repeat = action_repeat
+        # self._timestep = timestep
+        # self._solver_iterations = solver_iterations
+        # self._gripper_bounds = gripper_bounds
+        # self._pos_init = pos_init
+        # self._pos_low = pos_low
+        # self._pos_high = pos_high
+        # self._max_force = max_force
+        # self._visualize = visualize
         self._id = 'SawyerBaseEnv'
         self._robot_name = 'sawyer'
         self._gripper_joint_name = ('right_gripper_l_finger_joint', 'right_gripper_r_finger_joint')
@@ -31,7 +32,7 @@ class SawyerBaseEnv(RobotBaseEnv):
         # self.set_reset_hook()
         self._set_spaces()
 
-        self._img_dim = img_dim
+        # self._img_dim = img_dim
         self._view_matrix = bullet.get_view_matrix()
         self._projection_matrix = bullet.get_projection_matrix(self._img_dim, self._img_dim)
 

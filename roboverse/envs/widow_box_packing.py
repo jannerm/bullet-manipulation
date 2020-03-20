@@ -5,6 +5,7 @@ from roboverse.utils.shapenet_utils import load_single_object
 
 
 class WidowBoxPackingOneEnv(WidowGraspDownwardsOneEnv):
+    OPENED_DOOR_ANGLE = 1.2
 
     def get_door_angle(self):
         handle_id = bullet.get_index_by_attribute(self._objects['box'], 'link_name', 'handle_r')
@@ -19,10 +20,12 @@ class WidowBoxPackingOneEnv(WidowGraspDownwardsOneEnv):
         lego_box_dist = np.linalg.norm(self.get_object_midpoint("lego") - self.get_object_midpoint("box"))
         door_angle = self.get_door_angle()
         if self._reward_type == 'sparse':
-            reward = 0.5 * int(lego_box_dist < 0.1) + 0.5 * int(door_angle > 1.2)
+            # reward = 0.5 * int(lego_box_dist < 0.1) + 0.5 * int(door_angle > 1.2)
+            reward = int(door_angle > self.OPENED_DOOR_ANGLE)
         elif self._reward_type == 'shaped':
-            reward = np.clip(door_angle, 0, 1.2) - lego_box_dist
-            reward = np.clip(reward, 0, 1)
+            # reward = np.clip(door_angle, 0, 1.2) - lego_box_dist
+            # reward = np.clip(reward, 0, 1)
+            reward = np.clip(door_angle, 0, self.OPENED_DOOR_ANGLE) / self.OPENED_DOOR_ANGLE
         else:
             raise NotImplementedError
 
