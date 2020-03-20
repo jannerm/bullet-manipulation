@@ -143,9 +143,10 @@ for i in range(1000):
 
     time.sleep(0.05)
     o, r, d, info = env.step(action)
+    # import ipdb; ipdb.set_trace()
     print("action", action)
     print(o[3])
-    print(r)
+    print("reward", r)
     print('object to goal: {}'.format(info['object_goal_distance']))
     print('object to gripper: {}'.format(info['object_gripper_distance']))
     episode_reward += r
