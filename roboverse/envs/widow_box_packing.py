@@ -30,8 +30,8 @@ class WidowBoxPackingOneEnv(WidowGraspDownwardsOneEnv):
             # reward = np.clip(reward, 0, 1)
             door_angle_reward = np.clip(door_angle, 0, self.OPENED_DOOR_ANGLE) / self.OPENED_DOOR_ANGLE
             gripper_handle_dist = np.clip(np.linalg.norm(ee_pos - handle_pos), 0, 1)
-            print("reward gripper_handle_dist", gripper_handle_dist)
-            print("door_angle_reward - gripper_handle_dist", door_angle_reward - gripper_handle_dist)
+            # print("reward gripper_handle_dist", gripper_handle_dist)
+            # print("door_angle_reward - gripper_handle_dist", door_angle_reward - gripper_handle_dist)
             reward = np.clip(door_angle_reward - gripper_handle_dist, 0, 1)
         else:
             raise NotImplementedError
