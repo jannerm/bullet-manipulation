@@ -144,6 +144,7 @@ for i in range(1000):
     time.sleep(0.05)
     o, r, d, info = env.step(action)
     # import ipdb; ipdb.set_trace()
+    print("info", info)
     print("action", action)
     print(o[3])
     print("reward", r)
