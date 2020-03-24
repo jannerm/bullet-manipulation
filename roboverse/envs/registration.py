@@ -26,6 +26,11 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
         'id': 'SawyerMultiSoup-v0',
         'entry_point': ('roboverse.envs.sawyer_multi_soup:SawyerMultiSoupEnv'),
     },
+    {
+        'id': 'SawyerLiftGC-v0',
+        'entry_point': ('roboverse.envs.goal_conditioned.sawyer_lift:SawyerLiftEnvGC'),
+    },
+
 )
 
 PROJECTION_ENVIRONMENT_SPECS = tuple(
