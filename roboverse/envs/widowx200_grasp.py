@@ -4,29 +4,42 @@ from roboverse.envs.widow_base import WidowBaseEnv
 from roboverse.utils.shapenet_utils import load_single_object
 
 
-class WidowGraspUpwardsOneEnv(WidowBaseEnv):
+class WidowX200GraspEnv(WidowBaseEnv):
 
-    def __init__(self, goal_pos=(.7, -0.1,-0.26), *args, **kwargs):
-        self._env_name = 'WidowGraspUpwardsOneEnv'
+    def __init__(self, goal_pos=(.7, 0.15, -0.20), *args, **kwargs):
+        self._env_name = 'WidowX200GraspEnv'
         kwargs['downwards'] = False
         super().__init__(*args, **kwargs)
         self._goal_pos = goal_pos
+        self._reward_type = 'sparse'
+
 
     def _load_meshes(self):
         super()._load_meshes()
         self._objects = {
             'lego': bullet.objects.lego(),
-            #'bowl':   load_single_object('36ca3b684dbb9c159599371049c32d38',
-                                         #[.9, 0, -.28], quat=[0, 0, 0, 1],scale=0.5)[0]
-
+            # 'box': load_single_object('48862d7ed8b28f5425ebd1cd0b422e32',
+            #                             [.7, -0.15, -.28], quat=[1, 1, 1, 1], scale=1)[0],
+            # 'box1': load_single_object('48862d7ed8b28f5425ebd1cd0b422e32',
+            #                             [.7, -0.35, -.28], quat=[1, 1, 1, 1], scale=1)[0],
+            # 'bowl': load_single_object('36ca3b684dbb9c159599371049c32d38',
+            #                              [.7, -0.35, 0], quat=[1, 1, 1, 1],scale=0.7)[0],
+            'box': bullet.objects.box(),
         }
 
-    def get_reward(self, observation):
-        object_pos = self.get_object_midpoint('lego')
-        if object_pos[2] > -0.1:
-            reward = 1
+    def get_reward(self, info):
+        if self._reward_type == 'sparse':
+            if info['object_goal_distance'] < 0.1:
+                reward = 1
+            else:
+                reward = 0
+        elif self._reward_type == 'shaped':
+            reward = -1 * (4 * info['object_goal_distance']
+                           + info['object_gripper_distance'])
+            reward = max(reward, self._reward_min)
         else:
-            reward = 0
+            raise NotImplementedError
+
         return reward
 
     def step(self, *action):

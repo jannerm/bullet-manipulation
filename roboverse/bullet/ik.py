@@ -41,7 +41,7 @@ def ee_approx_eq(pos_a, theta_a, pos_b, theta_b, pos_eps=1e-3, theta_eps=1):
 
 def get_num_actuators(body):
     '''
-        TODO : there is probably a better way to do this
+        TODO : there is probably a better way to do thistime.sleep(200000)
     '''
     joint_indices, _ = get_joint_positions(body)
     return len(joint_indices)
@@ -102,6 +102,21 @@ def sawyer_position_ik(body, link, pos, theta, gripper, gripper_name=None, dampi
     #### ik
     ik_solution = ik(body, link, pos, theta, damping)
     ik_solution[-2:] = gripper_state
+    print("HI", ik_solution)
+    joints, current = get_joint_positions(body)
+    print(joints)
+    #### position control
+    forces = [max_force for _ in range(len(joints))]
+    p.setJointMotorControlArray(body, joints, p.POSITION_CONTROL, targetPositions=ik_solution, forces=forces)
+
+
+def joint_position_ik(body, link, joint, gripper, gripper_name=None, damping=1e-3,
+                      gripper_bounds=(-1, 1), discrete_gripper=True, max_force=1000):
+    gripper_state = get_gripper_state(body, gripper, gripper_bounds, discrete_gripper, gripper_name)
+    #### ik
+    ik_solution = joint
+    print(ik_solution, gripper_state)
+    ik_solution = np.append(ik_solution, gripper_state)
     joints, current = get_joint_positions(body)
     #### position control
     forces = [max_force for _ in range(len(joints))]

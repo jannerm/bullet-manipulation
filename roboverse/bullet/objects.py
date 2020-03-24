@@ -35,6 +35,7 @@ sawyer = loader(ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro.u
 sawyer_finger_visual_only = loader(ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro_finger_visual_only.urdf')
 widow_downwards = loader(ASSET_PATH, 'widowx/widowxdownwards.urdf', pos=[0.7, 0, 0.1])
 widow = loader(ASSET_PATH, 'widowx/widowx.urdf', pos=[0.7, 0, -0.4])
+widowx_200 = loader(ASSET_PATH, 'interbotix_descriptions/urdf/wx200.urdf', pos=[0.4, 0, -0.4], quat=[0, 0, -0.707, -0.707])
 #pos=[0.7, 0, 0.1]
 
 

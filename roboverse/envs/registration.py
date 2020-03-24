@@ -40,6 +40,16 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
         'id': 'WidowGraspUpwardsOne-v0',
         'entry_point': ('roboverse.envs.widow_grasp_upwards:WidowGraspUpwardsOneEnv'),
         'kwargs': {'max_force': 100, 'action_scale': 0.05}
+    },
+    {
+        'id': 'WidowX200Grasp-v0',
+        'entry_point': ('roboverse.envs.widowx200_grasp:WidowX200GraspEnv'),
+        'kwargs': {'max_force': 100, 'action_scale': 0.05}
+    },
+    {
+        'id': 'WidowGraspJointDownwardsOne-v0',
+        'entry_point': ('roboverse.envs.widow_joint_downwards:WidowGraspJointDownwardsEnv'),
+        'kwargs': {'max_force': 100, 'action_scale': 0.05}
     }
 )
 

@@ -161,13 +161,13 @@ class RobotBaseEnv(gym.Env, Serializable):
         self._prev_pos = bullet.get_link_state(self._robot_id, self._end_effector, 'pos')
         return observation, reward, done, {}
 
-    def _simulate(self, pos, theta, gripper):
+    def _simulate(self, pos, theta, gripper, discrete_gripper=True):
         for _ in range(self._action_repeat):
             bullet.sawyer_position_ik(
                 self._robot_id, self._end_effector,
                 pos, self.theta,
                 gripper, gripper_name=self._gripper_joint_name, gripper_bounds=self._gripper_bounds,
-                discrete_gripper=True, max_force=self._max_force
+                discrete_gripper=discrete_gripper, max_force=self._max_force
             )
             bullet.step_ik(self._gripper_range)
 
