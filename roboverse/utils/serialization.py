@@ -2,8 +2,12 @@ import os
 import glob
 import random
 import numpy as np
-import cv2
 import pdb
+
+import sys
+if '/opt/ros/kinetic/lib/python2.7/dist-packages' in sys.path:
+    sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
+import cv2
 
 def save_image(filepath, img):
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)

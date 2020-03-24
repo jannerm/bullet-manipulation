@@ -1,13 +1,17 @@
 import os
 import random
 import numpy as np
-import cv2
 import pdb
 
 import pybullet as p
 import pybullet_data as pdata
 
 from roboverse.utils.serialization import make_dir
+
+import sys
+if '/opt/ros/kinetic/lib/python2.7/dist-packages' in sys.path:
+    sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
+import cv2
 
 
 #########################

@@ -6,12 +6,16 @@ from roboverse.utils.shapenet_utils import load_single_object
 
 class WidowGraspDownwardsOneEnv(WidowBaseEnv):
 
-    def __init__(self, goal_pos=(.7, 0.15, -0.20), *args, **kwargs):
-        self._env_name = 'WidowGraspDownwardsOneEnv'
+    def __init__(self, 
+                goal_pos=(.7, 0.15, -0.20), 
+                reward_type='shaped',
+                *args, **kwargs
+                ):
+        self._env_name = 'WidowGraspDownwards'
         kwargs['downwards'] = True
         super().__init__(*args, **kwargs)
         self._goal_pos = goal_pos
-        self._reward_type = 'sparse'
+        self._reward_type = reward_type
 
 
     def _load_meshes(self):

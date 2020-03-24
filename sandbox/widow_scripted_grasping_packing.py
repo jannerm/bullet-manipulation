@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--save_video", action="store_true")
 args = parser.parse_args()
 
-env = roboverse.make('WidowGraspDownwardsOne-v0', gui=True)
+env = roboverse.make('WidowBoxPackingOne-v0', gui=True)
 obj_key = 'lego'
 num_grasps = 0
 
@@ -45,10 +45,9 @@ for i in range(1000):
     print("box_pos", box_pos)
 
     # Door angle calc
-    handle_l_pos = handle_r_pos
-    _, x, y = (handle_l_pos - lid_joint_pos) # y -> x, z -> y
-    door_angle = np.arctan2(y, -x)
-    opened = abs(door_angle - (np.pi / 2)) < 0.45
+    _, x, y = (handle_r_pos - lid_joint_pos) # y -> x, z -> y
+    door_angle = np.arctan2(y, -x) # equivalent to env.get_door_angle()
+    opened = abs(door_angle - (np.pi / 2)) < 0.375
     if opened:
         break
     lost_handle_grip = o[3] < 0.05 and np.linalg.norm(xyz_diff) > 0.07 and door_angle > 0.1
@@ -144,9 +143,11 @@ for i in range(1000):
 
     time.sleep(0.05)
     o, r, d, info = env.step(action)
+    # import ipdb; ipdb.set_trace()
+    print("info", info)
     print("action", action)
     print(o[3])
-    print(r)
+    print("reward", r)
     print('object to goal: {}'.format(info['object_goal_distance']))
     print('object to gripper: {}'.format(info['object_gripper_distance']))
     episode_reward += r
@@ -170,9 +171,7 @@ for i in range(1000):
     print("box_pos", box_pos)
 
     # Door angle calc
-    handle_l_pos = handle_r_pos
-    _, x, y = (handle_l_pos - lid_joint_pos) # y -> x, z -> y
-    door_angle = np.arctan2(y, -x)
+    door_angle = env.get_door_angle()
     opened = abs(door_angle - (np.pi / 2)) < 0.11
     lost_handle_grip = False # it will never lose grip of the lego
     handle_pos = handle_r_pos
@@ -214,8 +213,11 @@ for i in range(1000):
         action[2] = -0.01
         grip=1.0
         print('Grasping')
-    elif env._goal_pos[2] - object_pos[2] > 0.01 and not holding:
+    elif abs(env._goal_pos[2] - object_pos[2]) > 0.01 and not holding:
         # Something wrong with this condition.
+        # Lifts object to some goal height.
+        print("env._goal_pos[2] - object_pos[2]", env._goal_pos[2] - object_pos[2])
+        print("env._goal_pos[2]", env._goal_pos[2])
         action = env._goal_pos - object_pos
         grip = 1.0
         action[0] = 0
@@ -223,10 +225,12 @@ for i in range(1000):
         action *= 3.0
         print('Lifting')
     elif utils.true_angle_diff(
-            abs(utils.angle(box_pos[:2], np.array([0.7, 0])) - utils.angle(ee_pos[:2], np.array([0.7, 0])))) > 0.1\
+            abs(utils.angle(box_pos[:2], np.array([0.7, 0])) - utils.angle(ee_pos[:2], np.array([0.7, 0])))) > 0.05 \
             and not holding and not rotate_bowl:
+        print("env._goal_pos[2] - object_pos[2]", env._goal_pos[2] - object_pos[2])
         a = utils.angle(ee_pos[:2], np.array([0.7, 0]))
         diff = utils.angle(box_pos[:2], np.array([0.7, 0])) - utils.angle(ee_pos[:2], np.array([0.7, 0]))
+        print("diff", utils.true_angle_diff(abs(diff)))
         diff = diff - 2 * math.pi if diff > 2 * math.pi else diff + 2 * math.pi if diff < 0 else diff
         if diff > math.pi:
             action = np.array([math.sin(a), -math.cos(a), 0])
@@ -286,9 +290,7 @@ for i in range(1000):
     print("box_pos", box_pos)
 
     # Door angle calc
-    handle_l_pos = handle_r_pos
-    _, x, y = (handle_l_pos - lid_joint_pos) # y -> x, z -> y
-    door_angle = np.arctan2(y, -x)
+    door_angle = env.get_door_angle()
     print("door_angle", door_angle)
     opened = abs(door_angle - (np.pi / 2)) < 0.11
     lost_handle_grip = False # it will never lose grip of the lego
@@ -307,9 +309,11 @@ for i in range(1000):
             action = np.array([0.7, 0, 1]) - ee_pos
         else:
             action = np.array([math.sin(a), -math.cos(a), 0.1])
-    else:
-        action = box_pos - ee_pos
+    elif door_angle > 0.2:
+        action = lid_pos - ee_pos
         action /= 3
+    else:
+        break
     grip = 1.
 
     action = np.append(action, [grip])
