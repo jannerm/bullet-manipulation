@@ -11,10 +11,12 @@ class WidowGraspDownwardsOneEnv(WidowBaseEnv):
                 reward_type='shaped',
                 *args, **kwargs
                 ):
+        self._env_name = 'WidowGraspDownwards'
         kwargs['downwards'] = True
         super().__init__(*args, **kwargs)
         self._goal_pos = goal_pos
         self._reward_type = reward_type
+
 
     def _load_meshes(self):
         super()._load_meshes()

@@ -4,39 +4,54 @@ from roboverse.envs.widow_base import WidowBaseEnv
 from roboverse.utils.shapenet_utils import load_single_object
 
 
-class WidowGraspUpwardsOneEnv(WidowBaseEnv):
+class WidowGraspJointDownwardsEnv(WidowBaseEnv):
 
-    def __init__(self, goal_pos=(.7, -0.1,-0.26), *args, **kwargs):
-        self._env_name = 'WidowGraspUpwardsOneEnv'
-        kwargs['downwards'] = False
+    def __init__(self, goal_pos=(.7, 0.15, -0.20), *args, **kwargs):
+        self._env_name = 'WidowGraspJointDownwardsEnv'
+        kwargs['downwards'] = True
         super().__init__(*args, **kwargs)
         self._goal_pos = goal_pos
+        self._reward_type = 'sparse'
 
+    
     def _load_meshes(self):
         super()._load_meshes()
         self._objects = {
             'lego': bullet.objects.lego(),
-            #'bowl':   load_single_object('36ca3b684dbb9c159599371049c32d38',
-                                         #[.9, 0, -.28], quat=[0, 0, 0, 1],scale=0.5)[0]
-
+            # 'box': load_single_object('48862d7ed8b28f5425ebd1cd0b422e32',
+            #                             [.7, -0.15, -.28], quat=[1, 1, 1, 1], scale=1)[0],
+            # 'box1': load_single_object('48862d7ed8b28f5425ebd1cd0b422e32',
+            #                             [.7, -0.35, -.28], quat=[1, 1, 1, 1], scale=1)[0],
+            # 'bowl': load_single_object('36ca3b684dbb9c159599371049c32d38',
+            #                              [.7, -0.35, 0], quat=[1, 1, 1, 1],scale=0.7)[0],
+            'box': bullet.objects.box(),
         }
 
-    def get_reward(self, observation):
-        object_pos = self.get_object_midpoint('lego')
-        if object_pos[2] > -0.1:
-            reward = 1
+    def get_reward(self, info):
+        if self._reward_type == 'sparse':
+            if info['object_goal_distance'] < 0.1:
+                reward = 1
+            else:
+                reward = 0
+        elif self._reward_type == 'shaped':
+            reward = -1 * (4 * info['object_goal_distance']
+                           + info['object_gripper_distance'])
+            reward = max(reward, self._reward_min)
         else:
-            reward = 0
+            raise NotImplementedError
+
         return reward
 
+    
     def step(self, *action):
         delta_pos, gripper = self._format_action(*action)
-        pos = bullet.get_link_state(self._robot_id, self._end_effector, 'pos')
+        indices, pos = bullet.get_joint_positions(self._robot_id)
+        pos = pos[:6]
         pos += delta_pos * self._action_scale
-        pos = np.clip(pos, self._pos_low, self._pos_high)
+        #pos = np.clip(pos, self._pos_low, self._pos_high)
 
-        self._simulate(pos, self.theta, gripper)
-        if self._visualize: self.visualize_targets(pos)
+        self._simulate(pos, gripper)
+        #if self._visualize: self.visualize_targets(pos)
 
         observation = self.get_observation()
         info = self.get_info()
@@ -57,6 +72,17 @@ class WidowGraspUpwardsOneEnv(WidowBaseEnv):
         }
         return info
 
+    def _simulate(self, pos, gripper, discrete_gripper=True):
+        for _ in range(self._action_repeat):
+            bullet.joint_position_ik(
+                self._robot_id, self._end_effector,
+                pos,
+                gripper, gripper_name=self._gripper_joint_name, gripper_bounds=self._gripper_bounds,
+                discrete_gripper=discrete_gripper, max_force=self._max_force
+            )
+            bullet.step_ik(self._gripper_range)
+
+
     def get_observation(self):
         left_tip_pos = bullet.get_link_state(
             self._robot_id, self._gripper_joint_name[0], keys='pos')
@@ -76,3 +102,10 @@ class WidowGraspUpwardsOneEnv(WidowBaseEnv):
 
         return np.concatenate((end_effector_pos, gripper_tips_distance,
                                object_pos, object_theta))
+
+    def open_gripper(self, act_repeat=10):
+        delta_pos = [0, 0, 0, 0, 0, 0]
+        gripper = 0
+        for _ in range(act_repeat):
+            self.step(delta_pos, gripper)
+ 
