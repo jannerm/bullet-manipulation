@@ -43,17 +43,18 @@ class WidowBoxPackingOneEnv(WidowGraspDownwardsOneEnv):
         door_angle = self.get_door_angle()
         ee_pos = np.array(self.get_end_effector_pos())
         handle_pos = self.get_handle_pos()
+        gripper_handle_dist = np.clip(np.linalg.norm(ee_pos - handle_pos), 0, 1)
         if self._reward_type == 'sparse':
-            # reward = 0.5 * int(lego_box_dist < 0.1) + 0.5 * int(door_angle > 1.2)
-            reward = int(door_angle > self.OPENED_DOOR_ANGLE)
+            # reward = int(door_angle > self.OPENED_DOOR_ANGLE)
+            reward = (
+                0.5*int(gripper_handle_dist < self.SUCCESS_THRESH) + 
+                0.5*int(door_angle > self.OPENED_DOOR_ANGLE)
+            )
         elif self._reward_type == 'shaped':
-            # reward = np.clip(door_angle, 0, 1.2) - lego_box_dist
-            # reward = np.clip(reward, 0, 1)
-            door_angle_reward = np.clip(door_angle, 0, self.OPENED_DOOR_ANGLE) / self.OPENED_DOOR_ANGLE
-            gripper_handle_dist = np.clip(np.linalg.norm(ee_pos - handle_pos), 0, 1)
-            # print("reward gripper_handle_dist", gripper_handle_dist)
-            # print("door_angle_reward - gripper_handle_dist", door_angle_reward - gripper_handle_dist)
-            reward = np.clip(door_angle_reward - gripper_handle_dist, 0, 1)
+            # door_angle_reward = np.clip(door_angle, 0, self.OPENED_DOOR_ANGLE) / self.OPENED_DOOR_ANGLE
+            door_angle_reward = door_angle
+            # reward = np.clip(door_angle_reward - gripper_handle_dist, 0, 1)
+            reward = door_angle_reward - gripper_handle_dist
         else:
             raise NotImplementedError
 
