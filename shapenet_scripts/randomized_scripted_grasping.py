@@ -60,10 +60,11 @@ def scripted_non_markovian(env, pool, render_images):
 def scripted_markovian(env, pool, render_images):
     observation = env.reset()
     if args.randomize:
-        target_pos = np.random.uniform(low=env._object_position_low,
-                                      high=env._object_position_high)
-        target_pos[:2] += np.random.uniform(low=-0.03, high=0.03, size=(2,))
-        target_pos[2] += np.random.uniform(low=-0.02, high=0.02, size=(1,))
+        target_pos = env.get_object_midpoint(OBJECT_NAME)
+        #target_pos = np.random.uniform(low=env._object_position_low,
+        #                              high=env._object_position_high)
+        #target_pos[:2] += np.random.uniform(low=-0.03, high=0.03, size=(2,))
+        #target_pos[2] += np.random.uniform(low=-0.02, high=0.02, size=(1,))
     else:
         target_pos = env.get_object_midpoint(OBJECT_NAME)
         #target_pos[:2] += np.random.uniform(low=-0.05, high=0.05, size=(2,))
@@ -71,6 +72,7 @@ def scripted_markovian(env, pool, render_images):
         #target_pos[2] += 0.05 #np.random.uniform(low=-0.01, high=0.01, size=(1,))
     # the object is initialized above the table, so let's compensate for it
     # target_pos[2] += -0.01
+    print("target_pos: ", target_pos)
     images = []
     grip_open = -1
     grip_close = 1
@@ -97,7 +99,15 @@ def scripted_markovian(env, pool, render_images):
         else:
             gripper_tip_distance = observation[3]
         grip = 0
-        if env.get_info()['gripper_goal_distance'] > 0.02 and gripper_tip_distance > 0.025:
+
+        if i < 10:
+            diff = target_pos - ee_pos
+            action = [0,0,diff[2]*0.8]
+        else:
+            action = target_pos - ee_pos
+            action *= 5.0
+        """
+        elif env.get_info()['gripper_goal_distance'] > 0.02 and gripper_tip_distance > 0.025:
             action = target_pos - ee_pos
             action *= 5.0
             if np.linalg.norm(xy_diff) > 0.05:
@@ -121,9 +131,10 @@ def scripted_markovian(env, pool, render_images):
             action = np.zeros((3,))
             #grip = grip_close
             # print('Holding')
-        action[1] = 0
+        """
+        action[0] = 0
         action = np.append(action, [grip])
-        action += np.random.normal(scale=args.noise_std)
+        #action += np.random.normal(scale=args.noise_std)
         action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
 
         if render_images:
@@ -137,6 +148,7 @@ def scripted_markovian(env, pool, render_images):
         observation = next_state
         traj["observations"].append(observation)
         next_state, reward, done, info = env.step(action)
+        #print(observation[0:3])
         traj["next_observations"].append(next_state)
         traj["actions"].append(action)
         traj["rewards"].append(reward)
@@ -146,7 +158,7 @@ def scripted_markovian(env, pool, render_images):
 
     success = info['object_gripper_distance'] < 0.05
     #success = info['object_goal_distance'] < 0.05
-    return success, images, traj
+    return True, images, traj
 
 
 def main(args):
@@ -192,6 +204,18 @@ def main(args):
                     pool._fields['terminals'][i]
                 )
             all_trajs.append(traj)
+
+            """
+            
+            images_recreated = []
+            env.reset()
+            actions = traj["actions"]
+            for k in range(len(actions)):
+                a = actions[k]
+                env.step(a)
+                img = env.render()
+                images_recreated.append(Image.fromarray(np.uint8(img)))
+            """
         if render_images:
             images[0].save('{}/{}.gif'.format(video_save_path, j),
                            format='GIF', append_images=images[1:],
@@ -209,12 +233,12 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--data-save-directory", type=str)
-    parser.add_argument("-n", "--num-trajectories", type=int, default=2000)
+    parser.add_argument("-n", "--num-trajectories", type=int, default=500)
     parser.add_argument("-p", "--num-parallel-threads", type=int, default=1)
     parser.add_argument("--num-timesteps", type=int, default=50)
     parser.add_argument("--noise-std", type=float, default=0.1)
     parser.add_argument("--video_save_frequency", type=int,
-                        default=0, help="Set to zero for no video saving")
+                        default=1, help="Set to zero for no video saving")
     parser.add_argument("--randomize", dest="randomize",
                         action="store_true", default=False)
     parser.add_argument("--gui", dest="gui", action="store_true", default=False)
@@ -222,7 +246,7 @@ if __name__ == "__main__":
                         default=False)
     parser.add_argument("--non-markovian", dest="non_markovian",
                         action="store_true", default=False)
-    parser.add_argument("-o", "--observation-mode", type=str, default='pixels',
+    parser.add_argument("-o", "--observation-mode", type=str, default='state',
                         choices=('state', 'pixel', 'pixels_debug'))
 
     args = parser.parse_args()

@@ -30,9 +30,13 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         self._randomize = randomize
         self._observation_mode = observation_mode
 
-        self._object_position_low = (.65, .10, -.36)
-        self._object_position_high = (.8, .25, -.36)
+        self._object_position_low = (0.49999162183937296 + 0.3, -1.760392168808169e-05, -.36)#(.65, .10, -.36)
+        self._object_position_high = (0.49999162183937296 + 0.1, -1.760392168808169e-05, -.36)#(.8, .25, -.36)
         self._fixed_object_position = (0.49999162183937296 + 0.2, -1.760392168808169e-05, -.36)#-4.563183413075489e-08)#(.75, .2, -.36)
+        self._trimodal_position1 = (0.49999162183937296, -1.760392168808169e-05 - 0.7, -.36)
+        self._trimodal_position2 = (0.49999162183937296, -1.760392168808169e-05 - 0.1, -.36)
+        self._trimodal_position3 = (0.49999162183937296, -1.760392168808169e-05 + 0.5, -.36)
+        self._trimodal_positions = [self._trimodal_position1,self._trimodal_position2,self._trimodal_position3]
 
         self.obs_img_dim = obs_img_dim
         self._view_matrix_obs = bullet.get_view_matrix(
@@ -48,8 +52,10 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         super()._load_meshes()
 
         if self._randomize:
-            object_position = np.random.uniform(
-                low=self._object_position_low, high=self._object_position_high)
+            choice = np.random.randint(3)
+            object_position = self._trimodal_positions[choice]
+            #object_position = np.random.uniform(
+            #    low=self._object_position_low, high=self._object_position_high)
         else:
             object_position = self._fixed_object_position
         self._objects = {
@@ -59,7 +65,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         # set goal_pos to be directly above the randomized position 
         # of lego, rather than a fixed position
         self._goal_pos = np.copy(object_position)
-        self._goal_pos[2] = self._goal_pos[2] + 0.1
+        self._goal_pos[2] = self._goal_pos[2]
 
     def step(self, *action):
         delta_pos, gripper = self._format_action(*action)
