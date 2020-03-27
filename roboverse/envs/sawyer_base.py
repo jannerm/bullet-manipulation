@@ -86,7 +86,7 @@ class SawyerBaseEnv(gym.Env, Serializable):
         self._load_meshes()
 
         # Allow the objects to settle down after they are dropped in sim
-        for _ in range(50):
+        for _ in range(10):
             bullet.step()
 
         self._end_effector = bullet.get_index_by_attribute(

@@ -29,6 +29,9 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
     {
         'id': 'SawyerLiftGC-v0',
         'entry_point': ('roboverse.envs.goal_conditioned.sawyer_lift:SawyerLiftEnvGC'),
+        'kwargs': {
+            'img_dim': 84
+        },
     },
 
 )

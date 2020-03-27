@@ -8,12 +8,13 @@ class SawyerLiftEnv(SawyerBaseEnv):
 
     def __init__(self, goal_pos=[.75,-.4,.2], *args, goal_mult=4, bonus=0, min_reward=-3., **kwargs):
         self.record_args(locals())
-        super().__init__(*args, **kwargs)
         self._goal_pos = goal_pos
         self._goal_mult = goal_mult
         self._bonus = bonus
         self._min_reward = min_reward
         self._id = 'SawyerLiftEnv'
+        self.first = True
+        super().__init__(*args, **kwargs)
 
     def get_params(self):
         params = super().get_params()
@@ -25,9 +26,10 @@ class SawyerLiftEnv(SawyerBaseEnv):
         super()._load_meshes()
         self._objects.update({
             'bowl':  bullet.objects.bowl(),
-            'lid': bullet.objects.lid(),
+            # 'lid': bullet.objects.lid(),
             'cube': bullet.objects.spam()
         })
+
 
     def get_reward(self, observation):
         cube_pos = bullet.get_midpoint(self._objects['cube'])

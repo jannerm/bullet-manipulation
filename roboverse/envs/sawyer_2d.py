@@ -60,7 +60,6 @@ class Sawyer2dEnv(gym.Env):
             theta = current['theta']
             pos = x + yz
             bullet.set_body_state(body, pos, theta)
-
         obs = self.get_observation()
         rew = self._env.get_reward(obs)
         term = self._env.get_termination(obs)

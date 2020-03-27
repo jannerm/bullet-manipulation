@@ -1,51 +1,103 @@
 import numpy as np
 import gym
+from types import MethodType
 import pdb
 
 import roboverse.bullet as bullet
 from roboverse.envs.sawyer_lift import SawyerLiftEnv
+from roboverse.envs.sawyer_2d import Sawyer2dEnv
 from collections import OrderedDict
 
 from gym.spaces import Box, Dict
 
-class SawyerLiftEnvGC(SawyerLiftEnv):
+class SawyerLiftEnvGC(Sawyer2dEnv):
 
-    def __init__(self, *args, goal_pos=[.75, -.4, .2], **kwargs):
+    def __init__(self, *args, goal_pos=[.75, -.4, .2], is_eval=False, **kwargs):
+        self.is_eval = is_eval
         self._goal_pos = goal_pos
+        self.hand_and_obj_goal = np.tile(goal_pos[1:], (2))
+        super().__init__(*args, env='SawyerLift2d-v0', goal_pos=goal_pos, **kwargs)
         self.record_args(locals())
-        super().__init__(*args, goal_pos=goal_pos, **kwargs)
 
-        self._objects = self._objects
-        self._init_states = self._get_body_states()
-
-    # See sawyer2dEnv::get_observation
-    def get_flat_observation(self):
-        ee_pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
-        bodies = sorted([v for k, v in self._objects.items() if not bullet.has_fixed_root(v)])
-        obj_pos = [bullet.get_body_info(body, 'pos') for body in bodies]
-
-        ee_pos = np.array(ee_pos[1:])
-        obj_pos = np.array([pos[1:] for pos in obj_pos])
-        observation = np.concatenate((ee_pos, obj_pos.flatten()))
-        return observation
-
-    def get_observation(self):
-        obs = self.get_flat_observation()
-        goal = self._goal_pos
-
+    def get_info(self):
         cube_pos = bullet.get_midpoint(self._objects['cube'])
+        ee_pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
+        ee_dist = bullet.l2_dist(cube_pos[1:], ee_pos[1:])
+        goal_dist = bullet.l2_dist(cube_pos[1:], self._goal_pos[1:])
+
         return {
-            'observation': obs,
-            'desired_goal': goal,
-            'achieved_goal': cube_pos,
-            'state_observation': obs,
-            'state_desired_goal': goal,
-            'state_achieved_goal': cube_pos,
+            'hand_dist': ee_dist,
+            'obj_dist': goal_dist,
         }
 
-    def sample_goals(self, batch_size):
-        return np.tile(self._goal_pos, (batch_size, 1))
+    def reset(self):
+        self._env._pos_init = np.random.uniform(
+            low=self._env._pos_low,
+            high=self._env._pos_high)
+        super().reset()
 
+        ee_pos = bullet.get_link_state(self._env._sawyer, self._env._end_effector, 'pos')
+        cube_pos = np.random.uniform(
+            low=self._pos_low,
+            high=self._pos_high)
+        cube_pos[-1] = -.3
+        if not self.is_eval and np.random.random() > 0.5:
+            ee_pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
+            cube_pos = ee_pos
+        bullet.set_body_state(self._objects['cube'],
+                              cube_pos, deg=[90,0,-90])
+        self._env.open_gripper()
+
+        obs = self.get_dict_observation()
+        return obs
+
+    def step(self, action, *args, **kwargs):
+        obs, reward, done, info = super().step(action, *args, **kwargs)
+        info = {
+            **info,
+            **self.get_info()
+        }
+        obs = self.get_dict_observation()
+        reward = self.compute_reward(action, obs)
+        return obs, reward, done, info
+
+
+    def get_dict_observation(self):
+        obs = self.get_observation()
+        achieved_goal = self.achieved_goal_from_obs(obs)
+
+        cube_pos = bullet.get_midpoint(self._objects['cube'])[1:]
+        return {
+            'observation': obs,
+            'desired_goal': self.hand_and_obj_goal,
+            'achieved_goal': achieved_goal,
+            'state_observation': obs,
+            'state_desired_goal': self.hand_and_obj_goal,
+            'state_achieved_goal': achieved_goal,
+        }
+
+    def achieved_goal_from_obs(self, obs):
+        return np.concatenate((obs[:2], obs[-2:]))
+
+    def compute_reward(self, action, observation):
+        actions = action[None]
+        observations = {}
+        for k, v in observation.items():
+            observations[k] = v[None]
+        return self.compute_rewards(actions, observations)[0]
+
+    def compute_rewards(self, actions, observations):
+        ee_pos = observations['state_achieved_goal'][:, :2]
+        cube_pos = observations['state_achieved_goal'][:, 2:]
+        ee_dist = bullet.l2_dist2d(cube_pos, ee_pos)
+        goal_dist = bullet.l2_dist2d(
+            cube_pos,
+            np.tile(self._goal_pos[1:], (len(cube_pos), 1))
+        )
+        reward = -(ee_dist + self._goal_mult * goal_dist)
+        reward = np.clip(reward, self._min_reward, 1e10)
+        reward[goal_dist < 0.25] += self._bonus
+        return reward
     def _set_spaces(self):
         act_dim = 4
         act_bound = 1
@@ -53,13 +105,14 @@ class SawyerLiftEnvGC(SawyerLiftEnv):
         self.action_space = gym.spaces.Box(-act_high, act_high)
 
         obs = self.reset()
-        observation_dim = len(obs)
+        observation_dim = len(obs['observation'])
         obs_bound = 100
         obs_high = np.ones(observation_dim) * obs_bound
         obs_space = gym.spaces.Box(-obs_high, obs_high)
 
-        goal_high = np.ones(3) * obs_bound
+        goal_high = np.ones(len(obs['state_achieved_goal'])) * obs_bound
         goal_space = gym.spaces.Box(-goal_high, goal_high)
+        # goal_space = obs_space
 
         self.observation_space = Dict([
             ('observation', obs_space),
@@ -70,16 +123,21 @@ class SawyerLiftEnvGC(SawyerLiftEnv):
             ('state_achieved_goal', goal_space),
         ])
 
-    def get_info(self):
-        cube_pos = bullet.get_midpoint(self._objects['cube'])
-        ee_pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
-        ee_dist = bullet.l2_dist(cube_pos, ee_pos)
-        goal_dist = bullet.l2_dist(cube_pos, self._goal_pos)
+    def get_image(self, width, height):
+        img = self.render(mode='rgb_array', width=width, height=height)
+        return img
 
-        return {
-            'hand_dist': ee_dist,
-            'obj_dist': goal_dist,
-        }
+    def get_goal(self):
+        return self._goal_pos
+
+    def get_env_state(self):
+        return
+
+    def set_env_state(self, state):
+        return
+
+    def set_to_goal(self, goal):
+        return
 
     def get_diagnostics(self, paths, prefix=''):
         statistics = OrderedDict()
@@ -101,42 +159,4 @@ class SawyerLiftEnvGC(SawyerLiftEnv):
                 ))
         return statistics
 
-    def sawyer_step(self, act, *args, **kwargs):
-        act[0] = 0
-        out = super().step(act, *args, **kwargs)
-
-        current_states = self._get_body_states()
-        for name, body in self._objects.items():
-            current = current_states[name]
-            init = self._init_states[name]
-
-            x = init['pos'][0:1]
-            yz = current['pos'][1:3]
-            theta = current['theta']
-            pos = x + yz
-            bullet.set_body_state(body, pos, theta)
-
-        obs = self.get_observation()
-        rew = self.get_reward(obs['state_observation'])
-        term = False
-        info = {}
-        return obs, rew, term, info
-
-    def step(self, *args, **kwargs):
-        obs, reward, done, info = self.sawyer_step(*args, **kwargs)
-        info = {
-            **info,
-            **self.get_info()
-        }
-        return obs, reward, done, info
-
-    def _get_body_states(self):
-        states = {}
-        for name, body in self._objects.items():
-            state = bullet.get_body_info(body, ['pos', 'theta'])
-            states[name] = state
-        return states
-
-    def render(self, *args, **kwargs):
-        return self.render(*args, **kwargs)
 
