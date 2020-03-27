@@ -9,7 +9,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
                  goal_pos=(0.75, 0.2, -0.1),
                  reward_type='shaped',
                  reward_min=-2.5,
-                 randomize=True,
+                 randomize=False,
                  observation_mode='state',
                  obs_img_dim=48,
                  *args,
@@ -53,6 +53,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
 
         if self._randomize:
             choice = np.random.randint(3)
+            print("---------------choice: ", choice)
             object_position = self._trimodal_positions[choice]
             #object_position = np.random.uniform(
             #    low=self._object_position_low, high=self._object_position_high)

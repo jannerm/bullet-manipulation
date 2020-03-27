@@ -168,6 +168,9 @@ def main(args):
                                   args.data_save_directory, timestamp)
     data_save_path = os.path.abspath(data_save_path)
     video_save_path = os.path.join(data_save_path, "videos")
+
+    image_save_path = os.path.join(data_save_path, "images")
+
     if not os.path.exists(data_save_path):
         os.makedirs(data_save_path)
     if not os.path.exists(video_save_path) and args.video_save_frequency > 0:
@@ -181,6 +184,8 @@ def main(args):
     pool = roboverse.utils.DemoPool()
     success_pool = roboverse.utils.DemoPool()
     all_trajs = []
+
+    num_success = 0
     for j in tqdm(range(args.num_trajectories)):
         render_images = args.video_save_frequency > 0 and \
                         j % args.video_save_frequency == 0
@@ -191,8 +196,8 @@ def main(args):
             success, images, traj = scripted_markovian(env, pool, render_images)
 
         if success:
-            num_grasps += 1
-            print('Num Reaches: {}'.format(num_grasps))
+            num_success += 1
+            print('Num success: {}'.format(num_success))
             top = pool._size
             bottom = top - args.num_timesteps
             for i in range(bottom, top):
@@ -204,6 +209,15 @@ def main(args):
                     pool._fields['terminals'][i]
                 )
             all_trajs.append(traj)
+
+            new_image_save_path = os.path.join(image_save_path, str(num_success))
+            for i in range(len(images)):
+                if not os.path.exists(new_image_save_path):
+                    os.makedirs(new_image_save_path)
+                import imageio;
+                print('{}/t_{}.png'.format(new_image_save_path, i))
+                imageio.imwrite(
+                    '{}/t_{}.png'.format(new_image_save_path, i), images[i])
 
             """
             
@@ -227,7 +241,7 @@ def main(args):
     success_pool.save(params, data_save_path,
                       '{}_pool_{}_success_only.pkl'.format(
                           timestamp, pool.size))
-    path = "/home/huihanl/bm-new/reaching_success_fixed_{}.npy".format(timestamp)
+    path = "/home/gaoyuezhou/Desktop/images-bullet/bullet-manipulation/data/reaching_success_fixed_{}.npy".format(timestamp)
     np.save(path, all_trajs)
 
 if __name__ == "__main__":
@@ -247,7 +261,7 @@ if __name__ == "__main__":
     parser.add_argument("--non-markovian", dest="non_markovian",
                         action="store_true", default=False)
     parser.add_argument("-o", "--observation-mode", type=str, default='state',
-                        choices=('state', 'pixel', 'pixels_debug'))
+                        choices=('state', 'pixels', 'pixels_debug'))
 
     args = parser.parse_args()
 
