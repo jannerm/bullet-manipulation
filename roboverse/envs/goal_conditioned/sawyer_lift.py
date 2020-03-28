@@ -8,6 +8,12 @@ from roboverse.envs.sawyer_lift import SawyerLiftEnv
 from roboverse.envs.sawyer_2d import Sawyer2dEnv
 from collections import OrderedDict
 
+from multiworld.envs.env_util import (
+    get_stat_in_paths,
+    create_stats_ordered_dict,
+)
+
+
 from gym.spaces import Box, Dict
 
 class SawyerLiftEnvGC(Sawyer2dEnv):
@@ -35,6 +41,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             low=self._env._pos_low,
             high=self._env._pos_high)
         super().reset()
+        self._env.open_gripper()
 
         ee_pos = bullet.get_link_state(self._env._sawyer, self._env._end_effector, 'pos')
         cube_pos = np.random.uniform(
@@ -46,7 +53,6 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             cube_pos = ee_pos
         bullet.set_body_state(self._objects['cube'],
                               cube_pos, deg=[90,0,-90])
-        self._env.open_gripper()
 
         obs = self.get_dict_observation()
         return obs
@@ -98,6 +104,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         reward = np.clip(reward, self._min_reward, 1e10)
         reward[goal_dist < 0.25] += self._bonus
         return reward
+
     def _set_spaces(self):
         act_dim = 4
         act_bound = 1
@@ -158,5 +165,12 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
                 always_show_all_stats=True,
                 ))
         return statistics
+
+    def sample_goals(self, batch_size):
+        goals = np.tile(self.hand_and_obj_goal, (batch_size, 1))
+        return {
+            'state_desired_goal' : goals,
+            'desired_goal' : goals,
+        }
 
 

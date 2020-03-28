@@ -33,6 +33,44 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
             'img_dim': 84
         },
     },
+    {
+        'id': 'SawyerLiftGCTest-v0',
+        'entry_point': ('roboverse.envs.goal_conditioned.sawyer_lift:SawyerLiftEnvGC'),
+        'kwargs': {
+            'goal_mult': 4,
+            'action_scale': .1,
+            'action_repeat': 10,
+            'timestep': 1./120,
+            'gui': False,
+            'pos_init': [.75, 0, 0],
+            'pos_high':[.75,.4,.25],
+            'pos_low':[.75,-.6,-.36],
+            'is_eval': True,
+            'max_force': 1000,
+            'solver_iterations': 50,
+            'img_dim': 48,
+        }
+    },
+    {
+        'id': 'SawyerLiftGCTrain-v0',
+        'entry_point': ('roboverse.envs.goal_conditioned.sawyer_lift:SawyerLiftEnvGC'),
+        'kwargs': {
+            'goal_mult': 4,
+            'action_scale': .1,
+            'action_repeat': 10,
+            'timestep': 1./120,
+            'gui': False,
+            'pos_init': [.75, 0, 0],
+            'pos_high':[.75,.4,.25],
+            'pos_low':[.75,-.6,-.36],
+            'is_eval': False,
+            'max_force': 1000,
+            'solver_iterations': 50,
+            'img_dim': 48,
+        }
+    },
+
+
 
 )
 
