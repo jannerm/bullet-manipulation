@@ -21,11 +21,9 @@ while True:
         # action[:3] = 1
         action[3] = 1
         obs, reward, done, info = env.step(action)
-        l_grip = bullet.get_index_by_attribute(env._sawyer, 'link_name', 'right_gripper_l_finger')
-        r_grip = bullet.get_index_by_attribute(env._sawyer, 'link_name', 'right_gripper_r_finger')
-        dist = np.array(bullet.get_link_state(env._sawyer, l_grip, 'pos')) - np.array(bullet.get_link_state(env._sawyer, r_grip, 'pos'))
+        dist = obs['state_observation'][-1]
         # print(dist)
         total_dists.append(dist)
         # bullet.get_index_by_attribute(env._sawyer, 'link_name', 'right_gripper_l_finger')
-    print(np.array(total_dists).mean(axis=0)[1])
+    print(np.array(total_dists).mean())
     env.reset()

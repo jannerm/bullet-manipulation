@@ -67,9 +67,22 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         reward = self.compute_reward(action, obs)
         return obs, reward, done, info
 
+    def ee_pos_from_obs(self, obs):
+        return obs[:2]
+
+    def cube_pos_from_obs(self, obs):
+        return obs[2:4]
+
+    def achieved_goal_from_obs(self, obs):
+        return np.concatenate(
+            (self.ee_pos_from_obs(obs),
+             self.cube_pos_from_obs(obs))
+        )
 
     def get_dict_observation(self):
         obs = self.get_observation()
+        gripper = self.get_gripper_dist()
+        obs = np.r_[obs, gripper]
         achieved_goal = self.achieved_goal_from_obs(obs)
 
         cube_pos = bullet.get_midpoint(self._objects['cube'])[1:]
@@ -81,9 +94,6 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             'state_desired_goal': self.hand_and_obj_goal,
             'state_achieved_goal': achieved_goal,
         }
-
-    def achieved_goal_from_obs(self, obs):
-        return np.concatenate((obs[:2], obs[-2:]))
 
     def compute_reward(self, action, observation):
         actions = action[None]
@@ -172,5 +182,16 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             'state_desired_goal' : goals,
             'desired_goal' : goals,
         }
+
+    def get_gripper_dist(self):
+        l_grip_id = bullet.get_index_by_attribute(self._env._sawyer, 'link_name',
+                                               'right_gripper_l_finger')
+        r_grip_id = bullet.get_index_by_attribute(self._env._sawyer, 'link_name',
+                                               'right_gripper_r_finger')
+        l_grip = np.array(bullet.get_link_state(
+            self._env._sawyer, l_grip_id, 'pos'))
+        r_grip = np.array(bullet.get_link_state(
+            self._env._sawyer, r_grip_id, 'pos'))
+        return (r_grip - l_grip)[1] * 10
 
 
