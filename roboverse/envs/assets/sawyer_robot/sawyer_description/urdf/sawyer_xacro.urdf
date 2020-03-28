@@ -586,7 +586,7 @@
       <parent link="right_electric_gripper_base"/>
       <child link="right_gripper_l_finger"/>
       <!-- <limit effort="20.0" lower="0.0" upper="0.020833" velocity="5.0"/> -->
-      <limit effort="20.0" lower="0.0" upper="0.03" velocity="5.0"/>
+      <limit effort="20.0" lower="0.0" upper="0.05" velocity="5.0"/>
       <dynamics damping="100.0" friction="500.0"/>
     </joint>
 
@@ -599,7 +599,7 @@
       <parent link="right_electric_gripper_base"/>
       <child link="right_gripper_r_finger"/>
       <!-- <limit effort="20.0" lower="-0.020833" upper="0.0" velocity="5.0"/> -->
-      <limit effort="20.0" lower="-0.045" upper="0.0" velocity="5.0"/>
+      <limit effort="20.0" lower="-0.065" upper="0.0" velocity="5.0"/>
       <mimic joint="right_gripper_l_finger_joint" multiplier="-1.0"/>
       <dynamics damping="100.0" friction="500.0"/>
     </joint>

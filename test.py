@@ -4,7 +4,7 @@ import roboverse.bullet as bullet
 import pdb
 import cv2
 
-render = False 
+render = True 
 env = rv.make('SawyerLiftGC-v0', goal_mult=4, action_scale=.1, action_repeat=10,
 # env = rv.make('SawyerLift2d-v0', goal_mult=4, action_scale=.1, action_repeat=10,
               timestep=1./120, gui=render)
