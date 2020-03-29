@@ -18,10 +18,11 @@ from gym.spaces import Box, Dict
 
 class SawyerLiftEnvGC(Sawyer2dEnv):
 
-    def __init__(self, *args, goal_pos=[.75, -.4, .2], is_eval=False, **kwargs):
-        self.is_eval = is_eval
+    def __init__(self, *args, goal_pos=[.75, -.4, .2],
+                 reset_obj_in_hand_rate=0.5, **kwargs):
         self._goal_pos = goal_pos
         self.hand_and_obj_goal = np.tile(goal_pos[1:], (2))
+        self.reset_obj_in_hand_rate = reset_obj_in_hand_rate
         super().__init__(*args, env='SawyerLift2d-v0', goal_pos=goal_pos, **kwargs)
         self.record_args(locals())
 
@@ -30,14 +31,16 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         ee_pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
         ee_dist = bullet.l2_dist(cube_pos[1:], ee_pos[1:])
         goal_dist = bullet.l2_dist(cube_pos[1:], self._goal_pos[1:])
+        hand_goal_dist = bullet.l2_dist(ee_pos[1:], self._goal_pos[1:])
 
         return {
             'hand_dist': ee_dist,
             'obj_dist': goal_dist,
+            'hand_goal_dist': hand_goal_dist,
         }
 
     def reset(self):
-        self._env._pos_init = np.random.uniform(
+        self._env._pos_init[:] = np.random.uniform(
             low=self._env._pos_low,
             high=self._env._pos_high)
         super().reset()
@@ -48,7 +51,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             low=self._pos_low,
             high=self._pos_high)
         cube_pos[-1] = -.3
-        if not self.is_eval and np.random.random() > 0.5:
+        if np.random.random() > 1 - self.reset_obj_in_hand_rate:
             ee_pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
             cube_pos = ee_pos
         bullet.set_body_state(self._objects['cube'],
@@ -58,13 +61,30 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         return obs
 
     def step(self, action, *args, **kwargs):
+        action[3] = 0.3
+        if action[3] > 0:
+            action[3] = 10
+        else:
+            action[3] = -10
         obs, reward, done, info = super().step(action, *args, **kwargs)
+        # cube_pos = np.random.uniform(
+            # low=self._pos_low,
+            # high=self._pos_high)
+        # ee_pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
+        # cube_pos = ee_pos
+        # bullet.set_body_state(self._objects['cube'],
+                              # cube_pos, deg=[90,0,-90])
+
+
         info = {
             **info,
             **self.get_info()
         }
+
         obs = self.get_dict_observation()
         reward = self.compute_reward(action, obs)
+        # print(obs['state_observation'][:2], reward, self.is_eval)
+
         return obs, reward, done, info
 
     def ee_pos_from_obs(self, obs):

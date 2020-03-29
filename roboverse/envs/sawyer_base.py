@@ -106,7 +106,7 @@ class SawyerBaseEnv(gym.Env, Serializable):
     
     def open_gripper(self, act_repeat=10):
         delta_pos = [0,0,0]
-        gripper = 0
+        gripper = -10
         for _ in range(act_repeat):
             self.step(delta_pos, gripper)
 
