@@ -103,10 +103,10 @@ class SawyerBaseEnv(gym.Env, Serializable):
 
     def set_reset_hook(self, fn=lambda env: None):
         self._reset_hook = fn
-    
+
     def open_gripper(self, act_repeat=10):
         delta_pos = [0,0,0]
-        gripper = -10
+        gripper = 0
         for _ in range(act_repeat):
             self.step(delta_pos, gripper)
 
