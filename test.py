@@ -4,8 +4,8 @@ import roboverse.bullet as bullet
 import pdb
 import cv2
 
-render = True 
-env = rv.make('SawyerLiftGC-v0', goal_mult=4, action_scale=.1, action_repeat=10,
+render = True
+env = rv.make('SawyerLiftGC-v0', goal_mult=4, action_scale=.01, action_repeat=50,
 # env = rv.make('SawyerLift2d-v0', goal_mult=4, action_scale=.1, action_repeat=10,
               timestep=1./120, gui=render)
 
@@ -20,6 +20,7 @@ while True:
         action = env.action_space.sample()
         # action[:3] = 1
         action[3] = 1
+        action[2] = -1
         obs, reward, done, info = env.step(action)
         dist = obs['state_observation'][-1]
         # print(dist)

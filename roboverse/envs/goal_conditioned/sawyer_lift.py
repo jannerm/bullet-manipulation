@@ -106,10 +106,15 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             observations['state_achieved_goal'])
         ee_pos = achieved_goal_info['hand_pos']
         obj_pos = achieved_goal_info['obj_pos']
+
+        desired_goal_info = self.get_info_from_achieved_goals(
+            observations['state_desired_goal'])
+        obj_desired_goal = desired_goal_info['obj_pos']
+
         ee_dist = bullet.l2_dist2d(obj_pos, ee_pos)
         goal_dist = bullet.l2_dist2d(
             obj_pos,
-            np.tile(self._goal_pos[2:], (len(obj_pos), 1))
+            obj_desired_goal
         )
         reward = -(ee_dist + self._goal_mult * goal_dist)
         reward = np.clip(reward, self._min_reward, 1e10)
@@ -167,7 +172,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
                 high=self._env._pos_high,
                 size=(batch_size, len(self._env._pos_low)))
             # Make sure the objects is in the air
-            obj_goals[:, -1] = obj_goals[:, -1].clip(0, 1e10)
+            # obj_goals[:, -1] = obj_goals[:, -1].clip(0, 1e10)
         elif self.goal_mode == 'obj_in_bowl':
             obj_goals = np.tile(
                 bullet.get_midpoint(self._objects['bowl']),
