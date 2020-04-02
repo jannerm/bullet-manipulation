@@ -34,7 +34,7 @@
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
         <!--<cylinder radius="0.7" length=".05"/>-->
-          <box size="1.05 1.05 .1"/>
+          <box size="1.05 1.05 .2"/>
       </geometry>
        <material name="blue"/>
     </visual>

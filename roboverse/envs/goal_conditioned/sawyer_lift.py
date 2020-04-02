@@ -148,6 +148,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         return self.get_achieved_goal()
 
     def set_env_state(self, state):
+        self.reset()
         goal_info = self.get_info_from_achieved_goal(state)
         bullet.position_control(
             self._sawyer,
