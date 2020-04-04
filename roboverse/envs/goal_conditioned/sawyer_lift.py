@@ -35,7 +35,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
                 low=self._pos_low,
                 high=self._pos_high)
             # By default, reset cube pos on ground.
-            cube_reset_pos[-1] = -.3
+            cube_reset_pos[-1] = SawyerLiftEnvGC.GROUND_Y
             if obj_id == obj_id_to_put_in_hand:
                 cube_reset_pos = ee_reset_pos
             bullet.set_body_state(self._objects[self.get_obj_name(obj_id)],
@@ -162,7 +162,10 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         return img
 
     def get_goal(self):
-        return self._goal_pos
+        return {
+            'state_desired_goal': self._goal_pos,
+            'desired_goal': self._goal_pos
+        }
 
     def get_env_state(self):
         return self.get_achieved_goal()
@@ -186,7 +189,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             )
 
     def set_to_goal(self, goal):
-        self.set_env_state(goal)
+        self.set_env_state(goal['state_desired_goal'])
 
     def sample_goals(self, batch_size):
         low = self._env._pos_low[1:]

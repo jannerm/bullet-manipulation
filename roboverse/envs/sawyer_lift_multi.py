@@ -25,7 +25,7 @@ class SawyerLiftMultiEnv(SawyerBaseEnv):
         super()._load_meshes()
         self._objects.update({
             'bowl':  bullet.objects.bowl(),
-            'lid': bullet.objects.lid(),
+            # 'lid': bullet.objects.lid(),
         })
         for obj_id in range(self.num_obj):
             obj_name = self.get_obj_name(obj_id)
