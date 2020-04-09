@@ -31,6 +31,8 @@ print("lid_joint_id", lid_joint_id)
 lid_joint_pos = np.array(bullet.get_link_state(env._objects['box'], lid_joint_id, 'world_link_pos'))
 print("lid_joint_pos", lid_joint_pos)
 handle_idx = 1 # start with going for right handle.
+ts = 0 # Persistent across all for-loops
+reward_per_ts = [] # store rewards across all for-loops
 
 for i in range(1000):
     ee_pos = np.array(env.get_end_effector_pos())
@@ -151,6 +153,8 @@ for i in range(1000):
     print('object to goal: {}'.format(info['object_goal_distance']))
     print('object to gripper: {}'.format(info['object_gripper_distance']))
     episode_reward += r
+    ts += 1
+    reward_per_ts.append(r)
 
 # episode_reward = 0.
 holding = False
@@ -271,6 +275,8 @@ for i in range(1000):
     print('object to goal: {}'.format(info['object_goal_distance']))
     print('object to gripper: {}'.format(info['object_gripper_distance']))
     episode_reward += r
+    ts += 1
+    # reward_per_ts.append(r)
 
 holding = False
 rotate_object = False
@@ -330,6 +336,17 @@ for i in range(1000):
     print('object to goal: {}'.format(info['object_goal_distance']))
     print('object to gripper: {}'.format(info['object_gripper_distance']))
     episode_reward += r
+    ts += 1
+    # reward_per_ts.append(r)
+
+def plot_reward(rewards):
+	import matplotlib.pyplot as plt
+	plt.plot(list(range(len(rewards))), rewards, color='lightskyblue')
+	plt.title("Scripted Door opening Reward vs. Timestep")
+	plt.xlabel("Timestep")
+	plt.ylabel("Reward")
+	plt.savefig('scripted_door_reward.png')
+	plt.close()
 
 print('Episode reward: {}'.format(episode_reward))
 object_pos = env.get_object_midpoint(obj_key)
@@ -338,3 +355,5 @@ if object_pos[2] > -0.1:
 
 if args.save_video:
     utils.save_video('data/lego_test_{}.avi'.format(0), images)
+
+plot_reward(reward_per_ts)

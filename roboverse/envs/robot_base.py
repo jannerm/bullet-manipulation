@@ -95,6 +95,7 @@ class RobotBaseEnv(gym.Env, Serializable):
 
         self._prev_pos = np.array(self._pos_init)
         self.theta = bullet.deg_to_quat([180, 0, 0])
+
         bullet.position_control(self._robot_id, self._end_effector, self._prev_pos, self.theta)
         self.open_gripper()
         #self._reset_hook(self)

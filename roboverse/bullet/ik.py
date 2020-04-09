@@ -102,9 +102,9 @@ def sawyer_position_ik(body, link, pos, theta, gripper, gripper_name=None, dampi
     #### ik
     ik_solution = ik(body, link, pos, theta, damping)
     ik_solution[-2:] = gripper_state
-    print("HI", ik_solution)
+    # print("HI", ik_solution)
     joints, current = get_joint_positions(body)
-    print(joints)
+    # print(joints)
     #### position control
     forces = [max_force for _ in range(len(joints))]
     p.setJointMotorControlArray(body, joints, p.POSITION_CONTROL, targetPositions=ik_solution, forces=forces)

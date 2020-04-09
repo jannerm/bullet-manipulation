@@ -14,8 +14,9 @@ bullet.setup()
 ## load meshes
 table = bullet.objects.table()
 # spam = bullet.objects.spam()
-box = bullet.objects.box()
+# box = bullet.objects.box()
 # hinge = bullet.objects.hinge()
+w200 = bullet.objects.widowx_200()
 
 while True:
     time.sleep(0.01)

@@ -130,8 +130,8 @@ def render(height, width, view_matrix, projection_matrix,
     # print("len(img)", len(img))
     img = np.reshape(np.array(img), (height, width, 4))
     img = img[:,:,:-1]
-    if gaussian_width > 0:
-        img = cv2.GaussianBlur(img, (gaussian_width, gaussian_width), 0)
+    # if gaussian_width > 0:
+    #     img = cv2.GaussianBlur(img, (gaussian_width, gaussian_width), 0)
     return img, depth, segmentation
 
 ############################

@@ -5,13 +5,16 @@ from roboverse.utils.shapenet_utils import load_single_object
 
 
 class WidowX200GraspEnv(WidowBaseEnv):
-
     def __init__(self, goal_pos=(.7, 0.15, -0.20), *args, **kwargs):
         self._env_name = 'WidowX200GraspEnv'
         kwargs['downwards'] = False
         super().__init__(*args, **kwargs)
         self._goal_pos = goal_pos
-        self._reward_type = 'sparse'
+        self._reward_type = 'shaped'
+        self.RESET_JOINTS = [1.57, -0.6, -0.6, -1.57, 1.57]
+        # [ 0.5, 0, -0.5, -0.5, 1.57,  9.16906432e+00  3.70000000e-02 -3.70000000e-02]
+        # -0.15
+        self._end_effector = 8
 
 
     def _load_meshes(self):
@@ -26,6 +29,31 @@ class WidowX200GraspEnv(WidowBaseEnv):
             #                              [.7, -0.35, 0], quat=[1, 1, 1, 1],scale=0.7)[0],
             'box': bullet.objects.box(),
         }
+
+    def reset(self):
+        bullet.reset()
+        self._load_meshes()
+        # Allow the objects to settle down after they are dropped in sim
+        for _ in range(50):
+            bullet.step()
+
+        self._format_state_query()
+
+        bullet.setup_headless(self._timestep, solver_iterations=self._solver_iterations)
+
+        for i in range(len(self.RESET_JOINTS)):
+            bullet.p.resetJointState(self._robot_id, i, self.RESET_JOINTS[i])
+        # This is probably useless (Jonathan)
+        # bullet.p.setJointMotorControlArray(
+        #     self._robot_id, 
+        #     [_ for _ in range(5)],
+        #     bullet.p.POSITION_CONTROL,
+        #     self.RESET_JOINTS
+        # )
+        self._prev_pos, self.theta = bullet.p.getLinkState(self._robot_id, 5, computeForwardKinematics=1)[4:6]
+        self.open_gripper()
+        #self._reset_hook(self)
+        return self.get_observation()
 
     def get_reward(self, info):
         if self._reward_type == 'sparse':
@@ -45,6 +73,10 @@ class WidowX200GraspEnv(WidowBaseEnv):
     def step(self, *action):
         delta_pos, gripper = self._format_action(*action)
         pos = bullet.get_link_state(self._robot_id, self._end_effector, 'pos')
+
+        # # Debug
+        q_indices = [bullet.get_joint_info(self._robot_id, j, 'joint_name') for j in range(10)]
+        # print("q_indices", q_indices)
         pos += delta_pos * self._action_scale
         pos = np.clip(pos, self._pos_low, self._pos_high)
 

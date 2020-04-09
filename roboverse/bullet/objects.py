@@ -34,8 +34,14 @@ PDATA_PATH = pdata.getDataPath()
 sawyer = loader(ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro.urdf')
 sawyer_finger_visual_only = loader(ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro_finger_visual_only.urdf')
 widow_downwards = loader(ASSET_PATH, 'widowx/widowxdownwards.urdf', pos=[0.7, 0, 0.1])
-widow = loader(ASSET_PATH, 'widowx/widowx.urdf', pos=[0.7, 0, -0.4])
-widowx_200 = loader(ASSET_PATH, 'interbotix_descriptions/urdf/wx200.urdf', pos=[0.4, 0, -0.4], quat=[0, 0, -0.707, -0.707])
+# widow = loader(ASSET_PATH, 'widowx/widowx.urdf', pos=[0.7, 0, -0.4])
+widowx_200 = loader(
+  ASSET_PATH, 
+  'interbotix_descriptions/urdf/wx200.urdf', 
+  pos=[0.6, 0, -0.4], 
+  deg=[math.pi, math.pi, math.pi],
+  scale=1
+) #pos=[0.4, 0, -0.4], quat=[0, 0, -0.707, -0.707]
 #pos=[0.7, 0, 0.1]
 
 
@@ -53,7 +59,7 @@ duck = loader(PDATA_PATH, 'duck_vhacd.urdf',
 
 x = 1.5
 lego = loader(PDATA_PATH, 'lego/lego.urdf',
-              pos=np.array([0.7, -.3, -.3]) + np.array([math.cos(x), math.sin(x), 0]) * .15,
+              pos=np.array([0.8, -.3, -.3]) + np.array([math.cos(x), math.sin(x), 0]) * .15,
               quat=[0, 0, 1, 0],
               rgba=[1, 0, 0, 1],
               scale=0.8)
@@ -81,7 +87,7 @@ spam = loader(ASSET_PATH, 'objects/spam/spam.urdf',
 box = loader(ASSET_PATH, 'objects/box/box.urdf',
                 # pos=[0.85, 0, -.35],
                 pos=[0.8, 0.075, -.35],
-                scale=0.15)
+                scale=0.125)
 
 hinge = loader(ASSET_PATH, 'objects/hinge/hinge.urdf',
                 pos=[.75, -0.1, -.3],

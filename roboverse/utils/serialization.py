@@ -26,7 +26,7 @@ def save_video(filename, video_frames):
     folder = os.path.dirname(filename)
     make_dir(folder)
 
-    video_frames = np.flip(video_frames, axis=-1)
+    video_frames = np.uint8(np.flip(video_frames, axis=-1))
 
     # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'MJPG')
