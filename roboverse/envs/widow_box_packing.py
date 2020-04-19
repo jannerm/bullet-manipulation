@@ -55,7 +55,7 @@ class WidowBoxPackingOneEnv(WidowX200GraspEnv):
             # door_angle_reward = np.clip(door_angle, 0, self.OPENED_DOOR_ANGLE) / self.OPENED_DOOR_ANGLE
             door_angle_reward = door_angle
             # reward = np.clip(door_angle_reward - gripper_handle_dist, 0, 1)
-            reward = door_angle_reward - gripper_handle_dist
+            reward = door_angle_reward - (5 * gripper_handle_dist)
         else:
             raise NotImplementedError
 
