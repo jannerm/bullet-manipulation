@@ -32,10 +32,10 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
 
         self._object_position_low = (0.49999162183937296 + 0.3, -1.760392168808169e-05, -.36)#(.65, .10, -.36)
         self._object_position_high = (0.49999162183937296 + 0.1, -1.760392168808169e-05, -.36)#(.8, .25, -.36)
-        self._fixed_object_position = (0.49999162183937296 + 0.2, -1.760392168808169e-05, -.36)#-4.563183413075489e-08)#(.75, .2, -.36)
-        self._trimodal_position1 = (0.49999162183937296, -1.760392168808169e-05 - 0.7, -.36)
+        self._fixed_object_position = (0.49999162183937296, -1.760392168808169e-05 - 0.7, -.36)#-4.563183413075489e-08)#(.75, .2, -.36)
+        self._trimodal_position1 = (0.49999162183937296+0.2, -1.760392168808169e-05 - 0.7, -.36)
         self._trimodal_position2 = (0.49999162183937296, -1.760392168808169e-05 - 0.1, -.36)
-        self._trimodal_position3 = (0.49999162183937296, -1.760392168808169e-05 + 0.5, -.36)
+        self._trimodal_position3 = (0.49999162183937296+0.4, -1.760392168808169e-05 + 0.5, -.36)
         self._trimodal_positions = [self._trimodal_position1,self._trimodal_position2,self._trimodal_position3]
 
         self.obs_img_dim = obs_img_dim
