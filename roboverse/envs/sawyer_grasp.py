@@ -9,7 +9,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
                  goal_pos=(0.75, 0.2, -0.1),
                  reward_type='shaped',
                  reward_min=-2.5,
-                 randomize=False,
+                 randomize=True,
                  observation_mode='state',
                  obs_img_dim=48,
                  *args,
@@ -27,11 +27,22 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         self._goal_pos = np.asarray(goal_pos)
         self._reward_type = reward_type
         self._reward_min = reward_min
+
+
         self._randomize = randomize
+        self._multi_obj = True
+        self._obj_list = ['lego', 'duck', 'cube']
+        self._object = self._obj_list[0]
+
+
         self._observation_mode = observation_mode
 
-        self._object_position_low = (0.49999162183937296 + 0.3, -1.760392168808169e-05, -.36)#(.65, .10, -.36)
-        self._object_position_high = (0.49999162183937296 + 0.1, -1.760392168808169e-05, -.36)#(.8, .25, -.36)
+        # self._object_position_low = (0.49999162183937296 + 0.3, -1.760392168808169e-05, -.36)#(.65, .10, -.36)
+        # self._object_position_high = (0.49999162183937296 + 0.1, -1.760392168808169e-05, -.36)#(.8, .25, -.36)
+
+        self._object_position_low = (0.49999162183937296, -1.760392168808169e-05 - 0.7, -.36)#(.65, .10, -.36)
+        self._object_position_high = (0.49999162183937296, -1.760392168808169e-05 + 0.5, -.36)#(.8, .25, -.36)  # make trimodal a continuous distribution
+
         self._fixed_object_position = (0.49999162183937296 + 0.2, -1.760392168808169e-05, -.36)#-4.563183413075489e-08)#(.75, .2, -.36)
         self._trimodal_position1 = (0.49999162183937296, -1.760392168808169e-05 - 0.7, -.36)
         self._trimodal_position2 = (0.49999162183937296, -1.760392168808169e-05 - 0.1, -.36)
@@ -51,17 +62,49 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
     def _load_meshes(self):
         super()._load_meshes()
 
-        if self._randomize:
+        if self._multi_obj:
+            if self._randomize:
+                object_positions = [np.random.uniform(low=self._object_position_low, high=self._object_position_high),
+                                    np.random.uniform(low=self._object_position_low, high=self._object_position_high),
+                                    np.random.uniform(low=self._object_position_low, high=self._object_position_high)]
+            else:
+                object_positions = self._trimodal_positions
+            self._objects = {
+                'lego': bullet.objects.lego(pos=object_positions[0]),
+                'duck': bullet.objects.lego(pos=object_positions[1]),
+                'cube': bullet.objects.lego(pos=object_positions[2])
+            }
             choice = np.random.randint(3)
-            print("---------------choice: ", choice)
-            object_position = self._trimodal_positions[choice]
-            #object_position = np.random.uniform(
-            #    low=self._object_position_low, high=self._object_position_high)
+            self._object = self._obj_list[choice]
+            print(self._object)
+            object_position = object_positions[choice]
         else:
-            object_position = self._fixed_object_position
-        self._objects = {
-            'lego': bullet.objects.lego(pos=object_position)
-        }
+            if self._randomize:
+                object_position = np.random.uniform(low=self._object_position_low, high=self._object_position_high)
+            else:
+                object_position = self._fixed_object_position
+            self._objects = {
+                'lego': bullet.objects.lego(pos=object_position)
+            }
+            self._object = 'lego'
+
+
+
+        # if self._randomize:
+        #     choice = np.random.randint(3)
+        #     print("---------------choice: ", choice)
+        #     object_position = self._trimodal_positions[choice]
+        #     #object_position = np.random.uniform(
+        #     #    low=self._object_position_low, high=self._object_position_high)
+        # if self._uniform:
+        #     object_position = np.random.uniform(low=self._object_position_low, high=self._object_position_high)
+        #     print("obj position: ", object_position)
+        #
+        # else:
+        #     object_position = self._fixed_object_position
+        # self._objects = {
+        #     'lego': bullet.objects.lego(pos=object_position)
+        # }
 
         # set goal_pos to be directly above the randomized position 
         # of lego, rather than a fixed position
@@ -85,7 +128,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         return observation, reward, done, info
 
     def get_info(self):
-        object_pos = np.asarray(self.get_object_midpoint('lego'))
+        object_pos = np.asarray(self.get_object_midpoint(self._object))  ## generalized lego
         object_goal_distance = np.linalg.norm(object_pos - self._goal_pos)
         end_effector_pos = self.get_end_effector_pos()
         object_gripper_distance = np.linalg.norm(
@@ -140,7 +183,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         end_effector_pos = self.get_end_effector_pos()
 
         if self._observation_mode == 'state':
-            object_info = bullet.get_body_info(self._objects['lego'],
+            object_info = bullet.get_body_info(self._objects[self._object],
                                                quat_to_deg=False)
             object_pos = object_info['pos']
             object_theta = object_info['theta']
@@ -158,8 +201,13 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
             # This mode passes in all the true state information + images
             image_observation = self.render_obs()
 
-            object_info = bullet.get_body_info(self._objects['lego'],
+            object_info = bullet.get_body_info(self._objects[self._object],
                                                quat_to_deg=False)
+            all_obj_pos = []
+            for obj in self._obj_list:
+                all_obj_pos.append(bullet.get_body_info(self._objects[obj],
+                                               quat_to_deg=False)["pos"])
+
             object_pos = object_info['pos']
             object_theta = object_info['theta']
             state = np.concatenate(
@@ -168,6 +216,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
             observation = {
                 'state': state,
                 'image': image_observation,
+                'all_obj_pos': all_obj_pos
             }
         else:
             raise NotImplementedError

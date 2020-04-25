@@ -7,11 +7,13 @@ import time
 
 import roboverse
 
-OBJECT_NAME = 'lego'
+# OBJECT_NAME = 'lego'
 EPSILON = 1e-8
 
 
 def scripted_non_markovian(env, pool, render_images):
+    OBJECT_NAME = env._object
+
     env.reset()
     target_pos = env.get_object_midpoint(OBJECT_NAME)
     target_pos += np.random.uniform(low=-0.05, high=0.05, size=(3,))
@@ -59,6 +61,10 @@ def scripted_non_markovian(env, pool, render_images):
 
 def scripted_markovian(env, pool, render_images):
     observation = env.reset()
+
+    OBJECT_NAME = env._object
+
+
     if args.randomize:
         target_pos = env.get_object_midpoint(OBJECT_NAME)
         #target_pos = np.random.uniform(low=env._object_position_low,
