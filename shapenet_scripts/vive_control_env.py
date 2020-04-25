@@ -26,7 +26,7 @@ OBJECT_NAME = "lego"
 
 # set the environment
 reward_type = "grasp_only"
-env = roboverse.make('SawyerGraspOne-v0', reward_type=reward_type)
+#env = roboverse.make('SawyerGraspOne-v0', reward_type=reward_type)
 
 controllers = [e[0] for e in p.getVREvents()]
 
@@ -35,7 +35,7 @@ num_grasps = 0
 ORIENTATION_ENABLED = True
 data = []
 
-def collect_one_trajectory(env, pool, render_images):
+def collect_one_trajectory(env, env2, pool, render_images):
 
     # get VR controller output at one timestamp
     def get_VR_output():
@@ -48,7 +48,7 @@ def collect_one_trajectory(env, pool, render_images):
         if events:
             e = events[0]
         else:
-            return
+            return np.zeros((4,))
 
         # Detect change in button, and change trigger state
         if e[BUTTONS][33] & p.VR_BUTTON_WAS_TRIGGERED:
@@ -67,6 +67,10 @@ def collect_one_trajectory(env, pool, render_images):
 
 
         action = [cont_pos[0] - ee_pos[0], cont_pos[1] - ee_pos[1], cont_pos[2] - ee_pos[2]]
+        #nonlocal prev_pos
+        #action = [cont_pos[0] - prev_pos[0], cont_pos[1] - prev_pos[1], cont_pos[2] - prev_pos[2]]
+        #prev_pos = list(cont_pos)
+
         grip = trigger
         action = np.append(action, [grip])
 
@@ -87,19 +91,31 @@ def collect_one_trajectory(env, pool, render_images):
         agent_infos=[],
         env_infos=[],
     )
-
+    #events = p.getVREvents()
+    #e = events[0]
+    #prev_pos = e[POSITION]
+    #prev_pos = list(prev_pos)
     # Collect a fixed length of trajectory
-    for i in range(args.num_timesteps):
+    for i in range(1000):
+
+        # for _ in range(3):
+        #     action += get_VR_output()
+        #     time.sleep(0.001)
         
+        # for _ in range(3):
         action = get_VR_output()
+        action *= 2.0
 
         if render_images:
             img = env.render()
             images.append(Image.fromarray(np.uint8(img)))
 
         observation = env.get_observation()
+
         traj["observations"].append(observation)
         next_state, reward, done, info = env.step(action)
+        print("ENV: observation of object position: ", next_state[-7:-4])
+
         traj["next_observations"].append(next_state)
         traj["actions"].append(action)
         traj["rewards"].append(reward)
@@ -110,12 +126,13 @@ def collect_one_trajectory(env, pool, render_images):
 
         if info["object_goal_distance_z"] < 0.01:
             accept = True
+        time.sleep(0.03)
 
     # Collect each trajectory besides adding to the DemoPool, for 
     # purpose of  
     if accept:
         data.append(traj)
-    return accept, images
+    return accept, images, traj
 
 
 def main(args):
@@ -130,10 +147,13 @@ def main(args):
     if not os.path.exists(video_save_path) and args.video_save_frequency > 0:
         os.makedirs(video_save_path)
 
-    reward_type = 'sparse' if args.sparse else 'grasp_only'
+    reward_type = 'grasp_only'
     env = roboverse.make('SawyerGraspOne-v0', reward_type=reward_type,
-                         gui=args.gui, randomize=args.randomize,
+                         gui=args.gui, randomize=False,#args.randomize,
                          observation_mode=args.observation_mode)
+    env2 = roboverse.make('SawyerGraspOne-v0', reward_type=reward_type,
+                     gui=args.gui, randomize=False,#args.randomize,
+                     observation_mode=args.observation_mode)
     num_grasps = 0
     pool = roboverse.utils.DemoPool()
     success_pool = roboverse.utils.DemoPool()
@@ -142,9 +162,15 @@ def main(args):
         render_images = args.video_save_frequency > 0 and \
                         j % args.video_save_frequency == 0
 
-
-        success, images = collect_one_trajectory(env, pool, render_images)
-
+        #success, images
+        success, images, traj = collect_one_trajectory(env, env2, pool, render_images)
+        
+        #env2.reset()
+        #actions = traj["actions"]     
+        #for a in actions:
+        #    next_state2, reward, done, info = env2.step(a)
+        #    print("ENV2: observation of object position: ", next_state2[-7:-4])   
+        
         if success:
             num_grasps += 1
             print('Num grasps: {}'.format(num_grasps))
@@ -177,9 +203,9 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--data-save-directory", type=str, default="vr_expert_demos")
-    parser.add_argument("-n", "--num-trajectories", type=int, default=150)
+    parser.add_argument("-n", "--num-trajectories", type=int, default=5)
     parser.add_argument("-p", "--num-parallel-threads", type=int, default=1)
-    parser.add_argument("--num-timesteps", type=int, default=250)
+    parser.add_argument("--num-timesteps", type=int, default=1000)
     parser.add_argument("--noise-std", type=float, default=0.1)
     parser.add_argument("--video_save_frequency", type=int,
                         default=0, help="Set to zero for no video saving")
