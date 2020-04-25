@@ -58,7 +58,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         # set goal_pos to be directly above the randomized position 
         # of lego, rather than a fixed position
         self._goal_pos = np.copy(object_position)
-        self._goal_pos[2] = self._goal_pos[2] + 0.2
+        self._goal_pos[2] = self._goal_pos[2] + 0.1
 
     def step(self, *action):
         delta_pos, gripper = self._format_action(*action)
