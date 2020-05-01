@@ -1,7 +1,11 @@
 import os
 import random
 import numpy as np
+ros_path = '/opt/ros/kinetic/lib/python2.7/dist-packages'
+if ros_path in os.sys.path:
+    os.sys.path.remove(ros_path)
 import cv2
+os.sys.path.append(ros_path)
 import pdb
 
 import pybullet as p
@@ -113,13 +117,10 @@ def render(height, width, view_matrix, projection_matrix,
                                  lightDirection=light_direction,
                                  renderer=renderer)
     _, _, img, depth, segmentation = img_tuple
-    print(width, height)
+
     img = np.array(img).reshape([width, height, 4])
     img = img[:,:,:-1]
-    print("image in bullet: ", img.shape)
-   #print(img.shape) #img[:,:,:-1]
-    #if gaussian_width > 0:
-    #    img = cv2.GaussianBlur(img, (gaussian_width, gaussian_width), 0)
+
     return img, depth, segmentation
 
 ############################

@@ -6,7 +6,7 @@ import subprocess
 def get_data_save_directory(args):
     data_save_directory = args.data_save_directory
 
-    data_save_directory += args.observation_mode
+    data_save_directory += '_{}_{}'.format(args.env, args.observation_mode)
 
     if args.num_trajectories > 1000:
         data_save_directory += '_{}K'.format(int(args.num_trajectories/1000))
@@ -18,10 +18,17 @@ def get_data_save_directory(args):
     else:
         data_save_directory += '_dense_reward'
 
+    if args.random_actions:
+        data_save_directory += '_random_actions'
+    else:
+        data_save_directory += '_scripted_actions'
+
     if args.randomize:
         data_save_directory += '_randomize'
     else:
         data_save_directory += '_fixed_position'
+
+    data_save_directory += '_noise_std_{}'.format(args.noise_std)
 
     return data_save_directory
 
@@ -29,13 +36,20 @@ def get_data_save_directory(args):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("-e", "--env", type=str,
+                        choices=('SawyerGraspV2-v0', 'SawyerGraspOne-v0',
+                                 'SawyerReach-v0', 'SawyerGraspOneV2-v0',
+                                 'SawyerGraspTenV2-v0', 'SawyerGraspOneV4-v0'))
     parser.add_argument("-d", "--data-save-directory", type=str)
     parser.add_argument("-n", "--num-trajectories", type=int, default=2000)
+    parser.add_argument("--noise-std", type=float, default=0.1)
     parser.add_argument("-p", "--num-parallel-threads", type=int, default=10)
     parser.add_argument("--sparse", dest="sparse", action="store_true",
                         default=False)
     parser.add_argument("--randomize", dest="randomize", action="store_true",
                         default=False)
+    parser.add_argument("--random_actions", dest="random_actions",
+                        action="store_true", default=False)
     parser.add_argument("-o", "--observation-mode", type=str, default='pixels')
     args = parser.parse_args()
 
@@ -46,7 +60,10 @@ if __name__ == "__main__":
     save_directory = get_data_save_directory(args)
     command = ['python',
                'shapenet_scripts/randomized_scripted_grasping.py',
+               '-e{}'.format(args.env),
                '-d{}'.format(save_directory),
+               '--noise-std',
+               str(args.noise_std),
                '-n {}'.format(num_trajectories_per_thread),
                '-p {}'.format(args.num_parallel_threads),
                '-o{}'.format(args.observation_mode),
@@ -55,6 +72,8 @@ if __name__ == "__main__":
         command.append('--sparse')
     if args.randomize:
         command.append('--randomize')
+    if args.random_actions:
+        command.append('--random_actions')
 
     subprocesses = []
     for i in range(args.num_parallel_threads):
@@ -62,8 +81,16 @@ if __name__ == "__main__":
         time.sleep(1)
 
     exit_codes = [p.wait() for p in subprocesses]
+
+    # subprocess.call(['python',
+    #                  'shapenet_scripts/combine_trajectories.py',
+    #                  '-d{}'.format(save_directory)]
+    #                 )
     subprocess.call(['python',
-                     'shapenet_scripts/combine_trajectories.py',
-                     '-d{}'.format(save_directory)]
+                     'shapenet_scripts/combine_railrl_pools.py',
+                     '-d{}'.format(save_directory),
+                     '-o{}'.format(args.observation_mode),
+                     '-e{}'.format(args.env)]
                     )
-    # print(exit_codes)
+
+    print(exit_codes)

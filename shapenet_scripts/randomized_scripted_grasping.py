@@ -1,17 +1,26 @@
 import numpy as np
 from tqdm import tqdm
 import os
-from PIL import Image
+import os.path as osp
 import argparse
-import time
+import pickle
 
 import roboverse
+import skvideo.io
+
+from railrl.data_management.env_replay_buffer import EnvReplayBuffer
+from railrl.data_management.obs_dict_replay_buffer import \
+    ObsDictReplayBuffer
 
 OBJECT_NAME = 'lego'
-EPSILON = 1e-8
+EPSILON = 0.05
+V2_GRASPING_ENVS = ['SawyerGraspV2-v0',
+                    'SawyerGraspTenV2-v0',
+                    'SawyerGraspOneV2-v0']
+V4_GRASPING_ENVS = ['SawyerGraspOneV4-v0']
 
 
-def scripted_non_markovian(env, pool, render_images):
+def scripted_non_markovian_grasping(env, pool, render_images):
     env.reset()
     target_pos = env.get_object_midpoint(OBJECT_NAME)
     target_pos += np.random.uniform(low=-0.05, high=0.05, size=(3,))
@@ -47,7 +56,7 @@ def scripted_non_markovian(env, pool, render_images):
 
         if render_images:
             img = env.render()
-            images.append(Image.fromarray(np.uint8(img)))
+            images.append(img)
 
         observation = env.get_observation()
         next_state, reward, done, info = env.step(action)
@@ -57,7 +66,7 @@ def scripted_non_markovian(env, pool, render_images):
     return success, images
 
 
-def scripted_markovian(env, pool, render_images):
+def scripted_markovian_grasping(env, pool, render_images):
     observation = env.reset()
     if args.randomize:
         target_pos = env.get_object_midpoint(OBJECT_NAME)
@@ -74,6 +83,7 @@ def scripted_markovian(env, pool, render_images):
     # target_pos[2] += -0.01
     print("target_pos: ", target_pos)
     images = []
+<<<<<<< HEAD
     grip_open = -1
     grip_close = 1
     traj = dict(
@@ -85,6 +95,10 @@ def scripted_markovian(env, pool, render_images):
         agent_infos=[],
         env_infos=[],
     )
+=======
+    grip_open = -0.8
+    grip_close = 0.8
+>>>>>>> bedeeca2d0dcd26c2f382f8e4097569878edb091
 
     for i in range(args.num_timesteps):
         ee_pos = env.get_end_effector_pos()
@@ -138,8 +152,8 @@ def scripted_markovian(env, pool, render_images):
         action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
 
         if render_images:
-            img = env.render()
-            images.append(Image.fromarray(np.uint8(img)))
+            img = observation['image']
+            images.append(img)
 
         observation = env.get_observation()
         next_state, reward, done, info = env.step(action)
@@ -161,6 +175,208 @@ def scripted_markovian(env, pool, render_images):
     return True, images, traj
 
 
+def scripted_grasping_V2(env, pool, success_pool, random_actions=False):
+    """
+
+    :param env:
+    :param pool:
+    :param success_pool:
+    :param random_actions: When set to True, executes random actions instead
+    of following the object(s).
+    :return:
+    """
+
+    observation = env.reset()
+    object_ind = np.random.randint(0, env._num_objects)
+    actions, observations, next_observations, rewards, terminals, infos = \
+        [], [], [], [], [], []
+
+    for _ in range(args.num_timesteps):
+
+        if not random_actions:
+            if isinstance(observation, dict):
+                object_pos = observation['state'][
+                             object_ind*7 + 8: object_ind*7 + 8 + 3]
+                ee_pos = observation['state'][:3]
+            else:
+                object_pos = observation[
+                             object_ind * 7 + 8: object_ind * 7 + 8 + 3]
+                ee_pos = observation[:3]
+
+            action = object_pos - ee_pos
+            action = action*4.0
+            action += np.random.normal(scale=args.noise_std, size=(3,))
+        else:
+            action = np.random.uniform(low=-1.0, high=1.0, size=(3,))
+            if np.random.uniform() < 0.9:
+                action[2] = -1
+
+        theta_action = np.random.uniform(low=-1 + EPSILON, high=1-EPSILON)
+        action = np.concatenate((action, np.asarray([theta_action])))
+
+        action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
+        next_observation, reward, done, info = env.step(action)
+
+        actions.append(action)
+        observations.append(observation)
+        rewards.append(reward)
+        terminals.append(done)
+        infos.append(info)
+        next_observations.append(next_observation)
+
+        observation = next_observation
+
+        if done:
+            break
+
+    path = dict(
+        actions=actions,
+        rewards=np.asarray(rewards).reshape((-1, 1)),
+        terminals=np.asarray(terminals).reshape((-1, 1)),
+        infos=infos,
+        observations=observations,
+        next_observations=next_observations,
+    )
+
+    if not isinstance(observation, dict):
+        path_length = len(rewards)
+        path['agent_infos'] = np.asarray([{} for i in range(path_length)])
+        path['env_infos'] = np.asarray([{} for i in range(path_length)])
+
+    pool.add_path(path)
+    if rewards[-1] > 0:
+        success_pool.add_path(path)
+
+
+def scripted_grasping_V4(env, pool, success_pool):
+    observation = env.reset()
+    object_ind = np.random.randint(0, env._num_objects)
+    actions, observations, next_observations, rewards, terminals, infos = \
+        [], [], [], [], [], []
+
+    dist_thresh = 0.04 + np.random.normal(scale=0.01)
+
+    for _ in range(args.num_timesteps):
+
+        if isinstance(observation, dict):
+            object_pos = observation['state'][
+                         object_ind * 7 + 8: object_ind * 7 + 8 + 3]
+            ee_pos = observation['state'][:3]
+        else:
+            object_pos = observation[
+                         object_ind * 7 + 8: object_ind * 7 + 8 + 3]
+            ee_pos = observation[:3]
+
+        # print(object_ind)
+        # print(object_pos)
+        # print(ee_pos)
+
+        #ee_pos = observation[:3]
+        # object_pos = observation[object_ind * 7 + 8: object_ind * 7 + 8 + 3]
+        # object_pos += np.random.normal(scale=0.02, size=(3,))
+
+        object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
+        theta_action = 0.
+        # theta_action = np.random.uniform()
+
+        if object_gripper_dist > dist_thresh and env._gripper_open:
+            # print('approaching')
+            action = (object_pos - ee_pos) * 4.0
+            action = np.concatenate(
+                (action, np.asarray([theta_action, 0., 0.])))
+        elif env._gripper_open:
+            # print('gripper closing')
+            action = (object_pos - ee_pos) * 4.0
+            action = np.concatenate(
+                (action, np.asarray([0., -0.7, 0.])))
+        elif object_pos[2] < env._reward_height_thresh:
+            # print('lifting')
+            action = np.asarray([0., 0., 0.7])
+            action = np.concatenate(
+                (action, np.asarray([0., 0., 0.])))
+        else:
+            # print('terminating')
+            action = np.asarray([0., 0., 0.7])
+            action = np.concatenate(
+                (action, np.asarray([0., 0., 0.7])))
+
+        action += np.random.normal(scale=0.1, size=(6,))
+
+        next_observation, reward, done, info = env.step(action)
+
+        actions.append(action)
+        observations.append(observation)
+        rewards.append(reward)
+        terminals.append(done)
+        infos.append(info)
+        next_observations.append(next_observation)
+
+        observation = next_observation
+
+        if done:
+            break
+
+    path = dict(
+        actions=actions,
+        rewards=np.asarray(rewards).reshape((-1, 1)),
+        terminals=np.asarray(terminals).reshape((-1, 1)),
+        infos=infos,
+        observations=observations,
+        next_observations=next_observations,
+    )
+
+    if not isinstance(observation, dict):
+        path_length = len(rewards)
+        path['agent_infos'] = np.asarray([{} for i in range(path_length)])
+        path['env_infos'] = np.asarray([{} for i in range(path_length)])
+
+    pool.add_path(path)
+    if rewards[-1] > 0:
+        success_pool.add_path(path)
+
+
+def scripted_markovian_reaching(env, pool, render_images):
+    observation = env.reset()
+    if args.randomize:
+        target_pos = np.random.uniform(low=env._object_position_low,
+                                      high=env._object_position_high)
+        target_pos[:2] += np.random.uniform(low=-0.03, high=0.03, size=(2,))
+        target_pos[2] += np.random.uniform(low=-0.02, high=0.02, size=(1,))
+    else:
+        target_pos = env.get_object_midpoint(OBJECT_NAME)
+        target_pos[:2] += np.random.uniform(low=-0.05, high=0.05, size=(2,))
+        target_pos[2] += np.random.uniform(low=-0.01, high=0.01, size=(1,))
+
+    images = []
+
+    for i in range(args.num_timesteps):
+        ee_pos = env.get_end_effector_pos()
+        xyz_diff = target_pos - ee_pos
+        xy_diff = xyz_diff[:2]
+
+        action = target_pos - ee_pos
+        action *= 5.0
+        if np.linalg.norm(xy_diff) > 0.05:
+            action[2] *= 0.5
+        grip = 0.0
+        action = np.append(action, [grip])
+        action += np.random.normal(scale=args.noise_std)
+        action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
+
+        if render_images:
+            img = observation['image']
+            images.append(img)
+
+        observation = env.get_observation()
+        next_state, reward, done, info = env.step(action)
+        pool.add_sample(observation, action, next_state, reward, done)
+        # time.sleep(0.2)
+        observation = next_state
+
+    success = info['object_gripper_distance'] < 0.03
+    return success, images
+
+
 def main(args):
 
     timestamp = roboverse.utils.timestamp()
@@ -174,25 +390,72 @@ def main(args):
         os.makedirs(video_save_path)
 
     reward_type = 'sparse' if args.sparse else 'shaped'
-    env = roboverse.make('SawyerGraspOne-v0', reward_type=reward_type,
+    if args.env in V2_GRASPING_ENVS or args.env in V4_GRASPING_ENVS:
+        tranpose_image = True
+    else:
+        transpose_image = False
+
+    env = roboverse.make(args.env, reward_type=reward_type,
                          gui=args.gui, randomize=args.randomize,
+<<<<<<< HEAD
                          observation_mode=args.observation_mode)
     num_grasps = 0
     pool = roboverse.utils.DemoPool()
     success_pool = roboverse.utils.DemoPool()
     all_trajs = []
+=======
+                         observation_mode=args.observation_mode,
+                         transpose_image=tranpose_image)
+
+    num_success = 0
+    if args.env == 'SawyerGraspOne-v0' or args.env == 'SawyerReach-v0':
+        pool = roboverse.utils.DemoPool()
+        success_pool = roboverse.utils.DemoPool()
+    elif args.env in V2_GRASPING_ENVS or args.env in V4_GRASPING_ENVS:
+        if 'pixels' in args.observation_mode:
+            pool_size = args.num_trajectories*args.num_timesteps
+            railrl_pool = ObsDictReplayBuffer(pool_size, env, observation_key='image')
+            railrl_success_pool = ObsDictReplayBuffer(pool_size, env, observation_key='image')
+        elif args.observation_mode == 'state':
+            pool_size = args.num_trajectories*args.num_timesteps
+            railrl_pool = EnvReplayBuffer(pool_size, env)
+            railrl_success_pool = EnvReplayBuffer(pool_size, env)
+
+>>>>>>> bedeeca2d0dcd26c2f382f8e4097569878edb091
     for j in tqdm(range(args.num_trajectories)):
         render_images = args.video_save_frequency > 0 and \
                         j % args.video_save_frequency == 0
 
-        if args.non_markovian:
-            success, images = scripted_non_markovian(env, pool, render_images)
+        if args.env == 'SawyerGraspOne-v0':
+            if args.non_markovian:
+                success, images = scripted_non_markovian_grasping(env, pool, render_images)
+            else:
+                success, images = scripted_markovian_grasping(env, pool, render_images)
+        elif args.env == 'SawyerReach-v0':
+            success, images = scripted_markovian_reaching(env, pool, render_images)
+        elif args.env in V2_GRASPING_ENVS:
+            assert not render_images
+            success = False
+            scripted_grasping_V2(env, railrl_pool, railrl_success_pool,
+                                 random_actions=args.random_actions)
+        elif args.env in V4_GRASPING_ENVS:
+            assert not render_images
+            success = False
+            scripted_grasping_V4(env, railrl_pool, railrl_success_pool)
         else:
+<<<<<<< HEAD
             success, images, traj = scripted_markovian(env, pool, render_images)
 
         if success:
             num_grasps += 1
             print('Num Reaches: {}'.format(num_grasps))
+=======
+            raise NotImplementedError
+
+        if success:
+            num_success += 1
+            print('Num success: {}'.format(num_success))
+>>>>>>> bedeeca2d0dcd26c2f382f8e4097569878edb091
             top = pool._size
             bottom = top - args.num_timesteps
             for i in range(bottom, top):
@@ -217,10 +480,19 @@ def main(args):
                 images_recreated.append(Image.fromarray(np.uint8(img)))
             """
         if render_images:
-            images[0].save('{}/{}.gif'.format(video_save_path, j),
-                           format='GIF', append_images=images[1:],
-                           save_all=True, duration=100, loop=0)
+            filename = '{}/{}.mp4'.format(video_save_path, j)
+            writer = skvideo.io.FFmpegWriter(
+                filename,
+                inputdict={"-r": "10"},
+                outputdict={
+                    '-vcodec': 'libx264',
+                })
+            num_frames = len(images)
+            for i in range(num_frames):
+                writer.writeFrame(images[i])
+            writer.close()
 
+<<<<<<< HEAD
     params = env.get_params()
     pool.save(params, data_save_path,
               '{}_pool_{}.pkl'.format(timestamp, pool.size))
@@ -229,9 +501,32 @@ def main(args):
                           timestamp, pool.size))
     path = "/home/huihanl/bm-new/reaching_success_fixed_{}.npy".format(timestamp)
     np.save(path, all_trajs)
+=======
+    if args.env == 'SawyerGraspOne-v0' or args.env == 'SawyerReach-v0':
+        params = env.get_params()
+        pool.save(params, data_save_path,
+                  '{}_pool_{}.pkl'.format(timestamp, pool.size))
+        success_pool.save(params, data_save_path,
+                          '{}_pool_{}_success_only.pkl'.format(
+                              timestamp, pool.size))
+    elif args.env in V2_GRASPING_ENVS or args.env in V4_GRASPING_ENVS:
+        path = osp.join(data_save_path,
+                        '{}_pool_{}.pkl'.format(timestamp, pool_size))
+        pickle.dump(railrl_pool, open(path, 'wb'), protocol=4)
+        path = osp.join(data_save_path,
+                        '{}_pool_{}_success_only.pkl'.format(
+                            timestamp, pool_size))
+        pickle.dump(railrl_success_pool, open(path, 'wb'), protocol=4)
+        print('Num success: {}'.format(np.sum(railrl_success_pool._rewards)))
+
+>>>>>>> bedeeca2d0dcd26c2f382f8e4097569878edb091
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("-e", "--env", type=str,
+                        choices=('SawyerGraspOne-v0', 'SawyerGraspV2-v0',
+                                 'SawyerReach-v0', 'SawyerGraspOneV2-v0',
+                                 'SawyerGraspTenV2-v0', 'SawyerGraspOneV4-v0'))
     parser.add_argument("-d", "--data-save-directory", type=str)
     parser.add_argument("-n", "--num-trajectories", type=int, default=500)
     parser.add_argument("-p", "--num-parallel-threads", type=int, default=1)
@@ -241,14 +536,27 @@ if __name__ == "__main__":
                         default=1, help="Set to zero for no video saving")
     parser.add_argument("--randomize", dest="randomize",
                         action="store_true", default=False)
+    parser.add_argument("--random-actions", dest="random_actions",
+                        action="store_true", default=False)
     parser.add_argument("--gui", dest="gui", action="store_true", default=False)
     parser.add_argument("--sparse", dest="sparse", action="store_true",
                         default=False)
     parser.add_argument("--non-markovian", dest="non_markovian",
                         action="store_true", default=False)
+<<<<<<< HEAD
     parser.add_argument("-o", "--observation-mode", type=str, default='state',
                         choices=('state', 'pixel', 'pixels_debug'))
+=======
+    parser.add_argument("-o", "--observation-mode", type=str, default='pixels',
+                        choices=('state', 'pixels', 'pixels_debug'))
+>>>>>>> bedeeca2d0dcd26c2f382f8e4097569878edb091
 
     args = parser.parse_args()
 
+    if args.env in V2_GRASPING_ENVS:
+        args.num_timesteps = 20
+        assert args.observation_mode != 'pixels'
+    elif args.env in V4_GRASPING_ENVS:
+        args.num_timesteps = 25
+        assert args.observation_mode != 'pixels'
     main(args)
