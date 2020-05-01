@@ -78,6 +78,7 @@ def collect_one_trajectory(env, env2, pool, render_images):
         return action
 
     o = env.reset()
+    time.sleep(1)
     images = []
 
     accept = False
@@ -96,7 +97,7 @@ def collect_one_trajectory(env, env2, pool, render_images):
     #prev_pos = e[POSITION]
     #prev_pos = list(prev_pos)
     # Collect a fixed length of trajectory
-    for i in range(1000):
+    for i in range(50):
 
         # for _ in range(3):
         #     action += get_VR_output()
@@ -104,9 +105,9 @@ def collect_one_trajectory(env, env2, pool, render_images):
         
         # for _ in range(3):
         action = get_VR_output()
-        action *= 2.0
+        action *= 1.5
 
-        if render_images:
+        if False:
             img = env.render()
             images.append(Image.fromarray(np.uint8(img)))
 
@@ -114,7 +115,7 @@ def collect_one_trajectory(env, env2, pool, render_images):
 
         traj["observations"].append(observation)
         next_state, reward, done, info = env.step(action)
-        print("ENV: observation of object position: ", next_state[-7:-4])
+        #print("ENV: observation of object position: ", next_state[-7:-4])
 
         traj["next_observations"].append(next_state)
         traj["actions"].append(action)
@@ -123,15 +124,10 @@ def collect_one_trajectory(env, env2, pool, render_images):
         traj["agent_infos"].append(info)
         traj["env_infos"].append(info)
         pool.add_sample(observation, action, next_state, reward, done)
-
-        if info["object_goal_distance_z"] < 0.01:
-            accept = True
         time.sleep(0.03)
 
-    # Collect each trajectory besides adding to the DemoPool, for 
-    # purpose of  
-    if accept:
-        data.append(traj)
+        #if info["object_goal_distance_z"] < 0.01:
+    accept = "y" #input("Accept trajectory? [y/n]\n")
     return accept, images, traj
 
 
@@ -149,11 +145,11 @@ def main(args):
 
     reward_type = 'grasp_only'
     env = roboverse.make('SawyerGraspOne-v0', reward_type=reward_type,
-                         gui=args.gui, randomize=False,#args.randomize,
+                         gui=args.gui, randomize=True,#args.randomize,
                          observation_mode=args.observation_mode)
-    env2 = roboverse.make('SawyerGraspOne-v0', reward_type=reward_type,
-                     gui=args.gui, randomize=False,#args.randomize,
-                     observation_mode=args.observation_mode)
+    #env2 = roboverse.make('SawyerGraspOne-v0', reward_type=reward_type,
+    #                 gui=args.gui, randomize=True,#args.randomize,
+    #                 observation_mode=args.observation_mode)
     num_grasps = 0
     pool = roboverse.utils.DemoPool()
     success_pool = roboverse.utils.DemoPool()
@@ -163,58 +159,43 @@ def main(args):
                         j % args.video_save_frequency == 0
 
         #success, images
-        success, images, traj = collect_one_trajectory(env, env2, pool, render_images)
+        success, images, traj = collect_one_trajectory(env, None, pool, render_images)
+
+        while success != 'y' and success != 'Y':
+            print("failed for trajectory {}, collect again".format(j))
+            success, images, traj = collect_one_trajectory(env, None, pool, render_images)            
         
         #env2.reset()
         #actions = traj["actions"]     
         #for a in actions:
         #    next_state2, reward, done, info = env2.step(a)
         #    print("ENV2: observation of object position: ", next_state2[-7:-4])   
-        
-        if success:
-            num_grasps += 1
-            print('Num grasps: {}'.format(num_grasps))
-            top = pool._size
-            bottom = top - args.num_timesteps
-            for i in range(bottom, top):
-                success_pool.add_sample(
-                    pool._fields['observations'][i],
-                    pool._fields['actions'][i],
-                    pool._fields['next_observations'][i],
-                    pool._fields['rewards'][i],
-                    pool._fields['terminals'][i]
-                )
-        if render_images:
+
+        data.append(traj)
+
+        if False:
             images[0].save('{}/{}.gif'.format(video_save_path, j),
                            format='GIF', append_images=images[1:],
                            save_all=True, duration=100, loop=0)
 
-    params = env.get_params()
-    pool.save(params, data_save_path,
-              '{}_pool_{}.pkl'.format(timestamp, pool.size))
-    success_pool.save(params, data_save_path,
-                      '{}_pool_{}_success_only.pkl'.format(
-                          timestamp, pool.size))
-
-    path = os.path.join(__file__, "../..", "vr_demos_success + {}.npy".format(timestamp))
+    path = os.path.join(__file__, "../..", "vr_demos_success_{}.npy".format(timestamp))
     np.save(path, data)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--data-save-directory", type=str, default="vr_expert_demos")
-    parser.add_argument("-n", "--num-trajectories", type=int, default=5)
+    parser.add_argument("-n", "--num-trajectories", type=int, default=200)
     parser.add_argument("-p", "--num-parallel-threads", type=int, default=1)
-    parser.add_argument("--num-timesteps", type=int, default=1000)
+    parser.add_argument("--num-timesteps", type=int, default=50)
     parser.add_argument("--noise-std", type=float, default=0.1)
     parser.add_argument("--video_save_frequency", type=int,
-                        default=0, help="Set to zero for no video saving")
+                        default=1, help="Set to zero for no video saving")
     parser.add_argument("--randomize", dest="randomize",
                         action="store_true", default=True)
     parser.add_argument("--gui", dest="gui", action="store_true", default=False)
     parser.add_argument("--sparse", dest="sparse", action="store_true",
                         default=False)
-    parser.add_argument("-o", "--observation-mode", type=str, default='state')
+    parser.add_argument("-o", "--observation-mode", type=str, default='pixels_debug')
 
     args = parser.parse_args()
 
