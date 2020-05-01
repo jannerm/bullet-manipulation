@@ -1,37 +1,52 @@
-import time
 import roboverse
 import numpy as np
 #import skvideo.io
 import os
+from mpl_toolkits import mplot3d
+import matplotlib.pyplot as plt
+from PIL import Image
 
-#%matplotlib inline
-data = np.load('vr_demos_success + 2020-01-10T14-38-19.npy', allow_pickle=True)
-for i in range(5):
+fig = plt.figure()
+ax = plt.axes(projection='3d')
+data = np.load('vr_demos_success_2020-04-27T13-26-29.npy', allow_pickle=True)
+for i in range(100):
 	traj = data[i]
-	observations = traj["observations"]
+	observations = np.array(traj["observations"])
+	#ax.plot3D(observations[:50, 0], observations[:50, 1], observations[:50, 2], 'gray')
+		
+	
 	actions = traj["actions"]
-
 	first_observation = observations[0]
-	print("first_observation is : ", first_observation)
-	reward_type = "grasp_only"
+	reward_type = "shaped"
 	env = roboverse.make('SawyerGraspOne-v0', reward_type=reward_type, randomize=False)
-	lego_pos = first_observation[-7:-4]
-	#print(lego_pos)
-	env._fixed_object_position = list(lego_pos)
+	#lego_pos = first_observation[-7:-4]
+	env._trimodal_positions = first_observation["all_obj_pos"]
 	env.reset()
-	print("observation from the env is : ", env.get_observation())
-	#print(env.get_observation())
-	#filename = 'replay_demo_{}_new.mp4'.format(i)
+	print(env.get_observation())
 	
 
-	for k in range(len(actions)):
-		a = actions[k]
-		next_state, reward, done, info = env.step(a)
-		time.sleep(0.02)
-		print("correct object location: ", observations[k][-7:-4])
-		print("actual object location: ", env.get_observation()[-7:-4])
-		#print("correct full observation: ", observations[k + 2])
-		#print("actual full observation: ", env.get_observation())
 
+	"""
+	filename = 'replay_demo_{}.mp4'.format(i)
+	writer = skvideo.io.FFmpegWriter(
+		filename,
+		inputdict={"-r": "10"},
+		outputdict={
+			'-vcodec': 'libx264',
+		})
+	"""
 
-	print("############\n\n")
+	images = []
+	
+	for a in actions:
+		env.step(a)
+		image = env.render()
+		images.append(Image.fromarray(np.uint8(image)))
+
+	#video_save_path = os.path.join(".", "videos")
+	images[0].save('{}/{}.gif'.format("videos", i),
+				format='GIF', append_images=images[1:],
+				save_all=True, duration=100, loop=0)
+	
+
+plt.show()
