@@ -1,6 +1,7 @@
 import roboverse.bullet as bullet
 import numpy as np
 from roboverse.envs.sawyer_base import SawyerBaseEnv
+import gym
 
 
 class SawyerGraspOneEnv(SawyerBaseEnv):
@@ -8,6 +9,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
     def __init__(self,
                  goal_pos=(0.75, 0.2, -0.1),
                  reward_type='shaped',
+                 num_objects=3,
                  reward_min=-2.5,
                  randomize=True,
                  observation_mode='state',
@@ -28,12 +30,13 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         self._reward_type = reward_type
         self._reward_min = reward_min
 
+        self.image_length = obs_img_dim * obs_img_dim * 3
+        self._num_objects = num_objects
 
         self._randomize = randomize
         self._multi_obj = True
         self._obj_list = ['lego', 'duck', 'cube']
         self._object = self._obj_list[0]
-
 
         self._observation_mode = observation_mode
 
@@ -76,7 +79,9 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
             }
             choice = np.random.randint(3)
             self._object = self._obj_list[choice]
+            print("--------------------------")
             print(self._object)
+            print(object_positions)
             object_position = object_positions[choice]
         else:
             if self._randomize:
@@ -126,6 +131,34 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         done = self.get_termination(observation)
         self._prev_pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
         return observation, reward, done, info
+
+    def _set_action_space(self):
+        act_dim = 4
+        act_bound = 1
+        act_high = np.ones(act_dim) * act_bound
+        self.action_space = gym.spaces.Box(-act_high, act_high)
+
+    def _set_spaces(self):
+        self._set_action_space()
+        # obs = self.reset()
+        if self._observation_mode == 'state':
+            observation_dim = 7 + 1 + 7 * self._num_objects
+            obs_bound = 100
+            obs_high = np.ones(observation_dim) * obs_bound
+            self.observation_space = gym.spaces.Box(-obs_high, obs_high)
+        elif self._observation_mode == 'pixels' or self._observation_mode == 'pixels_debug':
+            img_space = gym.spaces.Box(0, 1, (self.image_length,), dtype=np.float32)
+            if self._observation_mode == 'pixels':
+                observation_dim = 7
+            elif self._observation_mode == 'pixels_debug':
+                observation_dim = 7 + 1 + 7 * self._num_objects
+            obs_bound = 100
+            obs_high = np.ones(observation_dim) * obs_bound
+            state_space = gym.spaces.Box(-obs_high, obs_high)
+            spaces = {'image': img_space, 'state': state_space}
+            self.observation_space = gym.spaces.Dict(spaces)
+        else:
+            raise NotImplementedError
 
     def get_info(self):
         object_pos = np.asarray(self.get_object_midpoint(self._object))  ## generalized lego
@@ -192,6 +225,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
                  object_pos, object_theta))
         elif self._observation_mode == 'pixels':
             image_observation = self.render_obs()
+            image_observation = np.float32(image_observation.flatten()) / 255.0
             observation = {
                 'state': np.concatenate(
                     (end_effector_pos, gripper_tips_distance)),
@@ -200,7 +234,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         elif self._observation_mode == 'pixels_debug':
             # This mode passes in all the true state information + images
             image_observation = self.render_obs()
-
+            image_observation = np.float32(image_observation.flatten()) / 255.0
             object_info = bullet.get_body_info(self._objects[self._object],
                                                quat_to_deg=False)
             all_obj_pos = []
