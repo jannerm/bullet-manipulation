@@ -44,6 +44,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                  *args,
                  observation_mode='state',
                  transpose_image=False,
+                 reward_height_threshold=-0.25,
                  reward_type=False,  # Not actually used
                  randomize=True,  # Not actually used
                  **kwargs):
@@ -66,7 +67,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
 
         self._env_name = 'Widow200GraspV2Env'
         self._height_threshold = -0.31
-        self._reward_height_thresh = -0.3
+        self._reward_height_thresh = reward_height_threshold
         self._max_force = 10000
 
     def render_obs(self):
@@ -176,6 +177,12 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                 self._simulate(pos, target_theta, gripper, delta_theta=0)
             done = True
             reward = self.get_reward({})
+            object_info = bullet.get_body_info(self._objects['beer_bottle'],
+                                               quat_to_deg=False)
+            object_pos = np.asarray(object_info['pos'])
+            object_height = object_pos[2]
+            print('-------------------')
+            print('obj height: {}'.format(object_height))
             if reward > 0:
                 info = {'grasp_success': 1.0}
             else:
@@ -280,10 +287,6 @@ if __name__ == "__main__":
     images = []
 
     num_objects = 1
-    # env = roboverse.make("SawyerGraspOneV2-v0",
-    #                      gui=True,
-    #                      observation_mode='state',)
-    #                      # num_objects=num_objects)
     env = roboverse.make("Widow200GraspV2-v0",
                          gui=True, observation_mode='pixels_debug')
     obs = env.reset()
