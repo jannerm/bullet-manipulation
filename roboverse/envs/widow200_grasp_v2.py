@@ -177,12 +177,13 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                 self._simulate(pos, target_theta, gripper, delta_theta=0)
             done = True
             reward = self.get_reward({})
-            object_info = bullet.get_body_info(self._objects['beer_bottle'],
-                                               quat_to_deg=False)
-            object_pos = np.asarray(object_info['pos'])
-            object_height = object_pos[2]
-            print('-------------------')
-            print('obj height: {}'.format(object_height))
+            for obj_name in self._objects.keys():
+                object_info = bullet.get_body_info(self._objects[obj_name],
+                                                   quat_to_deg=False)
+                object_pos = np.asarray(object_info['pos'])
+                object_height = object_pos[2]
+                print('-------------------')
+                print('{} height: {}'.format(obj_name, object_height))
             if reward > 0:
                 info = {'grasp_success': 1.0}
             else:
