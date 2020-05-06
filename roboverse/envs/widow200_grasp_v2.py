@@ -45,14 +45,16 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                  observation_mode='state',
                  transpose_image=False,
                  reward_height_threshold=-0.25,
+                 num_objects=1,
+                 object_names=('beer_bottle',),
                  reward_type=False,  # Not actually used
                  randomize=True,  # Not actually used
                  **kwargs):
 
         self._object_position_high = (.82, .075, -.20)
         self._object_position_low = (.78, -.125, -.20)
-        self._num_objects = 1
-        self.object_names = ['beer_bottle']
+        self._num_objects = num_objects
+        self.object_names = list(object_names)
         self._scaling_local = [0.5]*10 # converted into dict below.
         self.object_path_dict = dict(
             [(obj, path) for obj, path in obj_path_map.items() if obj in self.object_names])
@@ -117,11 +119,14 @@ class Widow200GraspV2Env(Widow200GraspEnv):
             visualize=False, rgba=[0,1,0,.1])
 
         import scipy.spatial
-        min_distance_threshold = 0.12
+        min_distance_threshold = 0.07
         object_positions = np.random.uniform(
             low=self._object_position_low, high=self._object_position_high)
         object_positions = np.reshape(object_positions, (1,3))
+        max_attempts = 100
+        i = 0
         while object_positions.shape[0] < self._num_objects:
+            i += 1
             object_position_candidate = np.random.uniform(
                 low=self._object_position_low, high=self._object_position_high)
             object_position_candidate = np.reshape(
@@ -131,6 +136,9 @@ class Widow200GraspV2Env(Widow200GraspEnv):
             if (min_distance > min_distance_threshold).any():
                 object_positions = np.concatenate(
                     (object_positions, object_position_candidate), axis=0)
+
+            if i > max_attempts:
+                ValueError('Min distance could not be assured')
 
         assert len(self.object_names) == self._num_objects
         import random
@@ -286,12 +294,12 @@ if __name__ == "__main__":
     save_video = True
     images = []
 
-    num_objects = 1
+    num_objects_x = 1
     env = roboverse.make("Widow200GraspV2-v0",
                          gui=True, observation_mode='pixels_debug')
     obs = env.reset()
     # object_ind = np.random.randint(0, env._num_objects)
-    object_ind = num_objects - 1
+    object_ind = num_objects_x - 1
     i = 0
     xy_dist_thresh = 0.02
     action = env.action_space.sample()
@@ -324,7 +332,7 @@ if __name__ == "__main__":
         i+=1
         if done or i > 25:
             # object_ind = np.random.randint(0, env._num_objects)
-            object_ind = num_objects - 1
+            object_ind = num_objects_x - 1
             obs = env.reset()
             i = 0
             print('Reward: {}'.format(rew))
