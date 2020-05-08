@@ -24,7 +24,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                  reward_height_threshold=-0.25,
                  num_objects=1,
                  object_names=('beer_bottle',),
-                 reward_type=False,  # Not actually used
+                 reward_type=False,  # Not actually used in grasping envs
                  randomize=True,  # Not actually used
                  **kwargs):
 
@@ -41,6 +41,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
             [(obj, self._scaling_local[i]) for i, obj in enumerate(self.object_names)])
         self._observation_mode = observation_mode
         self._transpose_image = transpose_image
+        self._reward_type = reward_type
 
         super().__init__(*args, **kwargs)
 
