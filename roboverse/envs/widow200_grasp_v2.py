@@ -4,7 +4,8 @@ import roboverse.utils as utils
 from roboverse.envs.widow200_grasp import Widow200GraspEnv
 import gym
 from roboverse.bullet.misc import load_obj
-from roboverse.utils.shapenet_utils import load_shapenet_object, import_shapenet_metadata
+from roboverse.utils.shapenet_utils import load_shapenet_object, \
+    import_shapenet_metadata
 import os.path as osp
 
 REWARD_NEGATIVE = -1.0
