@@ -35,22 +35,7 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
                     reward = REWARD_SUCCESS
         return reward
 
-    def step(self, action):
-        action = np.asarray(action)
-        pos = list(bullet.get_link_state(self._robot_id, self._end_effector, 'pos'))
-        delta_pos = action[:3]
-        pos += delta_pos * self._action_scale
-        pos = np.clip(pos, self._pos_low, self._pos_high)
-
-        theta = list(bullet.get_link_state(self._robot_id, self._end_effector,
-                                           'theta'))
-        target_theta = theta
-        delta_theta = action[3]
-        target_theta = np.clip(target_theta, [0, 85, 137], [180, 85, 137])
-        target_theta = bullet.deg_to_quat(target_theta)
-
-        gripper_action = action[4]
-
+    def _gripper_simulate(self, pos, target_theta, delta_theta, gripper_action):
         # is_gripper_open = self._is_gripper_open()
         is_gripper_open = self._gripper_open
         if gripper_action > 0.5 and is_gripper_open:
@@ -90,6 +75,23 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
             pass
         else:
             raise NotImplementedError
+
+    def step(self, action):
+        action = np.asarray(action)
+        pos = list(bullet.get_link_state(self._robot_id, self._end_effector, 'pos'))
+        delta_pos = action[:3]
+        pos += delta_pos * self._action_scale
+        pos = np.clip(pos, self._pos_low, self._pos_high)
+
+        theta = list(bullet.get_link_state(self._robot_id, self._end_effector,
+                                           'theta'))
+        target_theta = theta
+        delta_theta = action[3]
+        target_theta = np.clip(target_theta, [0, 85, 137], [180, 85, 137])
+        target_theta = bullet.deg_to_quat(target_theta)
+
+        gripper_action = action[4]
+        self._gripper_simulate(pos, target_theta, delta_theta, gripper_action)
 
         if action[5] > 0.5:
             done = True

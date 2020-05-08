@@ -10,7 +10,6 @@ class Widow200GraspEnv(WidowBaseEnv):
         kwargs['downwards'] = False
         super().__init__(*args, **kwargs)
         self._goal_pos = goal_pos
-        self._reward_type = 'shaped'
         self.RESET_JOINTS = [1.57, -0.6, -0.6, -1.57, 1.57]
         self._end_effector = 8
 
