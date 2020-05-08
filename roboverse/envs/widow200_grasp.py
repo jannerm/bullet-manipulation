@@ -127,3 +127,4 @@ class Widow200GraspEnv(WidowBaseEnv):
 
         return np.concatenate((end_effector_pos, gripper_tips_distance,
                                object_pos, object_theta))
+                               

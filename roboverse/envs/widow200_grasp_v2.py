@@ -4,39 +4,15 @@ import roboverse.utils as utils
 from roboverse.envs.widow200_grasp import Widow200GraspEnv
 import gym
 from roboverse.bullet.misc import load_obj
+from roboverse.utils.shapenet_utils import *
 import os.path as osp
-import importlib.util
 
 REWARD_NEGATIVE = -1.0
 REWARD_POSITIVE = 10.0
-SHAPENET_ASSET_PATH = osp.join(
-    osp.dirname(osp.abspath(__file__)), 'assets/bullet-objects/ShapeNetCore')
-
-def import_shapenet_metadata():
-    metadata_spec = importlib.util.spec_from_file_location(
-        "metadata", osp.join(SHAPENET_ASSET_PATH, "metadata.py"))
-    shapenet_metadata = importlib.util.module_from_spec(metadata_spec)
-    metadata_spec.loader.exec_module(shapenet_metadata)
-    return shapenet_metadata.obj_path_map, shapenet_metadata.path_scaling_map
 
 obj_path_map, path_scaling_map = import_shapenet_metadata()
 # obj_path_map = dict: object str names --> Shapenet Paths ({class_id}/{object_id})
 # path_scaling_map = dict: Shapenet Paths ({class_id}/{object_id}) --> scaling factor
-
-def load_shapenet_object(object_path, scaling, object_position, scale_local=0.5):
-    path = object_path.split('/')
-    dir_name = path[-2]
-    object_name = path[-1]
-    obj = load_obj(
-        SHAPENET_ASSET_PATH + '/ShapeNetCore_vhacd/{0}/{1}/model.obj'.format(
-            dir_name, object_name),
-        SHAPENET_ASSET_PATH + '/ShapeNetCore.v2/{0}/{1}/models/model_normalized.obj'.format(
-            dir_name, object_name),
-        object_position,
-        [1, -1, 0, 0], # this rotates objects 90 degrees. Originally: [0, 0, 1, 0]
-        scale=scale_local*scaling[
-            '{0}/{1}'.format(dir_name, object_name)])
-    return obj
 
 
 class Widow200GraspV2Env(Widow200GraspEnv):
@@ -268,7 +244,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
              object_pos = object_info['pos']
              info["object" + str(object_name)] = object_pos
 
-        return info 
+        return info
 
     def get_reward(self, info):
         object_list = self._objects.keys()
@@ -340,4 +316,3 @@ if __name__ == "__main__":
 
     if save_video:
         utils.save_video('data/autograsp.avi', images)
-
