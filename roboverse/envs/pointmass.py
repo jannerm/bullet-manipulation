@@ -51,7 +51,7 @@ class PointmassBaseEnv(gym.Env, Serializable):
 
     def _load_meshes(self):
         self._plane = bullet.objects.table(scale=1.0)
-        self._agent = bullet.objects.cube(pos = self._init_pos, scale=0.04)
+        self._agent = bullet.objects.cube(pos=self._init_pos, scale=0.04)
 
     def reset(self):
         bullet.reset()
@@ -64,8 +64,11 @@ class PointmassBaseEnv(gym.Env, Serializable):
 
     def get_info(self):
         object_info = bullet.get_body_info(self._agent, quat_to_deg=False)
-        object_pos = object_info['pos']
-        info = {'distance': np.linalg.norm(object_pos - self._goal_pos)}
+        object_pos = np.asarray(object_info['pos'])
+        info = dict(
+            distance=np.linalg.norm(object_pos - self._goal_pos),
+            object_pos=object_pos
+        )
         return info
 
     def step(self, action):
@@ -74,8 +77,7 @@ class PointmassBaseEnv(gym.Env, Serializable):
         reward = self.compute_reward(info)
         obs = self.get_observation()
         done = False
-        info = {'distance': -1.0*reward}
-        return self.get_observation(), reward, done, info
+        return obs, reward, done, info
 
     def render_obs(self):
         img, depth, segmentation = bullet.render(
