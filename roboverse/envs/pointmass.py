@@ -38,16 +38,32 @@ class PointmassBaseEnv(gym.Env, Serializable):
         self._projection_matrix_obs = bullet.get_projection_matrix(
             self._img_dim, self._img_dim)
 
+        self.image_length = img_dim*img_dim*3
+        self.xy_max = [1.0, 0.2]
+        self.xy_min = [0.75, -0.4]
+
+        self._set_spaces()
+
+    def _set_action_space(self):
         act_dim = 2
         act_bound = 1
         act_high = np.ones(act_dim) * act_bound
         self.action_space = gym.spaces.Box(-act_high, act_high)
 
-        obs = self.reset()
-        observation_dim = len(obs)
-        obs_bound = 100
-        obs_high = np.ones(observation_dim) * obs_bound
-        self.observation_space = gym.spaces.Box(-obs_high, obs_high)
+    def _set_spaces(self):
+        self._set_action_space()
+        # obs = self.reset()
+        if self._observation_mode == 'state':
+            observation_dim = 3
+            obs_bound = 100
+            obs_high = np.ones(observation_dim) * obs_bound
+            self.observation_space = gym.spaces.Box(-obs_high, obs_high)
+        elif self._observation_mode == 'pixels':
+            img_space = gym.spaces.Box(0, 1, (self.image_length,), dtype=np.float32)
+            spaces = {'image': img_space}
+            self.observation_space = gym.spaces.Dict(spaces)
+        else:
+            raise NotImplementedError
 
     def _load_meshes(self):
         self._plane = bullet.objects.table(scale=1.0)
@@ -72,8 +88,18 @@ class PointmassBaseEnv(gym.Env, Serializable):
         return info
 
     def step(self, action):
-        bullet.pointmass_position_step_simulation(self._agent, action)
+
         info = self.get_info()
+        if info['object_pos'][0] >= self.xy_max[0]:
+            action[0] = min(0, action[0])
+        if info['object_pos'][1] >= self.xy_max[1]:
+            action[1] = min(0, action[1])
+        if info['object_pos'][0] <= self.xy_min[0]:
+            action[0] = max(0, action[0])
+        if info['object_pos'][1] <= self.xy_min[1]:
+            action[1] = max(0, action[1])
+
+        bullet.pointmass_position_step_simulation(self._agent, action)
         reward = self.compute_reward(info)
         obs = self.get_observation()
         done = False
@@ -94,6 +120,7 @@ class PointmassBaseEnv(gym.Env, Serializable):
             return np.asarray(object_pos)
         elif self._observation_mode == 'pixels':
             img = self.render_obs()
+            img = np.float32(img.flatten()) / 255.0
             return {'image': img}
         else:
             raise NotImplementedError
