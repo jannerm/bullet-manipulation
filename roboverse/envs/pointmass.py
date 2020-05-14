@@ -39,8 +39,12 @@ class PointmassBaseEnv(gym.Env, Serializable):
             self._img_dim, self._img_dim)
 
         self.image_length = img_dim*img_dim*3
-        self.xy_max = [1.0, 0.2]
-        self.xy_min = [0.75, -0.4]
+
+        assert goal_pos[0] > init_pos[0]
+        assert goal_pos[1] > init_pos[1]
+
+        self.xy_max = list(goal_pos[:2])
+        self.xy_min = list(init_pos[:2])
 
         self._set_spaces()
 
