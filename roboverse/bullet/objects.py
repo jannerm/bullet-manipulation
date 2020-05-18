@@ -93,6 +93,10 @@ box = loader(ASSET_PATH, os.path.join(obj_dir, "box", "box.urdf"),
                 pos=[0.8, 0.075, -.35],
                 scale=0.125)
 
+box_open_top = loader(ASSET_PATH, os.path.join(obj_dir, "box_open_top", "box_open_top.urdf"),
+              pos=[0.8, 0, -.345],
+              scale=0.1)
+
 widow200_tray = loader(ASSET_PATH, os.path.join(obj_dir, "tray", "tray.urdf"),
               pos=[0.8, -0.05, -0.36],
               deg=[0, 0, 0],
