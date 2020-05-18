@@ -4,39 +4,16 @@ import roboverse.utils as utils
 from roboverse.envs.widow200_grasp import Widow200GraspEnv
 import gym
 from roboverse.bullet.misc import load_obj
+from roboverse.utils.shapenet_utils import load_shapenet_object, \
+    import_shapenet_metadata
 import os.path as osp
-import importlib.util
 
 REWARD_NEGATIVE = -1.0
 REWARD_POSITIVE = 10.0
-SHAPENET_ASSET_PATH = osp.join(
-    osp.dirname(osp.abspath(__file__)), 'assets/bullet-objects/ShapeNetCore')
-
-def import_shapenet_metadata():
-    metadata_spec = importlib.util.spec_from_file_location(
-        "metadata", osp.join(SHAPENET_ASSET_PATH, "metadata.py"))
-    shapenet_metadata = importlib.util.module_from_spec(metadata_spec)
-    metadata_spec.loader.exec_module(shapenet_metadata)
-    return shapenet_metadata.obj_path_map, shapenet_metadata.path_scaling_map
 
 obj_path_map, path_scaling_map = import_shapenet_metadata()
 # obj_path_map = dict: object str names --> Shapenet Paths ({class_id}/{object_id})
 # path_scaling_map = dict: Shapenet Paths ({class_id}/{object_id}) --> scaling factor
-
-def load_shapenet_object(object_path, scaling, object_position, scale_local=0.5):
-    path = object_path.split('/')
-    dir_name = path[-2]
-    object_name = path[-1]
-    obj = load_obj(
-        SHAPENET_ASSET_PATH + '/ShapeNetCore_vhacd/{0}/{1}/model.obj'.format(
-            dir_name, object_name),
-        SHAPENET_ASSET_PATH + '/ShapeNetCore.v2/{0}/{1}/models/model_normalized.obj'.format(
-            dir_name, object_name),
-        object_position,
-        [1, -1, 0, 0], # this rotates objects 90 degrees. Originally: [0, 0, 1, 0]
-        scale=scale_local*scaling[
-            '{0}/{1}'.format(dir_name, object_name)])
-    return obj
 
 
 class Widow200GraspV2Env(Widow200GraspEnv):
@@ -45,14 +22,16 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                  observation_mode='state',
                  transpose_image=False,
                  reward_height_threshold=-0.25,
-                 reward_type=False,  # Not actually used
+                 num_objects=1,
+                 object_names=('beer_bottle',),
+                 reward_type=False,  # Not actually used in grasping envs
                  randomize=True,  # Not actually used
                  **kwargs):
 
         self._object_position_high = (.82, .075, -.20)
         self._object_position_low = (.78, -.125, -.20)
-        self._num_objects = 1
-        self.object_names = ['beer_bottle']
+        self._num_objects = num_objects
+        self.object_names = list(object_names)
         self._scaling_local = [0.5]*10 # converted into dict below.
         self.object_path_dict = dict(
             [(obj, path) for obj, path in obj_path_map.items() if obj in self.object_names])
@@ -62,6 +41,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
             [(obj, self._scaling_local[i]) for i, obj in enumerate(self.object_names)])
         self._observation_mode = observation_mode
         self._transpose_image = transpose_image
+        self._reward_type = reward_type
 
         super().__init__(*args, **kwargs)
 
@@ -117,11 +97,14 @@ class Widow200GraspV2Env(Widow200GraspEnv):
             visualize=False, rgba=[0,1,0,.1])
 
         import scipy.spatial
-        min_distance_threshold = 0.12
+        min_distance_threshold = 0.07
         object_positions = np.random.uniform(
             low=self._object_position_low, high=self._object_position_high)
         object_positions = np.reshape(object_positions, (1,3))
+        max_attempts = 100
+        i = 0
         while object_positions.shape[0] < self._num_objects:
+            i += 1
             object_position_candidate = np.random.uniform(
                 low=self._object_position_low, high=self._object_position_high)
             object_position_candidate = np.reshape(
@@ -131,6 +114,9 @@ class Widow200GraspV2Env(Widow200GraspEnv):
             if (min_distance > min_distance_threshold).any():
                 object_positions = np.concatenate(
                     (object_positions, object_position_candidate), axis=0)
+
+            if i > max_attempts:
+                ValueError('Min distance could not be assured')
 
         assert len(self.object_names) == self._num_objects
         import random
@@ -261,7 +247,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
              object_pos = object_info['pos']
              info["object" + str(object_name)] = object_pos
 
-        return info 
+        return info
 
     def get_reward(self, info):
         object_list = self._objects.keys()
@@ -287,12 +273,12 @@ if __name__ == "__main__":
     save_video = True
     images = []
 
-    num_objects = 1
+    num_objects_x = 1
     env = roboverse.make("Widow200GraspV2-v0",
                          gui=True, observation_mode='pixels_debug')
     obs = env.reset()
     # object_ind = np.random.randint(0, env._num_objects)
-    object_ind = num_objects - 1
+    object_ind = num_objects_x - 1
     i = 0
     xy_dist_thresh = 0.02
     action = env.action_space.sample()
@@ -325,7 +311,7 @@ if __name__ == "__main__":
         i+=1
         if done or i > 25:
             # object_ind = np.random.randint(0, env._num_objects)
-            object_ind = num_objects - 1
+            object_ind = num_objects_x - 1
             obs = env.reset()
             i = 0
             print('Reward: {}'.format(rew))
@@ -333,4 +319,3 @@ if __name__ == "__main__":
 
     if save_video:
         utils.save_video('data/autograsp.avi', images)
-
