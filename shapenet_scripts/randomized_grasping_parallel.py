@@ -36,10 +36,7 @@ def get_data_save_directory(args):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-e", "--env", type=str,
-                        choices=('SawyerGraspV2-v0', 'SawyerGraspOne-v0',
-                                 'SawyerReach-v0', 'SawyerGraspOneV2-v0',
-                                 'SawyerGraspTenV2-v0', 'SawyerGraspOneV4-v0'))
+    parser.add_argument("-e", "--env", type=str, required=True)
     parser.add_argument("-d", "--data-save-directory", type=str)
     parser.add_argument("-n", "--num-trajectories", type=int, default=2000)
     parser.add_argument("--noise-std", type=float, default=0.1)
