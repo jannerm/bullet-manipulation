@@ -130,15 +130,14 @@ class WidowBaseEnv(gym.Env, Serializable):
     def reset(self):
 
         bullet.reset()
-        self._load_meshes()
-        # Allow the objects to settle down after they are dropped in sim
-        for _ in range(50):
-            bullet.step()
-
-        self._format_state_query()
-
         bullet.setup_headless(self._timestep,
                               solver_iterations=self._solver_iterations)
+        self._load_meshes()
+        # Allow the objects to settle down after they are dropped in sim
+        # for _ in range(50):
+        #     bullet.step()
+
+        self._format_state_query()
 
         self._prev_pos = np.array(self._pos_init)
         # self.theta = bullet.deg_to_quat([180, 0, 0])

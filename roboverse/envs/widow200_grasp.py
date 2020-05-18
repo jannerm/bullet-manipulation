@@ -10,7 +10,6 @@ class Widow200GraspEnv(WidowBaseEnv):
         kwargs['downwards'] = False
         super().__init__(*args, **kwargs)
         self._goal_pos = goal_pos
-        self._reward_type = 'shaped'
         self.RESET_JOINTS = [1.57, -0.6, -0.6, -1.57, 1.57]
         self._end_effector = 8
 
@@ -36,15 +35,11 @@ class Widow200GraspEnv(WidowBaseEnv):
 
     def reset(self):
         bullet.reset()
-        self._load_meshes()
-        # Allow the objects to settle down after they are dropped in sim
-        for _ in range(50):
-            bullet.step()
-
-        self._format_state_query()
-
         bullet.setup_headless(self._timestep,
                               solver_iterations=self._solver_iterations)
+        self._load_meshes()
+        self._format_state_query()
+
         for i in range(len(self.RESET_JOINTS)):
             bullet.p.resetJointState(self._robot_id, i, self.RESET_JOINTS[i])
         self._prev_pos, self.theta = bullet.p.getLinkState(
@@ -131,3 +126,4 @@ class Widow200GraspEnv(WidowBaseEnv):
 
         return np.concatenate((end_effector_pos, gripper_tips_distance,
                                object_pos, object_theta))
+                               
