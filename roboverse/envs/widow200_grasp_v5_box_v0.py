@@ -7,12 +7,13 @@ class Widow200GraspV5BoxV0Env(Widow200GraspV5AndPlaceV0Env):
 
     def __init__(self,
                  *args,
-                 goal_position=(0.78, -0.12, -0.22),
                  success_dist_threshold=0.04,
                  **kwargs):
-        self._goal_position = np.asarray(goal_position)
-        self._success_dist_threshold = success_dist_threshold
         super().__init__(*args, **kwargs)
+        self._success_dist_threshold = success_dist_threshold
+        self._scaling_local_list = [0.25] # converted into dict below.
+        self.set_scaling_dicts()
+        self.set_box_pos_as_goal_pos()
 
     def _load_meshes(self):
         super()._load_meshes()
@@ -27,6 +28,10 @@ class Widow200GraspV5BoxV0Env(Widow200GraspV5AndPlaceV0Env):
             print(self._reward_type)
             raise NotImplementedError
         return reward
+
+    def set_box_pos_as_goal_pos(self):
+        box_open_top_info = bullet.get_body_info(self._box, quat_to_deg=False)
+        self._goal_position = np.asarray(box_open_top_info['pos'])
 
     def get_info(self):
         assert self._num_objects == 1
