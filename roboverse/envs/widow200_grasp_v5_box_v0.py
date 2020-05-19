@@ -19,16 +19,19 @@ class Widow200GraspV5BoxV0Env(Widow200GraspV5AndPlaceV0Env):
         self.set_scaling_dicts()
         self.set_box_pos_as_goal_pos()
         # self.obs_img_dim = 228
+        self.box_high = np.array([0.83, .05, -.325])
+        self.box_low = np.array([0.77, -.03, -.345])
 
     def _load_meshes(self):
         super()._load_meshes()
         self._box = bullet.objects.box_open_top()
+        # self._test_box = bullet.objects.test_box()
 
     def get_reward(self, info):
         if self._reward_type == 'dense':
             reward = -1.0*info['object_goal_dist']
         elif self._reward_type == 'sparse':
-            reward = float(info['object_goal_success'])
+            reward = float(info['object_in_box_success'])
         else:
             print(self._reward_type)
             raise NotImplementedError
@@ -45,10 +48,15 @@ class Widow200GraspV5BoxV0Env(Widow200GraspV5AndPlaceV0Env):
                                            quat_to_deg=False)
         object_pos = np.asarray(object_info['pos'])
         object_goal_dist = np.linalg.norm(object_pos - self._goal_position)
-        object_goal_success = object_goal_dist < self._success_dist_threshold
+        object_dist_success = object_goal_dist < self._success_dist_threshold
+        object_within_box_bounds = ((self.box_low <= object_pos)
+            & (object_pos <= self.box_high))
+        object_in_box_success = np.all(object_within_box_bounds)
         info = dict(
             object_goal_dist=object_goal_dist,
-            object_goal_success=object_goal_success)
+            object_dist_success=object_dist_success,
+            object_in_box_success=object_in_box_success,
+            object_pos=object_pos)
         return info
 
     def step(self, action):
@@ -75,7 +83,7 @@ if __name__ == "__main__":
 
         images = [] # new video at the start of each trajectory.
 
-        for _ in range(25):
+        for _ in range(30):
             if isinstance(obs, dict):
                 obs = obs['state']
 
@@ -100,7 +108,7 @@ if __name__ == "__main__":
                 action = (object_pos - ee_pos) * 7.0
                 action = np.concatenate(
                     (action, np.asarray([0., -0.7, 0.])))
-            elif object_goal_dist > env._success_dist_threshold:
+            elif not env.get_info()['object_in_box_success']:
                 print(object_goal_dist)
                 action = (env._goal_position - object_pos)*7.0
                 # action = np.asarray([0., 0., 0.7])
