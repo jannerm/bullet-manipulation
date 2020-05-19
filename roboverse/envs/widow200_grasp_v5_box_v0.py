@@ -9,9 +9,12 @@ class Widow200GraspV5BoxV0Env(Widow200GraspV5AndPlaceV0Env):
                  *args,
                  success_dist_threshold=0.04,
                  **kwargs):
+        kwargs['object_names'] = ('jar',)
         super().__init__(*args, **kwargs)
+        self._object_position_high = (.82, -.04, -.20)
+        self._object_position_low = (.78, -.125, -.20)
         self._success_dist_threshold = success_dist_threshold
-        self._scaling_local_list = [0.25] # converted into dict below.
+        self._scaling_local_list = [0.3] # converted into dict below.
         self.set_scaling_dicts()
         self.set_box_pos_as_goal_pos()
 
