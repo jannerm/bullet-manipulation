@@ -1,5 +1,6 @@
 from roboverse.envs.widow200_grasp_v5_and_place_v0 import Widow200GraspV5AndPlaceV0Env
 import roboverse.bullet as bullet
+import roboverse.utils as utils
 import numpy as np
 
 
@@ -17,6 +18,7 @@ class Widow200GraspV5BoxV0Env(Widow200GraspV5AndPlaceV0Env):
         self._scaling_local_list = [0.3] # converted into dict below.
         self.set_scaling_dicts()
         self.set_box_pos_as_goal_pos()
+        # self.obs_img_dim = 228
 
     def _load_meshes(self):
         super()._load_meshes()
@@ -56,17 +58,22 @@ class Widow200GraspV5BoxV0Env(Widow200GraspV5AndPlaceV0Env):
 if __name__ == "__main__":
     import roboverse
     import time
+
+    save_video = True
+
     env = roboverse.make("Widow200GraspV5BoxV0Env-v0",
                          gui=True,
                          reward_type='sparse',
                          observation_mode='pixels_debug',)
 
     object_ind = 0
-    for _ in range(50):
+    for i in range(50):
         obs = env.reset()
         # object_pos[2] = -0.30
 
         dist_thresh = 0.04 + np.random.normal(scale=0.01)
+
+        images = [] # new video at the start of each trajectory.
 
         for _ in range(25):
             if isinstance(obs, dict):
@@ -105,9 +112,17 @@ if __name__ == "__main__":
             action[:3] += np.random.normal(scale=0.1, size=(3,))
             # print(action)
             obs, rew, done, info = env.step(action)
+
+            img = env.render_obs()
+            if save_video:
+                images.append(img)
+
             time.sleep(0.05)
 
         print('object pos: {}'.format(object_pos))
         print('reward: {}'.format(rew))
         print('distance: {}'.format(info['object_goal_dist']))
         print('--------------------')
+
+        if save_video:
+            utils.save_video('data/grasp_place_{}.avi'.format(i), images)
