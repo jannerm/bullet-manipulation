@@ -10,6 +10,10 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
         'entry_point': ('roboverse.envs.sawyer_lift:SawyerLiftEnv'),
     },
     {
+        'id': 'SawyerLiftMulti-v0',
+        'entry_point': ('roboverse.envs.sawyer_lift_multi:SawyerLiftMultiEnv'),
+    },
+    {
         'id': 'SawyerGraspOne-v0',
         'entry_point': ('roboverse.envs.sawyer_grasp:SawyerGraspOneEnv'),
         'kwargs': {'max_force': 100}
@@ -26,6 +30,92 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
         'id': 'SawyerMultiSoup-v0',
         'entry_point': ('roboverse.envs.sawyer_multi_soup:SawyerMultiSoupEnv'),
     },
+    {
+        'id': 'SawyerLiftGC-v0',
+        'entry_point': ('roboverse.envs.goal_conditioned.sawyer_lift:SawyerLiftEnvGC'),
+        'kwargs': {
+            'img_dim': 84
+        },
+    },
+    {
+        'id': 'SawyerLiftBowlGC0.0-v0',
+        'entry_point': ('roboverse.envs.goal_conditioned.sawyer_lift:SawyerLiftEnvGC'),
+        'kwargs': {
+            'goal_mult': 0,
+            'action_scale': .06,
+            'action_repeat': 5,
+            'timestep': 1./240,
+            'gui': False,
+            'pos_init': [.75, -.3, 0],
+            'pos_high':[.75, .4,.3],
+            'pos_low':[.75,-.4,-.36],
+            'max_force': 1000,
+            'solver_iterations': 150,
+            'reset_obj_in_hand_rate': 0.0,
+            'img_dim': 48,
+            'goal_mode': 'obj_in_bowl',
+            'num_obj': 2
+        }
+    },
+    {
+        'id': 'SawyerLiftBowlGC0.5-v0',
+        'entry_point': ('roboverse.envs.goal_conditioned.sawyer_lift:SawyerLiftEnvGC'),
+        'kwargs': {
+            'goal_mult': 0,
+            'action_scale': .06,
+            'action_repeat': 5,
+            'timestep': 1./240,
+            'gui': False,
+            'pos_init': [.75, -.3, 0],
+            'pos_high':[.75, .4,.3],
+            'pos_low':[.75,-.4,-.36],
+            'max_force': 1000,
+            'solver_iterations': 150,
+            'reset_obj_in_hand_rate': 0.5,
+            'img_dim': 48,
+            'goal_mode': 'obj_in_bowl',
+            'num_obj': 2
+        }
+    },
+    {
+        'id': 'SawyerLiftGC0.0-v0',
+        'entry_point': ('roboverse.envs.goal_conditioned.sawyer_lift:SawyerLiftEnvGC'),
+        'kwargs': {
+            'goal_mult': .25,
+            'action_scale': .06,
+            'action_repeat': 5,
+            'timestep': 1./240,
+            'gui': False,
+            'pos_init': [.75, -.3, 0],
+            'pos_high':[.75, .4,.3],
+            'pos_low':[.75,-.4,-.36],
+            'max_force': 1000,
+            'solver_iterations': 150,
+            'reset_obj_in_hand_rate': 0.0,
+            'img_dim': 48,
+            'num_obj': 2
+        }
+    },
+    {
+        'id': 'SawyerLiftGC0.5-v0',
+        'entry_point': ('roboverse.envs.goal_conditioned.sawyer_lift:SawyerLiftEnvGC'),
+        'kwargs': {
+            'goal_mult': .25,
+            'action_scale': .06,
+            'action_repeat': 5,
+            'timestep': 1./240,
+            'gui': False,
+            'pos_init': [.75, -.3, 0],
+            'pos_high':[.75, .4,.3],
+            'pos_low':[.75,-.4,-.36],
+            'max_force': 1000,
+            'solver_iterations': 150,
+            'reset_obj_in_hand_rate': 0.5,
+            'img_dim': 48,
+            'num_obj': 2
+        }
+    },
+
 )
 
 PROJECTION_ENVIRONMENT_SPECS = tuple(

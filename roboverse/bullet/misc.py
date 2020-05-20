@@ -66,6 +66,11 @@ def load_urdf(filepath, pos=[0, 0, 0], quat=[0, 0, 0, 1], scale=1, rgba=None):
         p.changeVisualShape(body, -1, rgbaColor=rgba)
     return body
 
+def set_pos(body, pos=[0, 0, 0], quat=[0, 0, 0, 1], deg=None):
+    if deg is not None:
+        quat = deg_to_quat(deg)
+    p.resetBasePositionAndOrientation(body, pos, quat)
+
 def load_obj(filepathcollision, filepathvisual, pos=[0, 0, 0], quat=[0, 0, 0, 1], scale=1, rgba=None):
     collisionid= p.createCollisionShape(p.GEOM_MESH, fileName=filepathcollision, meshScale=scale * np.array([1, 1, 1]))
     visualid = p.createVisualShape(p.GEOM_MESH, fileName=filepathvisual, meshScale=scale * np.array([1, 1, 1]))
@@ -153,6 +158,12 @@ def l2_dist(a, b):
     a = np.array(a)
     b = np.array(b)
     return np.linalg.norm(a-b, 2)
+
+def l2_dist2d(a, b):
+    a = np.array(a)
+    b = np.array(b)
+    return np.linalg.norm(a-b, 2, axis=1)
+
 
 def rot_diff_deg(a, b):
     '''

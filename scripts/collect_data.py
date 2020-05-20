@@ -42,7 +42,9 @@ for ep in range(args.num_episodes):
 	min_grasp_step = None
 	images = []
 	for i in range(args.horizon):
-		act = policy.get_action(obs)
+		# act = policy.get_action(obs)
+		act =env.action_space.sample()
+		act[3] = 1
 		if act[-1] > 0 and min_grasp_step is None:
 			min_grasp_step = i
 			print('min_grasp_step: ', min_grasp_step)

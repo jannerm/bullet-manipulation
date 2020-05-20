@@ -68,7 +68,7 @@ cube = loader(ASSET_PATH, 'objects/cube/cube.urdf',
 spam = loader(ASSET_PATH, 'objects/spam/spam.urdf',
               pos=[.75, -.4, -.3],
               deg=[90,0,-90],
-              scale=0.025)
+              scale=0.018)
 
 bowl_sliding = loader(ASSET_PATH, 'objects/bowl_sliding/bowl.urdf',
               pos=[.75, 0, -.3],

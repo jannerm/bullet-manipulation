@@ -7,6 +7,9 @@ class Serializable:
         pass
         
     def record_args(self, locals_):
+        if hasattr(self, "has_init") and self.has_init:
+            return
+        self.has_init = True
         spec = inspect.getfullargspec(self.__init__)
 
         ## **kwargs of init method

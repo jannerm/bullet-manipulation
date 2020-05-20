@@ -86,7 +86,7 @@ class SawyerBaseEnv(gym.Env, Serializable):
         self._load_meshes()
 
         # Allow the objects to settle down after they are dropped in sim
-        for _ in range(50):
+        for _ in range(10):
             bullet.step()
 
         self._end_effector = bullet.get_index_by_attribute(
@@ -103,7 +103,7 @@ class SawyerBaseEnv(gym.Env, Serializable):
 
     def set_reset_hook(self, fn=lambda env: None):
         self._reset_hook = fn
-    
+
     def open_gripper(self, act_repeat=10):
         delta_pos = [0,0,0]
         gripper = 0
@@ -178,8 +178,14 @@ class SawyerBaseEnv(gym.Env, Serializable):
             )
             bullet.step_ik()
 
-    def render(self, mode='rgb_array'):
-        img, depth, segmentation = bullet.render(self._img_dim, self._img_dim, self._view_matrix, self._projection_matrix)
+    def render(self, mode='rgb_array', width=None, height=None):
+        if not width:
+            width = self._img_dim
+        if not height:
+            height = self._img_dim
+        img, depth, segmentation = bullet.render(width, height,
+                                                 self._view_matrix,
+                                                 self._projection_matrix)
         return img
 
     def get_termination(self, observation):
