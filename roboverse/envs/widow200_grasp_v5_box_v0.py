@@ -16,14 +16,14 @@ class Widow200GraspV5BoxV0Env(Widow200GraspV5AndPlaceV0Env):
             object_names=object_names,
             scaling_local_list=scaling_local_list,
             **kwargs)
-        self._object_position_high = (.82, -.06, -.20)
+        self._object_position_high = (.82, -.07, -.20)
         self._object_position_low = (.78, -.125, -.20)
         self._success_dist_threshold = success_dist_threshold
         # self._scaling_local_list = scaling_local_list
         # self.set_scaling_dicts()
         self.set_box_pos_as_goal_pos()
         # self.obs_img_dim = 228
-        self.box_high = np.array([0.83, .05, -.325])
+        self.box_high = np.array([0.83, .05, -.32])
         self.box_low = np.array([0.77, -.03, -.345])
 
     def _load_meshes(self):
@@ -77,16 +77,16 @@ class Widow200GraspV5BoxV0RandObjEnv(Widow200GraspV5BoxV0Env):
                  scaling_local_list=[0.3]*10,
                  **kwargs):
         self.possible_objects = [
-            'gatorade',
+            'smushed_dumbbell',
             'jar',
             'beer_bottle',
-            'bunsen_burner',
+            'mug',
             'square_prism_bin',
-            'long_vase',
+            'conic_bin',
             'ball',
             'shed',
-            'long_sofa',
-            'l_sofa'
+            'sack_vase',
+            'conic_cup'
         ]
         # chosen_object = np.random.choice(self.possible_objects)
         super().__init__(*args,
