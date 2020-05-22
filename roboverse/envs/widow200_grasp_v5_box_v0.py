@@ -8,15 +8,19 @@ class Widow200GraspV5BoxV0Env(Widow200GraspV5AndPlaceV0Env):
 
     def __init__(self,
                  *args,
+                 object_names=('jar',),
+                 scaling_local_list=[0.3],
                  success_dist_threshold=0.04,
                  **kwargs):
-        kwargs['object_names'] = ('jar',)
-        super().__init__(*args, **kwargs)
-        self._object_position_high = (.82, -.04, -.20)
+        super().__init__(*args,
+            object_names=object_names,
+            scaling_local_list=scaling_local_list,
+            **kwargs)
+        self._object_position_high = (.82, -.06, -.20)
         self._object_position_low = (.78, -.125, -.20)
         self._success_dist_threshold = success_dist_threshold
-        self._scaling_local_list = [0.3] # converted into dict below.
-        self.set_scaling_dicts()
+        # self._scaling_local_list = scaling_local_list
+        # self.set_scaling_dicts()
         self.set_box_pos_as_goal_pos()
         # self.obs_img_dim = 228
         self.box_high = np.array([0.83, .05, -.325])
@@ -62,6 +66,41 @@ class Widow200GraspV5BoxV0Env(Widow200GraspV5AndPlaceV0Env):
     def step(self, action):
         return super().step(action)
 
+class Widow200GraspV5BoxV0RandObjEnv(Widow200GraspV5BoxV0Env):
+    """
+    Generalization env. Randomly samples one of the following objects
+    every time the env resets.
+    """
+    def __init__(self,
+                 *args,
+                 success_dist_threshold=0.04,
+                 scaling_local_list=[0.3]*10,
+                 **kwargs):
+        self.possible_objects = [
+            'gatorade',
+            'jar',
+            'beer_bottle',
+            'bunsen_burner',
+            'square_prism_bin',
+            'long_vase',
+            'ball',
+            'shed',
+            'long_sofa',
+            'l_sofa'
+        ]
+        # chosen_object = np.random.choice(self.possible_objects)
+        super().__init__(*args,
+            object_names=self.possible_objects,
+            success_dist_threshold=success_dist_threshold,
+            scaling_local_list=scaling_local_list,
+            **kwargs)
+
+    def reset(self):
+        """Currently only implemented for selecting 1 object at random"""
+        self.object_names = list([np.random.choice(self.possible_objects)])
+        print("self.object_names", self.object_names)
+        return super().reset()
+
 
 if __name__ == "__main__":
     import roboverse
@@ -69,7 +108,7 @@ if __name__ == "__main__":
 
     save_video = True
 
-    env = roboverse.make("Widow200GraspV5BoxV0Env-v0",
+    env = roboverse.make("Widow200GraspV5BoxV0RandObjEnv-v0",
                          gui=True,
                          reward_type='sparse',
                          observation_mode='pixels_debug',)

@@ -8,11 +8,14 @@ class Widow200GraspV5AndPlaceV0Env(Widow200GraspV5Env):
     def __init__(self,
                  *args,
                  goal_position=(0.78, -0.12, -0.22),
+                 scaling_local_list=[0.5],
                  success_dist_threshold=0.04,
                  **kwargs):
         self._goal_position = np.asarray(goal_position)
         self._success_dist_threshold = success_dist_threshold
-        super().__init__(*args, **kwargs)
+        super().__init__(*args,
+            scaling_local_list=scaling_local_list,
+            **kwargs)
 
     def get_reward(self, info):
         if self._reward_type == 'dense':

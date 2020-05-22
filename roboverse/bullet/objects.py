@@ -89,7 +89,7 @@ tray = loader('', os.path.join("tray", "tray.urdf"),
               scale=0.75)
 
 box = loader(ASSET_PATH, os.path.join(obj_dir, "box", "box.urdf"),
-                # pos=[0.85, 0, -.35],
+                # pos=[0.8, 0.075, -.35],
                 pos=[0.8, 0.075, -.35],
                 scale=0.125)
 
