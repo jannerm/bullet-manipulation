@@ -24,6 +24,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                  reward_height_threshold=-0.25,
                  num_objects=1,
                  object_names=('beer_bottle',),
+                 scaling_local_list=[0.5]*10,
                  reward_type=False,  # Not actually used in grasping envs
                  randomize=True,  # Not actually used
                  **kwargs):
@@ -32,7 +33,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
         self._object_position_low = (.78, -.125, -.20)
         self._num_objects = num_objects
         self.object_names = list(object_names)
-        self._scaling_local_list = [0.5]*10 # converted into dict below.
+        self._scaling_local_list = scaling_local_list # converted into dict below.
         self.set_scaling_dicts()
         self._observation_mode = observation_mode
         self._transpose_image = transpose_image
@@ -43,7 +44,6 @@ class Widow200GraspV2Env(Widow200GraspEnv):
         self._env_name = 'Widow200GraspV2Env'
         self._height_threshold = -0.31
         self._reward_height_thresh = reward_height_threshold
-        self._max_force = 10000
 
     def set_scaling_dicts(self):
         assert isinstance(self._scaling_local_list, list), (
@@ -123,7 +123,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
             if i > max_attempts:
                 ValueError('Min distance could not be assured')
 
-        assert len(self.object_names) == self._num_objects
+        assert len(self.object_names) >= self._num_objects
         import random
         indexes = list(range(self._num_objects))
         random.shuffle(indexes)
