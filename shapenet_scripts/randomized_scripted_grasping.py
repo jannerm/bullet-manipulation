@@ -18,7 +18,9 @@ V2_GRASPING_ENVS = ['SawyerGraspV2-v0',
                     'SawyerGraspTenV2-v0',
                     'SawyerGraspOneV2-v0']
 V4_GRASPING_ENVS = ['SawyerGraspOneV4-v0']
-V5_GRASPING_ENVS = ['Widow200GraspV5-v0', 'Widow200GraspFiveV5-v0']
+V5_GRASPING_ENVS = ['Widow200GraspV5-v0',
+                    'Widow200GraspFiveV5-v0',
+                    'Widow200GraspV5BoxV0RandObjEnv-v0']
 
 
 def scripted_non_markovian_grasping(env, pool, render_images):
@@ -535,7 +537,8 @@ if __name__ == "__main__":
                         choices=('SawyerGraspOne-v0', 'SawyerGraspV2-v0',
                                  'SawyerReach-v0', 'SawyerGraspOneV2-v0',
                                  'SawyerGraspTenV2-v0', 'SawyerGraspOneV4-v0',
-                                 'Widow200GraspV5-v0', 'Widow200GraspFiveV5-v0'))
+                                 'Widow200GraspV5-v0', 'Widow200GraspFiveV5-v0',
+                                 'Widow200GraspV5BoxV0RandObjEnv-v0'))
     parser.add_argument("-d", "--data-save-directory", type=str)
     parser.add_argument("-n", "--num-trajectories", type=int, default=2000)
     parser.add_argument("-p", "--num-parallel-threads", type=int, default=1)
