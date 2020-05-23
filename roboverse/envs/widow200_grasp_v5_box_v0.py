@@ -32,7 +32,7 @@ class Widow200GraspV5BoxV0Env(Widow200GraspV5AndPlaceV0Env):
         # self._test_box = bullet.objects.test_box()
 
     def get_reward(self, info):
-        if self._reward_type == 'dense':
+        if self._reward_type in ['dense', 'shaped']:
             reward = -1.0*info['object_goal_dist']
         elif self._reward_type == 'sparse':
             reward = float(info['object_in_box_success'])
