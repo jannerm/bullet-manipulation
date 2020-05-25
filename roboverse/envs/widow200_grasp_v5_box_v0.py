@@ -63,9 +63,6 @@ class Widow200GraspV5BoxV0Env(Widow200GraspV5AndPlaceV0Env):
             object_pos=object_pos)
         return info
 
-    def step(self, action):
-        return super().step(action)
-
 class Widow200GraspV5BoxV0RandObjEnv(Widow200GraspV5BoxV0Env):
     """
     Generalization env. Randomly samples one of the following objects
