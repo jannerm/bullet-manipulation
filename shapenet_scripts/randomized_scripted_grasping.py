@@ -385,11 +385,13 @@ def scripted_grasping_V5_placing_V0(env, pool, success_pool):
     for _ in range(args.num_timesteps):
 
         if isinstance(observation, dict):
-            observation = observation['state']
-
-        object_pos = observation[
-                     object_ind * 7 + 8: object_ind * 7 + 8 + 3]
-        ee_pos = observation[:3]
+            object_pos = observation['state'][
+                         object_ind * 7 + 8: object_ind * 7 + 8 + 3]
+            ee_pos = observation['state'][:3]
+        else:
+            object_pos = observation[
+                         object_ind * 7 + 8: object_ind * 7 + 8 + 3]
+            ee_pos = observation[:3]
 
         object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
         theta_action = 0.
@@ -608,7 +610,21 @@ def main(args):
                         '{}_pool_{}_success_only.pkl'.format(
                             timestamp, pool_size))
         pickle.dump(railrl_success_pool, open(path, 'wb'), protocol=4)
-        print('Num success: {}'.format(np.sum(railrl_success_pool._rewards > 0)))
+        if args.env in V5_GRASPING_V0_PLACING_ENVS:
+            # Since grasping v5 placing v0 does not have
+            # an effective termination action, we reshape the rewards
+            # array and count the number of trajectories with
+            # a sucess in the last timestep.
+            reshaped_rewards_pool = np.reshape(
+                railrl_success_pool._rewards,
+                (args.num_trajectories, args.num_timesteps))
+            # print("reshaped_rewards_pool", reshaped_rewards_pool)
+            # print("reshaped_rewards_pool[:,-1]", reshaped_rewards_pool[:,-1])
+            print('Num success: {}'.format(
+                np.sum(reshaped_rewards_pool[:,-1] > 0)))
+        else:
+            print('Num success: {}'.format(
+                np.sum(railrl_success_pool._rewards > 0)))
 
 
 if __name__ == "__main__":
