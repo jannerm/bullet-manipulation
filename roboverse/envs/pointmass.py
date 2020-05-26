@@ -103,7 +103,8 @@ class PointmassBaseEnv(gym.Env, Serializable):
         if info['object_pos'][1] <= self.xy_min[1]:
             action[1] = max(0, action[1])
 
-        bullet.pointmass_position_step_simulation(self._agent, action)
+        bullet.pointmass_position_step_simulation(self._agent, action,
+                                                  action_scale=0.01)
         reward = self.compute_reward(info)
         obs = self.get_observation()
         done = False
