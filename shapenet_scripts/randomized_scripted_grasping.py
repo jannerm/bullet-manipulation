@@ -397,23 +397,30 @@ def scripted_grasping_V5_placing_V0(env, pool, success_pool):
         theta_action = 0.
         # theta_action = np.random.uniform()
 
-        if object_gripper_dist > dist_thresh and env._gripper_open:
-            # print('approaching')
-            action = (object_pos - ee_pos) * 7.0
-            xy_diff = np.linalg.norm(action[:2] / 7.0)
-            if xy_diff > 0.02:
-                action[2] = 0.0
-            action = np.concatenate(
-                (action, np.asarray([theta_action, 0., 0.])))
-        elif env._gripper_open:
+        info = env.get_info()
+        if (object_gripper_dist > dist_thresh and
+                env._gripper_open and not info['object_above_box_success']):
+                # print('approaching')
+                action = (object_pos - ee_pos) * 7.0
+                xy_diff = np.linalg.norm(action[:2]/7.0)
+                if xy_diff > 0.02:
+                    action[2] = 0.0
+                action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
+        elif env._gripper_open and not info['object_above_box_success']:
             # print('gripper closing')
             action = (object_pos - ee_pos) * 7.0
             action = np.concatenate(
                 (action, np.asarray([0., -0.7, 0.])))
-        elif not env.get_info()['object_in_box_success']:
-            action = (env._goal_position - object_pos) * 7.0
+        elif not info['object_above_box_success']:
+            action = (env._goal_position - object_pos)*7.0
+            # action = np.asarray([0., 0., 0.7])
             action = np.concatenate(
                 (action, np.asarray([0., 0., 0.])))
+        elif not info['object_in_box_success']:
+            # object is now above the box.
+            action = (env._goal_position - object_pos)*7.0
+            action = np.concatenate(
+                (action, np.asarray([0., 0.7, 0.])))
         else:
             action = np.zeros((6,))
 
@@ -662,4 +669,6 @@ if __name__ == "__main__":
     elif args.env in V4_GRASPING_ENVS:
         args.num_timesteps = 25
         assert args.observation_mode != 'pixels'
+    elif args.env in V5_GRASPING_V0_PLACING_ENVS:
+        args.num_timesteps = 30
     main(args)

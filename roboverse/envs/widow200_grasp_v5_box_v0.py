@@ -53,13 +53,19 @@ class Widow200GraspV5BoxV0Env(Widow200GraspV5AndPlaceV0Env):
         object_pos = np.asarray(object_info['pos'])
         object_goal_dist = np.linalg.norm(object_pos - self._goal_position)
         object_dist_success = object_goal_dist < self._success_dist_threshold
+
         object_within_box_bounds = ((self.box_low <= object_pos)
             & (object_pos <= self.box_high))
         object_in_box_success = np.all(object_within_box_bounds)
+
+        object_xy_in_box_xy = np.all(object_within_box_bounds[:2])
+        object_z_above_box_z = object_pos[2] >= self.box_low[2]
+        object_above_box_sucess = object_xy_in_box_xy and object_z_above_box_z
         info = dict(
             object_goal_dist=object_goal_dist,
             object_dist_success=object_dist_success,
             object_in_box_success=object_in_box_success,
+            object_above_box_success=object_above_box_sucess,
             object_pos=object_pos)
         return info
 
@@ -130,26 +136,34 @@ if __name__ == "__main__":
             object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
             theta_action = 0.
             object_goal_dist = np.linalg.norm(object_pos - env._goal_position)
+
+            info = env.get_info()
             # theta_action = np.random.uniform()
             # print(object_gripper_dist)
-            if object_gripper_dist > dist_thresh and env._gripper_open:
+            if (object_gripper_dist > dist_thresh and
+                env._gripper_open and not info['object_above_box_success']):
                 # print('approaching')
                 action = (object_pos - ee_pos) * 7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
                 if xy_diff > 0.02:
                     action[2] = 0.0
                 action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
-            elif env._gripper_open:
+            elif env._gripper_open and not info['object_above_box_success']:
                 # print('gripper closing')
                 action = (object_pos - ee_pos) * 7.0
                 action = np.concatenate(
                     (action, np.asarray([0., -0.7, 0.])))
-            elif not env.get_info()['object_in_box_success']:
+            elif not info['object_above_box_success']:
                 print(object_goal_dist)
                 action = (env._goal_position - object_pos)*7.0
                 # action = np.asarray([0., 0., 0.7])
                 action = np.concatenate(
                     (action, np.asarray([0., 0., 0.])))
+            elif not info['object_in_box_success']:
+                # object is now above the box.
+                action = (env._goal_position - object_pos)*7.0
+                action = np.concatenate(
+                    (action, np.asarray([0., 0.7, 0.])))
             else:
                 action = np.zeros((6,))
 
