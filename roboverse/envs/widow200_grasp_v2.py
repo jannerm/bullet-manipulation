@@ -24,6 +24,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                  reward_height_threshold=-0.25,
                  num_objects=1,
                  object_names=('beer_bottle',),
+                 scaling_local_list=[0.5]*10,
                  reward_type=False,  # Not actually used in grasping envs
                  randomize=True,  # Not actually used
                  **kwargs):
@@ -32,13 +33,8 @@ class Widow200GraspV2Env(Widow200GraspEnv):
         self._object_position_low = (.78, -.125, -.20)
         self._num_objects = num_objects
         self.object_names = list(object_names)
-        self._scaling_local = [0.5]*10 # converted into dict below.
-        self.object_path_dict = dict(
-            [(obj, path) for obj, path in obj_path_map.items() if obj in self.object_names])
-        self.scaling = dict(
-            [(path, path_scaling_map[path]) for _, path in self.object_path_dict.items()])
-        self._scaling_local = dict(
-            [(obj, self._scaling_local[i]) for i, obj in enumerate(self.object_names)])
+        self._scaling_local_list = scaling_local_list # converted into dict below.
+        self.set_scaling_dicts()
         self._observation_mode = observation_mode
         self._transpose_image = transpose_image
         self._reward_type = reward_type
@@ -48,7 +44,16 @@ class Widow200GraspV2Env(Widow200GraspEnv):
         self._env_name = 'Widow200GraspV2Env'
         self._height_threshold = -0.31
         self._reward_height_thresh = reward_height_threshold
-        self._max_force = 10000
+
+    def set_scaling_dicts(self):
+        assert isinstance(self._scaling_local_list, list), (
+            "self._scaling_local_list not a list")
+        self.object_path_dict = dict(
+            [(obj, path) for obj, path in obj_path_map.items() if obj in self.object_names])
+        self.scaling = dict(
+            [(path, path_scaling_map[path]) for _, path in self.object_path_dict.items()])
+        self._scaling_local = dict(
+            [(obj, self._scaling_local_list[i]) for i, obj in enumerate(self.object_names)])
 
     def render_obs(self):
         img, depth, segmentation = bullet.render(
@@ -118,7 +123,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
             if i > max_attempts:
                 ValueError('Min distance could not be assured')
 
-        assert len(self.object_names) == self._num_objects
+        assert len(self.object_names) >= self._num_objects
         import random
         indexes = list(range(self._num_objects))
         random.shuffle(indexes)
@@ -163,12 +168,13 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                 self._simulate(pos, target_theta, gripper, delta_theta=0)
             done = True
             reward = self.get_reward({})
-            object_info = bullet.get_body_info(self._objects['beer_bottle'],
-                                               quat_to_deg=False)
-            object_pos = np.asarray(object_info['pos'])
-            object_height = object_pos[2]
-            print('-------------------')
-            print('obj height: {}'.format(object_height))
+            for obj_name in self._objects.keys():
+                object_info = bullet.get_body_info(self._objects[obj_name],
+                                                   quat_to_deg=False)
+                object_pos = np.asarray(object_info['pos'])
+                object_height = object_pos[2]
+                print('-------------------')
+                print('{} height: {}'.format(obj_name, object_height))
             if reward > 0:
                 info = {'grasp_success': 1.0}
             else:
