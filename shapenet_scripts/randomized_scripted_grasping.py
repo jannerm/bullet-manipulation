@@ -534,11 +534,11 @@ def main(args):
         V4_GRASPING_ENVS + V5_GRASPING_ENVS +
         V5_GRASPING_V0_PLACING_ENVS):
         if 'pixels' in args.observation_mode:
-            pool_size = args.num_trajectories*args.num_timesteps
+            pool_size = args.num_trajectories*args.num_timesteps + 1
             railrl_pool = ObsDictReplayBuffer(pool_size, env, observation_key='image')
             railrl_success_pool = ObsDictReplayBuffer(pool_size, env, observation_key='image')
         elif args.observation_mode == 'state':
-            pool_size = args.num_trajectories*args.num_timesteps
+            pool_size = args.num_trajectories*args.num_timesteps + 1
             railrl_pool = EnvReplayBuffer(pool_size, env)
             railrl_success_pool = EnvReplayBuffer(pool_size, env)
 
@@ -623,7 +623,7 @@ def main(args):
             # array and count the number of trajectories with
             # a sucess in the last timestep.
             reshaped_rewards_pool = np.reshape(
-                railrl_success_pool._rewards,
+                railrl_success_pool._rewards[:-1],
                 (args.num_trajectories, args.num_timesteps))
             # print("reshaped_rewards_pool", reshaped_rewards_pool)
             # print("reshaped_rewards_pool[:,-1]", reshaped_rewards_pool[:,-1])
