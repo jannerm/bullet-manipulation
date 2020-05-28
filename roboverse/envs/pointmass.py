@@ -82,9 +82,13 @@ class PointmassBaseEnv(gym.Env, Serializable):
     def compute_reward(self, info):
         return -1.0*info['distance']
 
-    def get_info(self):
+    def get_object_pos(self):
         object_info = bullet.get_body_info(self._agent, quat_to_deg=False)
         object_pos = np.asarray(object_info['pos'])
+        return object_pos
+
+    def get_info(self):
+        object_pos = self.get_object_pos()
         info = dict(
             distance=np.linalg.norm(object_pos - self._goal_pos),
             object_pos=object_pos
