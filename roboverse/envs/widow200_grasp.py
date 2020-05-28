@@ -81,7 +81,7 @@ class Widow200GraspEnv(WidowBaseEnv):
         pos += delta_pos * self._action_scale
         pos = np.clip(pos, self._pos_low, self._pos_high)
 
-        self._simulate(pos, self.theta, gripper)
+        self._simulate(pos, self.theta, gripper, 0)
         if self._visualize: self.visualize_targets(pos)
 
         observation = self.get_observation()
