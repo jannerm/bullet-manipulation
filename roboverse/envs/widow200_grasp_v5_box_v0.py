@@ -55,22 +55,29 @@ class Widow200GraspV5BoxV0Env(Widow200GraspV5AndPlaceV0Env):
         object_info = bullet.get_body_info(self._objects[object_name],
                                            quat_to_deg=False)
         object_pos = np.asarray(object_info['pos'])
+        ee_pos = self.get_end_effector_pos()
+
+        object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
+        object_gripper_success = int(
+            object_gripper_dist < self._success_dist_threshold)
+
         object_goal_dist = np.linalg.norm(object_pos - self._goal_position)
-        object_dist_success = object_goal_dist < self._success_dist_threshold
+        object_dist_success = int(object_goal_dist < self._success_dist_threshold)
 
         object_within_box_bounds = ((self.box_low <= object_pos)
             & (object_pos <= self.box_high))
-        object_in_box_success = np.all(object_within_box_bounds)
+        object_in_box_success = int(np.all(object_within_box_bounds))
 
-        object_xy_in_box_xy = np.all(object_within_box_bounds[:2])
-        object_z_above_box_z = object_pos[2] >= self.box_low[2]
+        object_xy_in_box_xy = int(np.all(object_within_box_bounds[:2]))
+        object_z_above_box_z = int(object_pos[2] >= self.box_low[2])
         object_above_box_sucess = object_xy_in_box_xy and object_z_above_box_z
         info = dict(
             object_goal_dist=object_goal_dist,
             object_dist_success=object_dist_success,
             object_in_box_success=object_in_box_success,
             object_above_box_success=object_above_box_sucess,
-            object_pos=object_pos)
+            object_gripper_dist=object_gripper_dist,
+            object_gripper_success=object_gripper_success)
         return info
 
 class Widow200GraspV5BoxV0RandObjEnv(Widow200GraspV5BoxV0Env):
