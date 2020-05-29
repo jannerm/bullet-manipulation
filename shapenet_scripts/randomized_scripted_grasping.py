@@ -382,6 +382,10 @@ def scripted_grasping_V5_placing_V0(env, pool, success_pool):
 
     dist_thresh = 0.04 + np.random.normal(scale=0.01)
 
+    assert args.num_timesteps == env.scripted_traj_len, (
+        "args.num_timesteps: {} != env.scripted_traj_len: {}".format(
+        args.num_timesteps, env.scripted_traj_len))
+
     for _ in range(args.num_timesteps):
 
         if isinstance(observation, dict):

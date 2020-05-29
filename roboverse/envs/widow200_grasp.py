@@ -12,6 +12,8 @@ class Widow200GraspEnv(WidowBaseEnv):
         self._goal_pos = goal_pos
         self.RESET_JOINTS = [1.57, -0.6, -0.6, -1.57, 1.57]
         self._end_effector = 8
+        self.terminates = True
+        self.scripted_traj_len = 50
 
     def _load_meshes(self):
         super()._load_meshes()

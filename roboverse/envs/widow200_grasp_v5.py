@@ -130,7 +130,7 @@ if __name__ == "__main__":
 
         dist_thresh = 0.04 + np.random.normal(scale=0.01)
 
-        for _ in range(25):
+        for _ in range(env.scripted_traj_len):
             ee_pos = obs[:3]
             object_pos = obs[object_ind * 7 + 8: object_ind * 7 + 8 + 3]
             # object_pos += np.random.normal(scale=0.02, size=(3,))
@@ -164,3 +164,4 @@ if __name__ == "__main__":
             if done:
                 print('reward: {}'.format(rew))
                 break
+
