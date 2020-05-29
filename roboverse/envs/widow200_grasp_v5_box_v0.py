@@ -26,6 +26,10 @@ class Widow200GraspV5BoxV0Env(Widow200GraspV5AndPlaceV0Env):
         self.box_high = np.array([0.83, .05, -.32])
         self.box_low = np.array([0.77, -.03, -.345])
 
+        # Params used for combine_railrl_pools.py
+        self.terminates = False
+        self.scripted_traj_len = 30
+
     def _load_meshes(self):
         super()._load_meshes()
         self._box = bullet.objects.box_open_top()
@@ -125,7 +129,7 @@ if __name__ == "__main__":
 
         images = [] # new video at the start of each trajectory.
 
-        for _ in range(30):
+        for _ in range(env.scripted_traj_len):
             if isinstance(obs, dict):
                 obs = obs['state']
 

@@ -33,6 +33,7 @@ if __name__ == "__main__":
         for f in files:
             if "pool" in f:
                 with open(os.path.join(root, f), 'rb') as fp:
+                    print("f", f)
                     pool = pickle.load(fp)
                 if 'success_only' in f:
                     success_pools.append(pool)
@@ -89,7 +90,10 @@ if __name__ == "__main__":
                 path['observations'].append(dict(image=pool._obs[obs_key][i]))
                 path['next_observations'].append(dict(image=pool._next_obs[obs_key][i]))
 
-                if pool._terminals[i]:
+                path_done = ((env.terminates and pool._terminals[i]) or
+                             (not env.terminates and
+                              (i + 1) % env.scripted_traj_len == 0))
+                if path_done:
                     consolidated_pool.add_path(path)
                     path = dict(
                         rewards=[],

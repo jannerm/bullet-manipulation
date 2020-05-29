@@ -16,6 +16,7 @@ class Widow200GraspV5AndPlaceV0Env(Widow200GraspV5Env):
         super().__init__(*args,
             scaling_local_list=scaling_local_list,
             **kwargs)
+        self.scripted_traj_len = 25
 
     def get_reward(self, info):
         if self._reward_type == 'dense':
@@ -83,7 +84,7 @@ if __name__ == "__main__":
 
         dist_thresh = 0.04 + np.random.normal(scale=0.01)
 
-        for _ in range(25):
+        for _ in range(env.scripted_traj_len):
             if isinstance(obs, dict):
                 obs = obs['state']
 
