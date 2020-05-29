@@ -109,9 +109,10 @@ if __name__ == "__main__":
     import roboverse
     import time
 
+    EPSILON = 0.05
     save_video = True
 
-    env = roboverse.make("Widow200GraspV5BoxV0RandObjEnv-v0",
+    env = roboverse.make("Widow200GraspV5BoxV0RandObj-v0",
                          gui=True,
                          reward_type='sparse',
                          observation_mode='pixels_debug',)
@@ -168,7 +169,8 @@ if __name__ == "__main__":
                 action = np.zeros((6,))
 
             action[:3] += np.random.normal(scale=0.1, size=(3,))
-            # print(action)
+            action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
+            print(action)
             obs, rew, done, info = env.step(action)
 
             img = env.render_obs()
