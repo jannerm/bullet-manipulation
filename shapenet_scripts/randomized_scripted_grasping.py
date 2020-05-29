@@ -266,6 +266,7 @@ def scripted_grasping_V4(env, pool, success_pool):
                 (action, np.asarray([0., 0., 0.7])))
 
         action += np.random.normal(scale=0.1, size=(6,))
+        action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
 
         next_observation, reward, done, info = env.step(action)
 
@@ -342,6 +343,7 @@ def scripted_grasping_V5(env, pool, success_pool):
                 (action, np.asarray([0., 0., 0.7])))
 
         action += np.random.normal(scale=0.1, size=(6,))
+        action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
 
         next_observation, reward, done, info = env.step(action)
 
@@ -430,6 +432,7 @@ def scripted_grasping_V5_placing_V0(env, pool, success_pool):
             action = np.zeros((6,))
 
         action += np.random.normal(scale=0.1, size=(6,))
+        action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
 
         next_observation, reward, done, info = env.step(action)
 
