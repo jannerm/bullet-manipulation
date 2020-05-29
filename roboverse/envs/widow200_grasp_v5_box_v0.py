@@ -170,7 +170,7 @@ if __name__ == "__main__":
 
             action[:3] += np.random.normal(scale=0.1, size=(3,))
             action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
-            print(action)
+            # print(action)
             obs, rew, done, info = env.step(action)
 
             img = env.render_obs()
