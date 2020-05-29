@@ -22,7 +22,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if osp.exists(NFS_PATH):
-        data_save_path = osp.join(NFS_PATH, args.data_directory)
+        data_directory = osp.join(NFS_PATH, args.data_directory)
     else:
         data_directory = osp.join(
             os.path.dirname(__file__), "..", 'data', args.data_directory)
@@ -109,6 +109,5 @@ if __name__ == "__main__":
     else:
         raise NotImplementedError
 
-    path = osp.join(os.path.dirname(__file__), "..", 'data',
-                    args.data_directory, 'railrl_consolidated.pkl')
+    path = osp.join(data_directory, 'railrl_consolidated.pkl')
     pickle.dump(consolidated_pool, open(path, 'wb'), protocol=4)
