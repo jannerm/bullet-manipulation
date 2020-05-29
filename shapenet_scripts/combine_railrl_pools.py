@@ -11,6 +11,7 @@ from railrl.data_management.obs_dict_replay_buffer import \
 EXTRA_POOL_SPACE = int(1e5)
 REWARD_NEGATIVE = -10
 REWARD_POSITIVE = 1
+NFS_PATH = '/nfs/kun1/users/avi/batch_rl_datasets/'
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -20,8 +21,11 @@ if __name__ == "__main__":
                         choices=('state', 'pixels', 'pixels_debug'))
     args = parser.parse_args()
 
-    data_directory = osp.join(
-        os.path.dirname(__file__), "..", 'data', args.data_directory)
+    if osp.exists(NFS_PATH):
+        data_directory = osp.join(NFS_PATH, args.data_directory)
+    else:
+        data_directory = osp.join(
+            os.path.dirname(__file__), "..", 'data', args.data_directory)
     print(data_directory)
     # keys = ('observations', 'actions', 'next_observations', 'rewards', 'terminals')
     timestamp = roboverse.utils.timestamp()
@@ -109,6 +113,5 @@ if __name__ == "__main__":
     else:
         raise NotImplementedError
 
-    path = osp.join(os.path.dirname(__file__), "..", 'data',
-                    args.data_directory, 'railrl_consolidated.pkl')
+    path = osp.join(data_directory, 'railrl_consolidated.pkl')
     pickle.dump(consolidated_pool, open(path, 'wb'), protocol=4)
