@@ -11,6 +11,7 @@ from railrl.data_management.obs_dict_replay_buffer import \
 EXTRA_POOL_SPACE = int(1e5)
 REWARD_NEGATIVE = -10
 REWARD_POSITIVE = 1
+NFS_PATH = '/nfs/kun1/users/avi/batch_rl_datasets/'
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -20,8 +21,11 @@ if __name__ == "__main__":
                         choices=('state', 'pixels', 'pixels_debug'))
     args = parser.parse_args()
 
-    data_directory = osp.join(
-        os.path.dirname(__file__), "..", 'data', args.data_directory)
+    if osp.exists(NFS_PATH):
+        data_directory = osp.join(NFS_PATH, args.data_directory)
+    else:
+        data_directory = osp.join(
+            os.path.dirname(__file__), "..", 'data', args.data_directory)
     print(data_directory)
     # keys = ('observations', 'actions', 'next_observations', 'rewards', 'terminals')
     timestamp = roboverse.utils.timestamp()
@@ -33,6 +37,7 @@ if __name__ == "__main__":
         for f in files:
             if "pool" in f:
                 with open(os.path.join(root, f), 'rb') as fp:
+                    print("f", f)
                     pool = pickle.load(fp)
                 if 'success_only' in f:
                     success_pools.append(pool)
@@ -89,7 +94,10 @@ if __name__ == "__main__":
                 path['observations'].append(dict(image=pool._obs[obs_key][i]))
                 path['next_observations'].append(dict(image=pool._next_obs[obs_key][i]))
 
-                if pool._terminals[i]:
+                path_done = ((env.terminates and pool._terminals[i]) or
+                             (not env.terminates and
+                              (i + 1) % env.scripted_traj_len == 0))
+                if path_done:
                     consolidated_pool.add_path(path)
                     path = dict(
                         rewards=[],
@@ -105,6 +113,5 @@ if __name__ == "__main__":
     else:
         raise NotImplementedError
 
-    path = osp.join(os.path.dirname(__file__), "..", 'data',
-                    args.data_directory, 'railrl_consolidated.pkl')
+    path = osp.join(data_directory, 'railrl_consolidated.pkl')
     pickle.dump(consolidated_pool, open(path, 'wb'), protocol=4)

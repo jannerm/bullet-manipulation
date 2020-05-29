@@ -44,6 +44,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
         self._env_name = 'Widow200GraspV2Env'
         self._height_threshold = -0.31
         self._reward_height_thresh = reward_height_threshold
+        self.scripted_traj_len = 25
 
     def set_scaling_dicts(self):
         assert isinstance(self._scaling_local_list, list), (
@@ -314,7 +315,7 @@ if __name__ == "__main__":
 
         # print("info", env.get_info())
         i+=1
-        if done or i > 25:
+        if done or i > env.scripted_traj_len:
             # object_ind = np.random.randint(0, env._num_objects)
             object_ind = num_objects_x - 1
             obs = env.reset()

@@ -21,6 +21,7 @@ V4_GRASPING_ENVS = ['SawyerGraspOneV4-v0']
 V5_GRASPING_ENVS = ['Widow200GraspV5-v0', 'Widow200GraspFiveV5-v0']
 V5_GRASPING_V0_PLACING_ENVS = ['Widow200GraspV5BoxV0-v0', 'Widow200GraspV5BoxV0RandObj-v0']
 
+NFS_PATH = '/nfs/kun1/users/avi/batch_rl_datasets/'
 
 def scripted_non_markovian_grasping(env, pool, render_images):
     env.reset()
@@ -265,6 +266,7 @@ def scripted_grasping_V4(env, pool, success_pool):
                 (action, np.asarray([0., 0., 0.7])))
 
         action += np.random.normal(scale=0.1, size=(6,))
+        action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
 
         next_observation, reward, done, info = env.step(action)
 
@@ -341,6 +343,7 @@ def scripted_grasping_V5(env, pool, success_pool):
                 (action, np.asarray([0., 0., 0.7])))
 
         action += np.random.normal(scale=0.1, size=(6,))
+        action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
 
         next_observation, reward, done, info = env.step(action)
 
@@ -381,6 +384,10 @@ def scripted_grasping_V5_placing_V0(env, pool, success_pool):
         [], [], [], [], [], []
 
     dist_thresh = 0.04 + np.random.normal(scale=0.01)
+
+    assert args.num_timesteps == env.scripted_traj_len, (
+        "args.num_timesteps: {} != env.scripted_traj_len: {}".format(
+        args.num_timesteps, env.scripted_traj_len))
 
     for _ in range(args.num_timesteps):
 
@@ -425,6 +432,7 @@ def scripted_grasping_V5_placing_V0(env, pool, success_pool):
             action = np.zeros((6,))
 
         action += np.random.normal(scale=0.1, size=(6,))
+        action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
 
         next_observation, reward, done, info = env.step(action)
 
@@ -503,8 +511,11 @@ def scripted_markovian_reaching(env, pool, render_images):
 def main(args):
 
     timestamp = roboverse.utils.timestamp()
-    data_save_path = os.path.join(__file__, "../..", 'data',
-                                  args.data_save_directory, timestamp)
+    if osp.exists(NFS_PATH):
+        data_save_path = osp.join(NFS_PATH, args.data_save_directory, timestamp)
+    else:
+        data_save_path = osp.join(os.path.dirname(__file__), "..", 'data',
+                                  args.data_save_directory,  timestamp)
     data_save_path = os.path.abspath(data_save_path)
     video_save_path = os.path.join(data_save_path, "videos")
     if not os.path.exists(data_save_path):
@@ -534,11 +545,11 @@ def main(args):
         V4_GRASPING_ENVS + V5_GRASPING_ENVS +
         V5_GRASPING_V0_PLACING_ENVS):
         if 'pixels' in args.observation_mode:
-            pool_size = args.num_trajectories*args.num_timesteps
+            pool_size = args.num_trajectories*args.num_timesteps + 1
             railrl_pool = ObsDictReplayBuffer(pool_size, env, observation_key='image')
             railrl_success_pool = ObsDictReplayBuffer(pool_size, env, observation_key='image')
         elif args.observation_mode == 'state':
-            pool_size = args.num_trajectories*args.num_timesteps
+            pool_size = args.num_trajectories*args.num_timesteps + 1
             railrl_pool = EnvReplayBuffer(pool_size, env)
             railrl_success_pool = EnvReplayBuffer(pool_size, env)
 
@@ -623,7 +634,7 @@ def main(args):
             # array and count the number of trajectories with
             # a sucess in the last timestep.
             reshaped_rewards_pool = np.reshape(
-                railrl_success_pool._rewards,
+                railrl_success_pool._rewards[:-1],
                 (args.num_trajectories, args.num_timesteps))
             # print("reshaped_rewards_pool", reshaped_rewards_pool)
             # print("reshaped_rewards_pool[:,-1]", reshaped_rewards_pool[:,-1])
