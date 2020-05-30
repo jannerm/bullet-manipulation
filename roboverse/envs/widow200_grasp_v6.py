@@ -43,7 +43,6 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
         self._prev_pos = bullet.get_link_state(self._robot_id, self._end_effector,
                                                'pos')
         done = False
-        print("reward", reward)
         return observation, reward, done, info
 
 
