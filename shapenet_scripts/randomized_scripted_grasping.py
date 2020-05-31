@@ -416,12 +416,12 @@ def scripted_grasping_V6(env, pool, success_pool):
             action = np.concatenate(
                 (action, np.asarray([0., -0.7, 0.])))
         elif not object_lifted:
-                # print('raise object upward')
-                action = np.asarray([0., 0., 0.7])
-                action = np.concatenate(
-                    (action, np.asarray([0., 0., 0.])))
-            else:
-                action = np.zeros((6,))
+            # print('raise object upward')
+            action = np.asarray([0., 0., 0.7])
+            action = np.concatenate(
+                (action, np.asarray([0., 0., 0.])))
+        else:
+            action = np.zeros((6,))
 
         action += np.random.normal(scale=0.1, size=(6,))
         action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
@@ -721,7 +721,6 @@ def main(args):
             reshaped_rewards_pool = np.reshape(
                 railrl_success_pool._rewards[:-1],
                 (args.num_trajectories, args.num_timesteps))
-            # print("reshaped_rewards_pool", reshaped_rewards_pool)
             # print("reshaped_rewards_pool[:,-1]", reshaped_rewards_pool[:,-1])
             print('Num success: {}'.format(
                 np.sum(reshaped_rewards_pool[:,-1] > 0)))
@@ -735,8 +734,8 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--env", type=str,
                         choices=tuple(['SawyerGraspOne-v0', 'SawyerReach-v0'] +
                                        V2_GRASPING_ENVS + V4_GRASPING_ENVS +
-                                       V5_GRASPING_ENVS + V5_GRASPING_V0_PLACING_ENVS +
-                                       V6_GRASPING_ENVS))
+                                       V5_GRASPING_ENVS + V6_GRASPING_ENVS +
+                                       V5_GRASPING_V0_PLACING_ENVS))
     parser.add_argument("-d", "--data-save-directory", type=str)
     parser.add_argument("-n", "--num-trajectories", type=int, default=2000)
     parser.add_argument("-p", "--num-parallel-threads", type=int, default=1)
@@ -763,7 +762,6 @@ if __name__ == "__main__":
         assert args.observation_mode != 'pixels'
     elif args.env in V4_GRASPING_ENVS + V6_GRASPING_ENVS:
         args.num_timesteps = 25
-        print("args.num_timesteps", args.num_timesteps)
         assert args.observation_mode != 'pixels'
     elif args.env in V5_GRASPING_V0_PLACING_ENVS:
         args.num_timesteps = 30

@@ -96,7 +96,7 @@ if __name__ == "__main__":
             # print(action)
             obs, rew, done, info = env.step(action)
             time.sleep(0.05)
-            if done:
-                print('reward: {}'.format(rew))
-                break
 
+            print('reward: {}'.format(rew))
+
+        print("="*10)
