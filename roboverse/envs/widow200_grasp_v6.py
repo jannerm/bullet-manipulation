@@ -64,6 +64,7 @@ if __name__ == "__main__":
         for _ in range(env.scripted_traj_len):
             ee_pos = obs[:3]
             object_pos = obs[object_ind * 7 + 8: object_ind * 7 + 8 + 3]
+            object_lifted = object_pos[2] > env._reward_height_thresh
             # object_pos += np.random.normal(scale=0.02, size=(3,))
 
             object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
@@ -82,11 +83,13 @@ if __name__ == "__main__":
                 action = (object_pos - ee_pos) * 7.0
                 action = np.concatenate(
                     (action, np.asarray([0., -0.7, 0.])))
-            else:
-                # print('terminating')
+            elif not object_lifted:
+                # print('raise object upward')
                 action = np.asarray([0., 0., 0.7])
                 action = np.concatenate(
-                    (action, np.asarray([0., 0., 0.7])))
+                    (action, np.asarray([0., 0., 0.])))
+            else:
+                action = np.zeros((6,))
 
             action[:3] += np.random.normal(scale=0.1, size=(3,))
             action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
