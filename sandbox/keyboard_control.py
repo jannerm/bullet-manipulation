@@ -36,24 +36,64 @@ char_to_action = {
     'g': 'goal',
 }
 
-env_id = 'SawyerBase2d-v0'
+# env_id = 'SawyerBase2d-v0'
 # env_id = 'SawyerGraspOne2d-v0'
-# env_id = 'SawyerLid-v0'
+env_id = 'SawyerLid2d-v0'
 # env_id = 'SawyerSoup2d-v0'
 # env_id = 'SawyerMultiSoup2d-v0'
 
-env = rv.make(
-    env_id,
-    action_scale=.05,
-    action_repeat=50,
-    timestep=1. / 120,
+# env = rv.make(
+#     env_id,
+#     action_scale=.05,
+#     action_repeat=50,
+#     timestep=1. / 120,
+#
+#     solver_iterations=250,
+#
+#     max_force=100,
+#
+#     gui=True
+# )
 
-    solver_iterations=250,
+# env = rv.make(
+#     env_id,
+#
+#     # action_scale=.05,
+#     # action_repeat=50,
+#     # timestep=1. / 120,
+#     # solver_iterations=250,
+#     # max_force=100,
+#
+#     action_scale=.06,
+#     action_repeat=10,
+#     timestep=1. / 120, #1. / 240
+#     solver_iterations=150,
+#     max_force=1000,
+#
+#     gui=True
+# )
 
-    max_force=100,
+from roboverse.envs.goal_conditioned.sawyer_lift import SawyerLiftEnvGC
+env_kwargs={
+    'action_scale': .06, #.06
+    'action_repeat': 10, #5
+    'timestep': 1./120, #1./240
+    'max_force': 1000,
+    'solver_iterations': 150,
 
-    gui=True
-)
+    'gui': True,  # False,
+    'goal_mult': 0,
+    'pos_init': [.75, -.3, 0],
+    'pos_high': [.75, .4, .3],
+    'pos_low': [.75, -.4, -.36],
+    'reset_obj_in_hand_rate': 0.0,
+    'img_dim': 48,
+    'goal_mode': 'obj_in_bowl',
+    'num_obj': 2, #2
+}
+env = SawyerLiftEnvGC(**env_kwargs)
+
+
 print(env.observation_space, env.action_space)
 
 NDIM = env.action_space.low.size
@@ -92,8 +132,8 @@ while True:
             else:
                 action = np.zeros(10)
             if action.any():
-                print(action[:4])
                 env.step(action[:4])
+                print(env.get_observation())
     if done:
         obs = env.reset()
     env.render()

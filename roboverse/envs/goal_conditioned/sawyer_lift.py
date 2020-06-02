@@ -11,9 +11,10 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
     GROUND_Y = -0.355
 
     def __init__(self, *args, reset_obj_in_hand_rate=0.5,
-                 goal_mode='obj_in_air', **kwargs):
+                 goal_mode='obj_in_air', reward_type='hand_dist+obj_dist', **kwargs):
         self.reset_obj_in_hand_rate = reset_obj_in_hand_rate
         self.goal_mode = goal_mode
+        self.reward_type = reward_type
         super().__init__(*args, env='SawyerLiftMulti2d-v0', **kwargs)
         self.record_args(locals())
 
@@ -28,7 +29,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         ee_reset_pos = bullet.get_link_state(self._env._sawyer,
                                              self._env._end_effector, 'pos')
         obj_id_to_put_in_hand = -1
-        if np.random.random() > 1 - self.reset_obj_in_hand_rate:
+        if (np.random.random() > 1 - self.reset_obj_in_hand_rate) and (self.num_obj > 0):
             obj_id_to_put_in_hand = np.random.choice(self.num_obj)
         for obj_id in range(self.num_obj):
             cube_reset_pos = np.random.uniform(
@@ -121,22 +122,48 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         desired_goal_info = self.get_info_from_achieved_goals(
             observations['state_desired_goal'])
 
-        ee_dist = np.ones(len(ee_pos)) * 1e10
+        # ee_dist = np.ones(len(ee_pos)) * 1e10
+        #
+        # total_goal_dist = 0
+        # for obj_id in range(self.num_obj):
+        #     obj_pos = achieved_goal_info[self.get_obj_name(obj_id)]
+        #     obj_desired_goal = desired_goal_info[self.get_obj_name(obj_id)]
+        #
+        #     goal_dist = bullet.l2_dist2d(
+        #         obj_pos,
+        #         obj_desired_goal
+        #     )
+        #     total_goal_dist += goal_dist
+        #     ee_dist = np.clip(bullet.l2_dist2d(obj_pos, ee_pos), -1e10, ee_dist)
+        # reward = -(ee_dist * self._goal_mult + total_goal_dist)
+        # reward = np.clip(reward, self.num_obj * self._min_reward, 1e10)
+        # reward[total_goal_dist < 0.25 * self.num_obj] += self._bonus
+        # return reward
 
-        total_goal_dist = 0
+        rewards = self.reward_type.split('+')
+        dist = np.zeros(len(ee_pos))
+
+        ee_desired_goal = desired_goal_info['hand_pos']
+        ee_dist = bullet.l2_dist2d(
+            ee_pos,
+            ee_desired_goal
+        )
+
+        if 'hand_dist' in rewards:
+            dist += ee_dist
+
         for obj_id in range(self.num_obj):
             obj_pos = achieved_goal_info[self.get_obj_name(obj_id)]
             obj_desired_goal = desired_goal_info[self.get_obj_name(obj_id)]
 
-            goal_dist = bullet.l2_dist2d(
+            obj_dist = bullet.l2_dist2d(
                 obj_pos,
                 obj_desired_goal
             )
-            total_goal_dist += goal_dist
-            ee_dist = np.clip(bullet.l2_dist2d(obj_pos, ee_pos), -1e10, ee_dist)
-        reward = -(ee_dist * self._goal_mult + total_goal_dist)
-        reward = np.clip(reward, self.num_obj * self._min_reward, 1e10)
-        reward[total_goal_dist < 0.25 * self.num_obj] += self._bonus
+            if 'obj_dist' in rewards:
+                dist += obj_dist
+
+        reward = -dist
         return reward
 
     def get_info(self):
@@ -145,16 +172,27 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             self.get_achieved_goal())
         ee_pos = achieved_goal_info['hand_pos']
 
+        # info = {}
+        # hand_dist = 1e10
+        # for obj_id in range(self.num_obj):
+        #     cube_pos = achieved_goal_info[self.get_obj_name(obj_id)]
+        #     cube_goal = desired_goal_info[self.get_obj_name(obj_id)]
+        #
+        #     obj_goal_dist = bullet.l2_dist(cube_pos, cube_goal)
+        #     hand_dist = min(hand_dist, bullet.l2_dist(cube_pos, ee_pos))
+        #     info['{}_dist'.format(self.get_obj_name(obj_id))] = obj_goal_dist
+        # info['hand_dist'] = hand_dist
+        # return info
+
         info = {}
-        hand_dist = 1e10
+        ee_goal = desired_goal_info['hand_pos']
+        info['hand_dist'] = bullet.l2_dist(ee_pos, ee_goal)
         for obj_id in range(self.num_obj):
             cube_pos = achieved_goal_info[self.get_obj_name(obj_id)]
             cube_goal = desired_goal_info[self.get_obj_name(obj_id)]
 
             obj_goal_dist = bullet.l2_dist(cube_pos, cube_goal)
-            hand_dist = min(hand_dist, bullet.l2_dist(cube_pos, ee_pos))
             info['{}_dist'.format(self.get_obj_name(obj_id))] = obj_goal_dist
-        info['hand_dist'] = hand_dist
         return info
 
     def get_image(self, width, height):
@@ -280,3 +318,11 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             ('state_desired_goal', goal_space),
             ('state_achieved_goal', goal_space),
         ])
+
+    def get_contextual_diagnostics(self, paths, contexts):
+        diagnostics = {}
+        return diagnostics
+
+    def goal_conditioned_diagnostics(self, paths, contexts):
+        diagnostics = {}
+        return diagnostics

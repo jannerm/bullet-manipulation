@@ -41,7 +41,9 @@ class SawyerBaseEnv(gym.Env, Serializable):
         self._set_spaces()
 
         self._img_dim = img_dim
-        self._view_matrix = bullet.get_view_matrix()
+        target_pos = (np.array(pos_low) + np.array(pos_high)) / 2
+        target_pos[2] = 0
+        self._view_matrix = bullet.get_view_matrix(target_pos=target_pos)
         self._projection_matrix = bullet.get_projection_matrix(self._img_dim, self._img_dim)
 
     def get_params(self):
@@ -96,7 +98,7 @@ class SawyerBaseEnv(gym.Env, Serializable):
         bullet.setup_headless(self._timestep, solver_iterations=self._solver_iterations)
 
         self._prev_pos = np.array(self._pos_init)
-        self.theta = bullet.deg_to_quat([180, 0, 0])
+        self.theta = bullet.deg_to_quat([180, 0, 0]) #[180, 0, 90]
         bullet.position_control(self._sawyer, self._end_effector, self._prev_pos, self.theta)
         self._reset_hook(self)
         return self.get_observation()
