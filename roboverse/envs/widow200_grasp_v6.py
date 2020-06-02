@@ -13,11 +13,22 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
                  *args,
                  scaling_local_list=[0.5],
                  **kwargs):
+        self.reward_height_threshold = -0.275
         super().__init__(*args,
             scaling_local_list=scaling_local_list,
             **kwargs)
         self.terminates = False
         self.scripted_traj_len = 25
+
+    def get_info(self):
+        info = __super__.get_info()
+
+        object_keys_list = list(self._objects.keys())
+        assert len(object_keys_list) == 1, "Too many objects in list."
+        object_pos = info["object" + object_keys_list]
+
+        info['object_lifted_success'] = int(
+            object_pos[2] > self.reward_height_threshold)
 
     def step(self, action):
         action = np.asarray(action)
@@ -55,16 +66,24 @@ if __name__ == "__main__":
 
     object_ind = 0
     EPSILON = 0.05
+    margin = 0.025
+
+    def strint(x):
+        return str(int(x))
+
     for _ in range(50):
         obs = env.reset()
         # object_pos[2] = -0.30
 
         dist_thresh = 0.04 + np.random.normal(scale=0.01)
+        rewards = []
 
         for _ in range(env.scripted_traj_len):
             ee_pos = obs[:3]
             object_pos = obs[object_ind * 7 + 8: object_ind * 7 + 8 + 3]
+
             object_lifted = object_pos[2] > env._reward_height_thresh
+            object_lifted_with_margin = object_pos[2] > (env._reward_height_thresh + margin)
             # object_pos += np.random.normal(scale=0.02, size=(3,))
 
             object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
@@ -83,20 +102,26 @@ if __name__ == "__main__":
                 action = (object_pos - ee_pos) * 7.0
                 action = np.concatenate(
                     (action, np.asarray([0., -0.7, 0.])))
-            elif not object_lifted:
+            elif not object_lifted_with_margin:
                 # print('raise object upward')
                 action = np.asarray([0., 0., 0.7])
                 action = np.concatenate(
                     (action, np.asarray([0., 0., 0.])))
             else:
-                action = np.zeros((6,))
+                tray_info = bullet.get_body_info(env._tray, quat_to_deg=False)
+                tray_center = np.asarray(tray_info['pos'])
+                action = (tray_center - ee_pos)[:2]
+                action = np.concatenate(
+                    (action, np.asarray([0., 0., 0., 0.])))
+                # action = np.zeros((6,))
 
             action[:3] += np.random.normal(scale=0.1, size=(3,))
             action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
-            # print(action)
             obs, rew, done, info = env.step(action)
             time.sleep(0.05)
 
-            print('reward: {}'.format(rew))
+            # print('reward: {}'.format(rew))
+            rewards.append(rew)
 
-        print("="*10)
+        # print("="*10)
+        print("".join(list(map(strint, rewards))))
