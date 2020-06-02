@@ -154,6 +154,7 @@ if __name__ == "__main__":
                          observation_mode='state',)
 
     object_ind = 0
+    EPSILON = 0.05
     for _ in range(50):
         obs = env.reset()
         # object_pos[2] = -0.30
@@ -188,6 +189,7 @@ if __name__ == "__main__":
                     (action, np.asarray([0., 0., 0.7])))
 
             action[:3] += np.random.normal(scale=0.1, size=(3,))
+            action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
             # print(action)
             obs, rew, done, info = env.step(action)
             time.sleep(0.05)
