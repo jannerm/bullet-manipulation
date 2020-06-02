@@ -116,6 +116,36 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
         return obs
 
 
+class Widow200GraspV5RandObjEnv(Widow200GraspV5Env):
+    def __init__(self,
+                 *args,
+                 scaling_local_list=[0.3]*10,
+                 **kwargs):
+        self.possible_objects = [
+            'smushed_dumbbell',
+            'jar',
+            'beer_bottle',
+            'mug',
+            'square_prism_bin',
+            'conic_bin',
+            'ball',
+            'shed',
+            'sack_vase',
+            'conic_cup'
+        ]
+        # chosen_object = np.random.choice(self.possible_objects)
+        super().__init__(*args,
+            object_names=self.possible_objects,
+            scaling_local_list=scaling_local_list,
+            **kwargs)
+
+    def reset(self):
+        """Currently only implemented for selecting 1 object at random"""
+        self.object_names = list([np.random.choice(self.possible_objects)])
+        print("self.object_names", self.object_names)
+        return super().reset()
+
+
 if __name__ == "__main__":
     import roboverse
     import time
@@ -164,4 +194,3 @@ if __name__ == "__main__":
             if done:
                 print('reward: {}'.format(rew))
                 break
-
