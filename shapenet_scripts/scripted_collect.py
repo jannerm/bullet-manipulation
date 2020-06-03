@@ -383,6 +383,7 @@ def scripted_grasping_V5(env, pool, success_pool):
 def scripted_grasping_V6(env, pool, success_pool):
     observation = env.reset()
     object_ind = np.random.randint(0, env._num_objects)
+    margin = 0.025
     actions, observations, next_observations, rewards, terminals, infos = \
         [], [], [], [], [], []
 
@@ -400,6 +401,8 @@ def scripted_grasping_V6(env, pool, success_pool):
             ee_pos = observation[:3]
 
         object_lifted = object_pos[2] > env._reward_height_thresh
+        object_lifted_with_margin = object_pos[2] > (env._reward_height_thresh + margin)
+
         object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
         theta_action = 0.
         # theta_action = np.random.uniform()
@@ -414,16 +417,22 @@ def scripted_grasping_V6(env, pool, success_pool):
                 (action, np.asarray([theta_action, 0., 0.])))
         elif env._gripper_open:
             # print('gripper closing')
-            action = (object_pos - ee_pos) * 4.0
+            action = (object_pos - ee_pos) * 7.0
             action = np.concatenate(
                 (action, np.asarray([0., -0.7, 0.])))
-        elif not object_lifted:
+        elif not object_lifted_with_margin:
             # print('raise object upward')
             action = np.asarray([0., 0., 0.7])
             action = np.concatenate(
                 (action, np.asarray([0., 0., 0.])))
         else:
-            action = np.zeros((6,))
+            # Move above tray's xy-center.
+            tray_info = roboverse.bullet.get_body_info(
+                env._tray, quat_to_deg=False)
+            tray_center = np.asarray(tray_info['pos'])
+            action = (tray_center - ee_pos)[:2]
+            action = np.concatenate(
+                (action, np.asarray([0., 0., 0., 0.])))
 
         action += np.random.normal(scale=0.1, size=(6,))
         action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
