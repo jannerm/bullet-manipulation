@@ -56,7 +56,7 @@ if __name__ == "__main__":
         num_trajectories_per_thread += 1
     save_directory = get_data_save_directory(args)
     command = ['python',
-               'shapenet_scripts/randomized_scripted_grasping.py',
+               'shapenet_scripts/scripted_collect.py',
                '-e{}'.format(args.env),
                '-d{}'.format(save_directory),
                '--noise-std',
