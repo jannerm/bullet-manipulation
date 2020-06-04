@@ -29,6 +29,7 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
 
         info['object_lifted_success'] = int(
             object_pos[2] > self.reward_height_threshold)
+        return info
 
     def step(self, action):
         action = np.asarray(action)
