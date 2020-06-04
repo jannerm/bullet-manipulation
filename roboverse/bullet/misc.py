@@ -33,7 +33,8 @@ def connect_headless(gui=False):
     else:
         p.connect(p.DIRECT)
 
-    p.resetDebugVisualizerCamera(0.8, 90, -20, [0.75, -.2, 0])
+    # p.resetDebugVisualizerCamera(0.8, 90, -20, [0.75, -.2, 0])
+    p.resetDebugVisualizerCamera(0.8, 90, -45, [0.75, -0.03, -0.1])
     p.setAdditionalSearchPath(pdata.getDataPath())
 
 

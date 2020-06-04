@@ -78,8 +78,8 @@ env_kwargs={
     'action_scale': .06, #.06
     'action_repeat': 10, #5
     'timestep': 1./120, #1./240
-    'max_force': 1000,
-    'solver_iterations': 150,
+    'max_force': 1000, #1000
+    'solver_iterations': 150, #150
 
     'gui': True,  # False,
     'goal_mult': 0,
@@ -90,6 +90,8 @@ env_kwargs={
     'img_dim': 48,
     'goal_mode': 'obj_in_bowl',
     'num_obj': 2, #2
+
+    'theta_rot': [180, 0, 90],
 }
 env = SawyerLiftEnvGC(**env_kwargs)
 

@@ -23,13 +23,15 @@ def loader(*filepath, **defaults):
     return fn
 
 cur_path = os.path.dirname(os.path.realpath(__file__))
-ASSET_PATH = os.path.join(cur_path, '../envs/assets')
+# ASSET_PATH = os.path.join(cur_path, '../envs/assets')
+ASSET_PATH = os.path.join(cur_path, '../../../bullet-assets/roboverse_assets')
 PDATA_PATH = pdata.getDataPath()
 
 
 ## robots
 
-sawyer = loader(ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro.urdf')
+# sawyer = loader(ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro.urdf')
+sawyer = loader(ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro_debug.urdf')
 
 
 ## pybullet_data objects
@@ -53,7 +55,10 @@ lego = loader(PDATA_PATH, 'lego/lego.urdf',
 
 ## custom objects
 
-bowl = loader(ASSET_PATH, 'objects/bowl/bowl.urdf',
+# bowl = loader(ASSET_PATH, 'objects/bowl/bowl.urdf',
+#               pos=[.75, 0, -.3],
+#               scale=0.25)
+bowl = loader(ASSET_PATH, 'objects/bowl/bowl_short.urdf',
               pos=[.75, 0, -.3],
               scale=0.25)
 

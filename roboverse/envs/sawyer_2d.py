@@ -55,7 +55,12 @@ class Sawyer2dEnv(gym.Env):
             current = current_states[name]
             init = self._init_states[name]
 
-            x = init['pos'][0:1]
+            # x = init['pos'][0:1]
+            x = current['pos'][0:1]
+            center_x = init['pos'][0:1]
+            if np.abs(x[0] - center_x[0]) > 0.015:
+                x = center_x
+
             yz = current['pos'][1:3]
             theta = current['theta']
             pos = x + yz
