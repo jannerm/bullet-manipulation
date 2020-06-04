@@ -123,7 +123,7 @@ if __name__ == "__main__":
     EPSILON = 0.05
     save_video = True
 
-    env = roboverse.make("Widow200GraspV5BoxV0RandObj-v0",
+    env = roboverse.make("Widow200GraspV5BoxPlaceV0RandObj-v0",
                          gui=True,
                          reward_type='sparse',
                          observation_mode='pixels_debug',)
