@@ -21,14 +21,16 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
         self.scripted_traj_len = 25
 
     def get_info(self):
-        info = __super__.get_info()
+        assert self._num_objects == 1
+        object_name = list(self._objects.keys())[0]
+        object_info = bullet.get_body_info(self._objects[object_name],
+                                           quat_to_deg=False)
+        object_pos = np.asarray(object_info['pos'])
+        ee_pos = np.array(self.get_end_effector_pos())
 
-        object_keys_list = list(self._objects.keys())
-        assert len(object_keys_list) == 1, "Too many objects in list."
-        object_pos = info["object" + object_keys_list]
+        object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
 
-        info['object_lifted_success'] = int(
-            object_pos[2] > self.reward_height_threshold)
+        info = dict(object_gripper_dist=object_gripper_dist)
         return info
 
     def step(self, action):
@@ -49,7 +51,8 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
         self._gripper_simulate(pos, target_theta, delta_theta, gripper_action)
 
         reward = self.get_reward({})
-        info = {'grasp_success': 1.0 if reward > 0 else 0.0}
+        info = self.get_info()
+        info['grasp_success'] = 1.0 if reward > 0 else 0.0
 
         observation = self.get_observation()
         self._prev_pos = bullet.get_link_state(self._robot_id, self._end_effector,
