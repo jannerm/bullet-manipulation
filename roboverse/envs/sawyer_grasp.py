@@ -34,7 +34,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         self._num_objects = num_objects
 
         self._randomize = randomize
-        self._multi_obj = True
+        self._multi_obj = False
         self._obj_list = ['lego', 'duck', 'cube']
         self._object = self._obj_list[0]
 
@@ -53,11 +53,18 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         self._trimodal_positions = [self._trimodal_position1,self._trimodal_position2,self._trimodal_position3]
 
         self.obs_img_dim = obs_img_dim
-        self._view_matrix_obs = bullet.get_view_matrix(
-            target_pos=[.75, +.15, -0.2], distance=0.3,
-            yaw=90, pitch=-45, roll=0, up_axis_index=2)
-        self._projection_matrix_obs = bullet.get_projection_matrix(
-            self.obs_img_dim, self.obs_img_dim)
+        # self._view_matrix_obs = bullet.get_view_matrix(
+        #     target_pos=[.75, +.15, -0.2], distance=0.3,
+        #     yaw=90, pitch=-45, roll=0, up_axis_index=2)
+        # self._projection_matrix_obs = bullet.get_projection_matrix(
+        #     self.obs_img_dim, self.obs_img_dim)
+
+        self._view_matrix_obs = bullet.get_view_matrix()
+        self._projection_matrix_obs = bullet.get_projection_matrix(self.obs_img_dim, self.obs_img_dim)
+
+        self.video_img_dim = 1024
+
+        self._projection_matrix_video_obs = bullet.get_projection_matrix(self.video_img_dim, self.video_img_dim)
 
         self.dt = 0.1
         super().__init__(*args, **kwargs)
@@ -74,10 +81,11 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
                 object_positions = self._trimodal_positions
             self._objects = {
                 'lego': bullet.objects.lego(pos=object_positions[0]),
-                'duck': bullet.objects.lego(pos=object_positions[1]),
-                'cube': bullet.objects.lego(pos=object_positions[2])
+                'duck': bullet.objects.cube(pos=object_positions[1]),
+                'cube': bullet.objects.cube(pos=object_positions[2])
             }
-            choice = np.random.randint(3)
+            # choice = np.random.randint(3)
+            choice = 0 #### make the goal always the same object
             self._object = self._obj_list[choice]
             print("--------------------------")
             print(self._object)
@@ -87,7 +95,11 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
             if self._randomize:
                 object_position = np.random.uniform(low=self._object_position_low, high=self._object_position_high)
             else:
-                object_position = self._fixed_object_position
+                object_positions = self._trimodal_positions
+                choice = np.random.randint(3)
+                object_position = object_positions[choice]
+                print("obj position: ", object_position)
+                # object_position = self._fixed_object_position
             self._objects = {
                 'lego': bullet.objects.lego(pos=object_position)
             }
@@ -182,26 +194,31 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         img, depth, segmentation = bullet.render(
             self.obs_img_dim, self.obs_img_dim, self._view_matrix_obs, self._projection_matrix_obs)
         return img
+    def render_video_frame(self):
+        img, depth, segmentation = bullet.render(
+            self.video_img_dim, self.video_img_dim, self._view_matrix_obs, self._projection_matrix_obs)
+        return img
 
     def get_reward(self, info):
+        return -info['object_gripper_distance']
 
-        if self._reward_type == 'sparse':
-            if info['object_goal_distance'] < 0.05:
-                reward = 1
-            else:
-                reward = 0
-        elif self._reward_type == 'shaped':
-            reward = -1*(4*info['object_goal_distance']
-                         + info['object_gripper_distance'])
-            reward = max(reward, self._reward_min)
-        elif self._reward_type == 'grasp_only':
-            reward = -1*(4*info['object_goal_distance_z']
-                         + info['object_gripper_distance'])
-            reward = max(reward, self._reward_min)
-        else:
-            raise NotImplementedError
-
-        return reward
+        # if self._reward_type == 'sparse':
+        #     if info['object_goal_distance'] < 0.05:
+        #         reward = 1
+        #     else:
+        #         reward = 0
+        # elif self._reward_type == 'shaped':
+        #     reward = -1*(4*info['object_goal_distance']
+        #                  + info['object_gripper_distance'])
+        #     reward = max(reward, self._reward_min)
+        # elif self._reward_type == 'grasp_only':
+        #     reward = -1*(4*info['object_goal_distance_z']
+        #                  + info['object_gripper_distance'])
+        #     reward = max(reward, self._reward_min)
+        # else:
+        #     raise NotImplementedError
+        #
+        # return reward
 
     def get_observation(self):
         left_tip_pos = bullet.get_link_state(
@@ -225,7 +242,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
                  object_pos, object_theta))
         elif self._observation_mode == 'pixels':
             image_observation = self.render_obs()
-            image_observation = np.float32(image_observation.flatten()) / 255.0
+            # image_observation = np.float32(image_observation.flatten()) / 255.0
             observation = {
                 'state': np.concatenate(
                     (end_effector_pos, gripper_tips_distance)),
@@ -234,7 +251,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         elif self._observation_mode == 'pixels_debug':
             # This mode passes in all the true state information + images
             image_observation = self.render_obs()
-            image_observation = np.float32(image_observation.flatten()) / 255.0
+            # image_observation = np.float32(image_observation.flatten()) / 255.0
             object_info = bullet.get_body_info(self._objects[self._object],
                                                quat_to_deg=False)
             all_obj_pos = []
@@ -244,9 +261,25 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
 
             object_pos = object_info['pos']
             object_theta = object_info['theta']
+            print("[base env] gripper pos: ", end_effector_pos, "   goal pos: ", self._goal_pos,  "  dist: ", [np.linalg.norm(end_effector_pos - self._goal_pos)])
             state = np.concatenate(
                 (end_effector_pos,gripper_tips_distance,
                  object_pos, object_theta))
+
+
+            # from PIL import Image
+            # import os
+            # # reshaped_img = frame['image'].reshape([48, 48, 3]) * 255
+            # # ready_img = Image.fromarray(np.uint8(reshaped_img))
+            # new_image_save_path = '/home/gaoyuezhou/Desktop/debug_images'
+            # if not os.path.exists(new_image_save_path):
+            #     os.makedirs(new_image_save_path)
+            # import imageio;
+            # # print('{}/t_{}.png'.format(new_image_save_path, i))
+            # imageio.imwrite('{}/latestobs.png'.format(new_image_save_path), image_observation)
+            # import pdb;
+            # pdb.set_trace()
+
             observation = {
                 'state': state,
                 'image': image_observation,
