@@ -641,8 +641,8 @@ def main(args):
         V6_GRASPING_ENVS + V5_GRASPING_V0_PLACING_ENVS):
         if 'pixels' in args.observation_mode:
             pool_size = args.num_trajectories*args.num_timesteps + 1
-            railrl_pool = ObsDictReplayBuffer(pool_size, env, observation_key='image')
-            railrl_success_pool = ObsDictReplayBuffer(pool_size, env, observation_key='image')
+            railrl_pool = ObsDictReplayBuffer(pool_size, env, observation_keys=('image', 'state'))
+            railrl_success_pool = ObsDictReplayBuffer(pool_size, env, observation_keys=('image', 'state'))
         elif args.observation_mode == 'state':
             pool_size = args.num_trajectories*args.num_timesteps + 1
             railrl_pool = EnvReplayBuffer(pool_size, env)
