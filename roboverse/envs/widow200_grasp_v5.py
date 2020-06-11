@@ -66,7 +66,7 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
             # image_observation = np.zeros((48, 48, 3), dtype=np.uint8)
             observation = {
                 'robot_state': np.concatenate(
-                    (end_effector_pos, gripper_open)),
+                    (end_effector_pos, wrist_joint_angle, gripper_open)),
                 'image': image_observation
             }
         elif self._observation_mode == 'pixels_debug':
