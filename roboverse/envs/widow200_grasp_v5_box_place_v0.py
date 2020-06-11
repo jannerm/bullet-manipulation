@@ -139,10 +139,11 @@ if __name__ == "__main__":
 
         for _ in range(env.scripted_traj_len):
             if isinstance(obs, dict):
-                obs = obs['state']
+                state_obs = obs['robot_state']
+                obj_obs = obs['object_state']
 
-            ee_pos = obs[:3]
-            object_pos = obs[object_ind * 7 + 8: object_ind * 7 + 8 + 3]
+            ee_pos = state_obs[:3]
+            object_pos = obj_obs[object_ind * 7 : object_ind * 7 + 3]
             # object_pos += np.random.normal(scale=0.02, size=(3,))
 
             object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
@@ -183,6 +184,7 @@ if __name__ == "__main__":
             action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
             # print(action)
             obs, rew, done, info = env.step(action)
+            # print("obs", obs)
 
             img = env.render_obs()
             if save_video:

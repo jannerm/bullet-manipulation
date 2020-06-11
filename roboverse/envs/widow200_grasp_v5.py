@@ -35,6 +35,59 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
                     reward = REWARD_SUCCESS
         return reward
 
+    def get_wrist_joint_angle(self):
+        # Returns scalar corresponding to gripper wrist angle.
+        joints, current = bullet.get_joint_positions(self._robot_id)
+        return current[joints[4]]
+
+    def get_observation(self):
+        # gripper_tips_distance = self.get_gripper_tips_distance()
+        gripper_open = np.array([float(self._gripper_open)])
+        wrist_joint_angle = np.array(
+            [self.get_wrist_joint_angle()]) # shape (1,) array
+        end_effector_pos = self.get_end_effector_pos()
+        # end_effector_theta = bullet.get_link_state(
+        #     self._robot_id, self._end_effector, 'theta', quat_to_deg=False)
+
+        if self._observation_mode == 'state':
+            state_observation = np.concatenate(
+                (end_effector_pos, wrist_joint_angle, gripper_open))
+
+            object_observation = self.get_obj_obs_array()
+
+            observation = {
+                'robot_state': state_observation,
+                'object_state': object_observation,
+            }
+
+        elif self._observation_mode == 'pixels':
+            image_observation = self.render_obs()
+            image_observation = np.float32(image_observation.flatten())/255.0
+            # image_observation = np.zeros((48, 48, 3), dtype=np.uint8)
+            observation = {
+                'robot_state': np.concatenate(
+                    (end_effector_pos, env._gripper_open)),
+                'image': image_observation
+            }
+        elif self._observation_mode == 'pixels_debug':
+            # This mode passes in all the true state information + images
+            image_observation = self.render_obs()
+            image_observation = np.float32(image_observation.flatten())/255.0
+            state_observation = np.concatenate(
+                (end_effector_pos, wrist_joint_angle, gripper_open))
+
+            object_observation = self.get_obj_obs_array()
+
+            observation = {
+                'robot_state': state_observation,
+                'object_state': object_observation,
+                'image': image_observation,
+            }
+        else:
+            raise NotImplementedError
+
+        return observation
+
     def _gripper_simulate(self, pos, target_theta, delta_theta, gripper_action):
         # is_gripper_open = self._is_gripper_open()
         is_gripper_open = self._gripper_open
@@ -162,8 +215,12 @@ if __name__ == "__main__":
         dist_thresh = 0.04 + np.random.normal(scale=0.01)
 
         for _ in range(env.scripted_traj_len):
-            ee_pos = obs[:3]
-            object_pos = obs[object_ind * 7 + 8: object_ind * 7 + 8 + 3]
+            if isinstance(obs, dict):
+                state_obs = obs['robot_state']
+                obj_obs = obs['object_state']
+
+            ee_pos = state_obs[:3]
+            object_pos = obj_obs[object_ind * 7 : object_ind * 7 + 3]
             # object_pos += np.random.normal(scale=0.02, size=(3,))
 
             object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
