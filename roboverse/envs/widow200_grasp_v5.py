@@ -19,6 +19,33 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
         act_high = np.ones(act_dim) * act_bound
         self.action_space = gym.spaces.Box(-act_high, act_high)
 
+    def _set_spaces(self):
+        self._set_action_space()
+        # obs = self.reset()
+        robot_obs_dim = 3 + 1 + 1
+        obj_obs_dim = 7 * self._num_objects
+        obs_bound = 100
+        robot_obs_high = np.ones(robot_obs_dim) * obs_bound
+        obj_obs_high = np.ones(obj_obs_dim) * obs_bound
+        robot_obs_space = gym.spaces.Box(-robot_obs_high, robot_obs_high)
+        obj_obs_space = gym.spaces.Box(-obj_obs_high, obj_obs_high)
+        if self._observation_mode == 'state':
+            spaces = {'robot_state': robot_obs_space, 'object_state': obj_obs_space}
+            self.observation_space = gym.spaces.Dict(spaces)
+        elif self._observation_mode == 'pixels' or self._observation_mode == 'pixels_debug':
+            img_space = gym.spaces.Box(0, 1, (self.image_length,), dtype=np.float32)
+            if self._observation_mode == 'pixels':
+                spaces = {'image': img_space, 'robot_state': robot_obs_space}
+            elif self._observation_mode == 'pixels_debug':
+                spaces = {
+                    'image': img_space,
+                    'robot_state': robot_obs_space,
+                    'object_state': obj_obs_space
+                }
+            self.observation_space = gym.spaces.Dict(spaces)
+        else:
+            raise NotImplementedError
+
     def get_reward(self, info):
         object_list = self._objects.keys()
         reward = REWARD_FAIL
