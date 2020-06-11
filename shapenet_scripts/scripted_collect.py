@@ -317,9 +317,9 @@ def scripted_grasping_V5(env, pool, success_pool):
     for _ in range(args.num_timesteps):
 
         if isinstance(observation, dict):
-            object_pos = observation['state'][
-                         object_ind * 7 + 8: object_ind * 7 + 8 + 3]
-            ee_pos = observation['state'][:3]
+            object_pos = observation['object_state'][
+                         object_ind * 7 : object_ind * 7 + 3]
+            ee_pos = observation['robot_state'][:3]
         else:
             object_pos = observation[
                          object_ind * 7 + 8: object_ind * 7 + 8 + 3]
@@ -395,9 +395,9 @@ def scripted_grasping_V6(env, pool, success_pool):
     for _ in range(args.num_timesteps):
 
         if isinstance(observation, dict):
-            object_pos = observation['state'][
-                         object_ind * 7 + 8: object_ind * 7 + 8 + 3]
-            ee_pos = observation['state'][:3]
+            object_pos = observation['object_state'][
+                         object_ind * 7 : object_ind * 7 + 3]
+            ee_pos = observation['robot_state'][:3]
         else:
             object_pos = observation[
                          object_ind * 7 + 8: object_ind * 7 + 8 + 3]
@@ -487,9 +487,9 @@ def scripted_grasping_V5_placing_V0(env, pool, success_pool):
     for _ in range(args.num_timesteps):
 
         if isinstance(observation, dict):
-            object_pos = observation['state'][
-                         object_ind * 7 + 8: object_ind * 7 + 8 + 3]
-            ee_pos = observation['state'][:3]
+            object_pos = observation['object_state'][
+                         object_ind * 7 : object_ind * 7 + 3]
+            ee_pos = observation['robot_state'][:3]
         else:
             object_pos = observation[
                          object_ind * 7 + 8: object_ind * 7 + 8 + 3]
