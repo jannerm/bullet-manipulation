@@ -84,8 +84,8 @@ if __name__ == "__main__":
 
         for _ in range(env.scripted_traj_len):
             if isinstance(obs, dict):
-                state_obs = obs['robot_state']
-                obj_obs = obs['object_state']
+                state_obs = obs[env.fc_input_key]
+                obj_obs = obs[env.object_obs_key]
 
             ee_pos = state_obs[:3]
             object_pos = obj_obs[object_ind * 7 : object_ind * 7 + 3]

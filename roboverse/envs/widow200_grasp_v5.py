@@ -8,6 +8,13 @@ REWARD_SUCCESS = 1.0
 
 
 class Widow200GraspV5Env(Widow200GraspV2Env):
+    def __init__(self, *args, **kwargs):
+        # Used for obs and railrl-private CNN forward.
+        self.cnn_input_key = "image"
+        self.fc_input_key = "robot_state"
+        self.object_obs_key = "object_state"
+
+        super().__init__(*args, **kwargs)
 
     def _set_action_space(self):
         act_dim = 6
@@ -30,17 +37,17 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
         robot_obs_space = gym.spaces.Box(-robot_obs_high, robot_obs_high)
         obj_obs_space = gym.spaces.Box(-obj_obs_high, obj_obs_high)
         if self._observation_mode == 'state':
-            spaces = {'robot_state': robot_obs_space, 'object_state': obj_obs_space}
+            spaces = {self.fc_input_key: robot_obs_space, self.object_obs_key: obj_obs_space}
             self.observation_space = gym.spaces.Dict(spaces)
         elif self._observation_mode == 'pixels' or self._observation_mode == 'pixels_debug':
             img_space = gym.spaces.Box(0, 1, (self.image_length,), dtype=np.float32)
             if self._observation_mode == 'pixels':
-                spaces = {'image': img_space, 'robot_state': robot_obs_space}
+                spaces = {self.cnn_input_key: img_space, self.fc_input_key: robot_obs_space}
             elif self._observation_mode == 'pixels_debug':
                 spaces = {
-                    'image': img_space,
-                    'robot_state': robot_obs_space,
-                    'object_state': obj_obs_space
+                    self.cnn_input_key: img_space,
+                    self.fc_input_key: robot_obs_space,
+                    self.object_obs_key: obj_obs_space
                 }
             self.observation_space = gym.spaces.Dict(spaces)
         else:
@@ -68,9 +75,6 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
         return current[joints[4]]
 
     def get_observation(self):
-        print("self.cnn_input_key", self.cnn_input_key)
-        print("self.fc_input_key", self.fc_input_key)
-        print("self.object_obs_key", self.object_obs_key)
         # gripper_tips_distance = self.get_gripper_tips_distance()
         gripper_open = np.array([float(self._gripper_open)])
         wrist_joint_angle = np.array(
@@ -86,8 +90,8 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
             object_observation = self.get_obj_obs_array()
 
             observation = {
-                'robot_state': state_observation,
-                'object_state': object_observation,
+                self.fc_input_key: state_observation,
+                self.object_obs_key: object_observation,
             }
 
         elif self._observation_mode == 'pixels':
@@ -95,9 +99,9 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
             image_observation = np.float32(image_observation.flatten())/255.0
             # image_observation = np.zeros((48, 48, 3), dtype=np.uint8)
             observation = {
-                'robot_state': np.concatenate(
+                self.fc_input_key: np.concatenate(
                     (end_effector_pos, wrist_joint_angle, gripper_open)),
-                'image': image_observation
+                self.cnn_input_key: image_observation
             }
         elif self._observation_mode == 'pixels_debug':
             # This mode passes in all the true state information + images
@@ -109,9 +113,9 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
             object_observation = self.get_obj_obs_array()
 
             observation = {
-                'robot_state': state_observation,
-                'object_state': object_observation,
-                'image': image_observation,
+                self.fc_input_key: state_observation,
+                self.object_obs_key: object_observation,
+                self.cnn_input_key: image_observation,
             }
         else:
             raise NotImplementedError
@@ -246,8 +250,8 @@ if __name__ == "__main__":
 
         for _ in range(env.scripted_traj_len):
             if isinstance(obs, dict):
-                state_obs = obs['robot_state']
-                obj_obs = obs['object_state']
+                state_obs = obs[env.fc_input_key]
+                obj_obs = obs[env.object_obs_key]
 
             ee_pos = state_obs[:3]
             object_pos = obj_obs[object_ind * 7 : object_ind * 7 + 3]
