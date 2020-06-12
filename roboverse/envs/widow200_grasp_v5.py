@@ -68,6 +68,9 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
         return current[joints[4]]
 
     def get_observation(self):
+        print("self.cnn_input_key", self.cnn_input_key)
+        print("self.fc_input_key", self.fc_input_key)
+        print("self.object_obs_key", self.object_obs_key)
         # gripper_tips_distance = self.get_gripper_tips_distance()
         gripper_open = np.array([float(self._gripper_open)])
         wrist_joint_angle = np.array(
