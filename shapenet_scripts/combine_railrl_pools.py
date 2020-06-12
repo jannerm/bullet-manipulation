@@ -75,7 +75,7 @@ if __name__ == "__main__":
                 )
 
     elif args.observation_mode in ['pixels', 'pixels_debug']:
-        image_obs_key, state_obs_key = 'image', 'robot_state'
+        image_obs_key, state_obs_key = env.cnn_input_key, env.fc_input_key
         obs_keys = (image_obs_key, state_obs_key)
         consolidated_pool = ObsDictReplayBuffer(pool_size, env,
                                                 observation_keys=obs_keys)

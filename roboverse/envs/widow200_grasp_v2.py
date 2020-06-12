@@ -47,11 +47,6 @@ class Widow200GraspV2Env(Widow200GraspEnv):
         self.scripted_traj_len = 25
         self._gripper_open = True
 
-        # Used for obs and railrl-private CNN forward.
-        self.cnn_input_key = "image"
-        self.fc_input_key = "robot_state"
-        self.object_obs_key = "object_state"
-
     def set_scaling_dicts(self):
         assert isinstance(self._scaling_local_list, list), (
             "self._scaling_local_list not a list")
