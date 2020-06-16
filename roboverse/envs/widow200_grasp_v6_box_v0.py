@@ -62,9 +62,9 @@ class Widow200GraspV6BoxV0RandObjEnv(Widow200GraspV6BoxV0Env):
         ]
 
         if self.in_eval:
-            self.possible_objects = self.possible_train_objects
-        else:
             self.possible_objects = self.possible_test_objects
+        else:
+            self.possible_objects = self.possible_train_objects
 
         super().__init__(*args,
             object_names=self.possible_objects,
