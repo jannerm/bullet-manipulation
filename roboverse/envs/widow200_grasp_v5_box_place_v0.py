@@ -87,10 +87,14 @@ class Widow200GraspV5BoxPlaceV0RandObjEnv(Widow200GraspV5BoxPlaceV0Env):
     """
     def __init__(self,
                  *args,
+                 in_eval=False,
                  success_dist_threshold=0.04,
                  scaling_local_list=[0.3]*10,
                  **kwargs):
-        self.possible_objects = [
+        self.in_eval = in_eval # True when doing evaluation
+        # so that we use novel test_objects.
+
+        self.possible_train_objects = [
             'smushed_dumbbell',
             'jar',
             'beer_bottle',
@@ -102,7 +106,15 @@ class Widow200GraspV5BoxPlaceV0RandObjEnv(Widow200GraspV5BoxPlaceV0Env):
             'sack_vase',
             'conic_cup'
         ]
-        # chosen_object = np.random.choice(self.possible_objects)
+
+        self.possible_test_objects = [
+        ]
+
+        if self.in_eval:
+            self.possible_objects = self.possible_train_objects
+        else:
+            self.possible_objects = self.possible_test_objects
+
         super().__init__(*args,
             object_names=self.possible_objects,
             success_dist_threshold=success_dist_threshold,
