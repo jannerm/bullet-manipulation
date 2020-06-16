@@ -83,8 +83,12 @@ if __name__ == "__main__":
         rewards = []
 
         for _ in range(env.scripted_traj_len):
-            ee_pos = obs[:3]
-            object_pos = obs[object_ind * 7 + 8: object_ind * 7 + 8 + 3]
+            if isinstance(obs, dict):
+                state_obs = obs[env.fc_input_key]
+                obj_obs = obs[env.object_obs_key]
+
+            ee_pos = state_obs[:3]
+            object_pos = obj_obs[object_ind * 7 : object_ind * 7 + 3]
 
             object_lifted = object_pos[2] > env._reward_height_thresh
             object_lifted_with_margin = object_pos[2] > (env._reward_height_thresh + margin)
