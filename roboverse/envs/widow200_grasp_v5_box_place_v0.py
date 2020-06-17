@@ -90,41 +90,53 @@ class Widow200GraspV5BoxPlaceV0RandObjEnv(Widow200GraspV5BoxPlaceV0Env):
                  in_eval=False,
                  success_dist_threshold=0.04,
                  scaling_local_list=[0.3]*10,
+                 possible_train_objects="default",
+                 possible_test_objects="default",
                  **kwargs):
         self.in_eval = in_eval # True when doing evaluation
         # so that we use novel test_objects.
 
-        self.possible_train_objects = [
-            'smushed_dumbbell',
-            'jar',
-            'beer_bottle',
-            'mug',
-            'square_prism_bin',
-            'conic_bin',
-            'ball',
-            'shed',
-            'sack_vase',
-            'conic_cup'
-        ]
+        if possible_train_objects == "default":
+            self.possible_train_objects = [
+                'smushed_dumbbell',
+                'jar',
+                'beer_bottle',
+                'mug',
+                'square_prism_bin',
+                'conic_bin',
+                'ball',
+                'shed',
+                'sack_vase',
+                'conic_cup'
+            ]
+        else:
+            assert isinstance(possible_train_objects, list)
+            self.possible_train_objects = possible_train_objects
 
-        self.possible_test_objects = [
-        ]
+        if possible_test_objects == "default":
+            self.possible_test_objects = [
+            ]
+        else:
+            assert isinstance(possible_test_objects, list)
+            self.possible_test_objects = possible_test_objects
 
         if self.in_eval:
             self.possible_objects = self.possible_test_objects
         else:
             self.possible_objects = self.possible_train_objects
 
+        self.success_dist_threshold = success_dist_threshold
+        self.scaling_local_list = scaling_local_list
         super().__init__(*args,
             object_names=self.possible_objects,
-            success_dist_threshold=success_dist_threshold,
-            scaling_local_list=scaling_local_list,
+            success_dist_threshold=self.success_dist_threshold,
+            scaling_local_list=self.scaling_local_list,
             **kwargs)
 
     def reset(self):
         """Currently only implemented for selecting 1 object at random"""
         self.object_names = list([np.random.choice(self.possible_objects)])
-        print("self.object_names", self.object_names)
+        print("self.object_names", self.object_names, self.scaling_local_list)
         return super().reset()
 
 
