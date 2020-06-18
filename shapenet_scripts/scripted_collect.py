@@ -317,9 +317,9 @@ def scripted_grasping_V5(env, pool, success_pool, noise=0.1):
     for _ in range(args.num_timesteps):
 
         if isinstance(observation, dict):
-            object_pos = observation['state'][
-                         object_ind * 7 + 8: object_ind * 7 + 8 + 3]
-            ee_pos = observation['state'][:3]
+            object_pos = observation[env.object_obs_key][
+                         object_ind * 7 : object_ind * 7 + 3]
+            ee_pos = observation[env.fc_input_key][:3]
         else:
             object_pos = observation[
                          object_ind * 7 + 8: object_ind * 7 + 8 + 3]
@@ -394,9 +394,9 @@ def scripted_grasping_V6(env, pool, success_pool, noise=0.1):
     for _ in range(args.num_timesteps):
 
         if isinstance(observation, dict):
-            object_pos = observation['state'][
-                         object_ind * 7 + 8: object_ind * 7 + 8 + 3]
-            ee_pos = observation['state'][:3]
+            object_pos = observation[env.object_obs_key][
+                         object_ind * 7 : object_ind * 7 + 3]
+            ee_pos = observation[env.fc_input_key][:3]
         else:
             object_pos = observation[
                          object_ind * 7 + 8: object_ind * 7 + 8 + 3]
@@ -484,9 +484,9 @@ def scripted_grasping_V5_placing_V0(env, pool, success_pool):
     for _ in range(args.num_timesteps):
 
         if isinstance(observation, dict):
-            object_pos = observation['state'][
-                         object_ind * 7 + 8: object_ind * 7 + 8 + 3]
-            ee_pos = observation['state'][:3]
+            object_pos = observation[env.object_obs_key][
+                         object_ind * 7 : object_ind * 7 + 3]
+            ee_pos = observation[env.fc_input_key][:3]
         else:
             object_pos = observation[
                          object_ind * 7 + 8: object_ind * 7 + 8 + 3]
@@ -633,13 +633,20 @@ def main(args):
     if args.env == 'SawyerGraspOne-v0' or args.env == 'SawyerReach-v0':
         pool = roboverse.utils.DemoPool()
         success_pool = roboverse.utils.DemoPool()
-    elif args.env in (V2_GRASPING_ENVS +
-        V4_GRASPING_ENVS + V5_GRASPING_ENVS +
-        V6_GRASPING_ENVS + V5_GRASPING_V0_PLACING_ENVS):
+    elif args.env in (V2_GRASPING_ENVS + V4_GRASPING_ENVS +
+        V5_GRASPING_ENVS + V6_GRASPING_ENVS +
+        V5_GRASPING_V0_PLACING_ENVS):
+        if args.env in (V2_GRASPING_ENVS + V4_GRASPING_ENVS):
+            observation_keys = ('image',)
+        else:
+            # grasp_v5 env or newer.
+            obs_keys = (env.cnn_input_key, env.fc_input_key)
         if 'pixels' in args.observation_mode:
             pool_size = args.num_trajectories*args.num_timesteps + 1
-            railrl_pool = ObsDictReplayBuffer(pool_size, env, observation_key='image')
-            railrl_success_pool = ObsDictReplayBuffer(pool_size, env, observation_key='image')
+            railrl_pool = ObsDictReplayBuffer(pool_size, env,
+                observation_keys=obs_keys)
+            railrl_success_pool = ObsDictReplayBuffer(pool_size, env,
+                observation_keys=obs_keys)
         elif args.observation_mode == 'state':
             pool_size = args.num_trajectories*args.num_timesteps + 1
             railrl_pool = EnvReplayBuffer(pool_size, env)

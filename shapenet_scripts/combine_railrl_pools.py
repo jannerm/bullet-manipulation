@@ -75,9 +75,10 @@ if __name__ == "__main__":
                 )
 
     elif args.observation_mode in ['pixels', 'pixels_debug']:
-        obs_key = 'image'
+        image_obs_key, state_obs_key = env.cnn_input_key, env.fc_input_key
+        obs_keys = (image_obs_key, state_obs_key)
         consolidated_pool = ObsDictReplayBuffer(pool_size, env,
-                                                observation_key=obs_key)
+                                                observation_keys=obs_keys)
         for pool in pools:
             # import IPython; IPython.embed()
             path = dict(
@@ -91,8 +92,14 @@ if __name__ == "__main__":
                 path['rewards'].append(pool._rewards[i])
                 path['actions'].append(pool._actions[i])
                 path['terminals'].append(pool._terminals[i])
-                path['observations'].append(dict(image=pool._obs[obs_key][i]))
-                path['next_observations'].append(dict(image=pool._next_obs[obs_key][i]))
+                path['observations'].append(
+                    {image_obs_key: pool._obs[image_obs_key][i],
+                         state_obs_key: pool._obs[state_obs_key][i]}
+                )
+                path['next_observations'].append(
+                    {image_obs_key: pool._next_obs[image_obs_key][i],
+                         state_obs_key: pool._next_obs[state_obs_key][i]}
+                )
 
                 path_done = ((env.terminates and pool._terminals[i]) or
                              (not env.terminates and

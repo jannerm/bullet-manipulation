@@ -21,6 +21,9 @@ class WidowBaseEnv(gym.Env, Serializable):
                  max_force=1000.,
                  visualize=True,
                  downwards=False,
+                 camera_target_pos=[.95, -0.05, -0.2],
+                 camera_distance=0.10,
+                 camera_pitch=-40
                  ):
 
         self._id = 'WidowBaseEnv'
@@ -58,8 +61,8 @@ class WidowBaseEnv(gym.Env, Serializable):
         bullet.connect_headless(self._gui)
         self._load_meshes()
 
-        view_matrix_args = dict(target_pos=[.95, -0.05, -0.2], distance=0.10,
-                                yaw=90, pitch=-40, roll=0, up_axis_index=2)
+        view_matrix_args = dict(target_pos=camera_target_pos, distance=camera_distance,
+                                yaw=90, pitch=camera_pitch, roll=0, up_axis_index=2)
         self._view_matrix = bullet.get_view_matrix(
             **view_matrix_args)
         self._projection_matrix = bullet.get_projection_matrix(
@@ -248,5 +251,3 @@ class WidowBaseEnv(gym.Env, Serializable):
 
     def convert_to_active_observation(self, obs):
         return obs
-
-
