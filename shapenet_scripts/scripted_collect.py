@@ -306,7 +306,7 @@ def scripted_grasping_V4(env, pool, success_pool):
     if rewards[-1] > 0:
         success_pool.add_path(path)
 
-def scripted_grasping_V5(env, pool, success_pool):
+def scripted_grasping_V5(env, pool, success_pool, noise=0.1):
     observation = env.reset()
     object_ind = np.random.randint(0, env._num_objects)
     actions, observations, next_observations, rewards, terminals, infos = \
@@ -327,7 +327,6 @@ def scripted_grasping_V5(env, pool, success_pool):
 
         object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
         theta_action = 0.
-        # theta_action = np.random.uniform()
 
         if object_gripper_dist > dist_thresh and env._gripper_open:
             # print('approaching')
@@ -348,7 +347,7 @@ def scripted_grasping_V5(env, pool, success_pool):
             action = np.concatenate(
                 (action, np.asarray([0., 0., 0.7])))
 
-        action += np.random.normal(scale=0.1, size=(6,))
+        action += np.random.normal(scale=noise, size=(6,))
         action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
 
         next_observation, reward, done, info = env.step(action)
@@ -383,7 +382,7 @@ def scripted_grasping_V5(env, pool, success_pool):
     if rewards[-1] > 0:
         success_pool.add_path(path)
 
-def scripted_grasping_V6(env, pool, success_pool):
+def scripted_grasping_V6(env, pool, success_pool, noise=0.1):
     observation = env.reset()
     object_ind = np.random.randint(0, env._num_objects)
     margin = 0.025
@@ -403,12 +402,10 @@ def scripted_grasping_V6(env, pool, success_pool):
                          object_ind * 7 + 8: object_ind * 7 + 8 + 3]
             ee_pos = observation[:3]
 
-        object_lifted = object_pos[2] > env._reward_height_thresh
         object_lifted_with_margin = object_pos[2] > (env._reward_height_thresh + margin)
 
         object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
         theta_action = 0.
-        # theta_action = np.random.uniform()
 
         if object_gripper_dist > dist_thresh and env._gripper_open:
             # print('approaching')
@@ -437,7 +434,7 @@ def scripted_grasping_V6(env, pool, success_pool):
             action = np.concatenate(
                 (action, np.asarray([0., 0., 0., 0.])))
 
-        action += np.random.normal(scale=0.1, size=(6,))
+        action += np.random.normal(scale=noise, size=(6,))
         action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
 
         next_observation, reward, done, info = env.step(action)
@@ -671,11 +668,13 @@ def main(args):
         elif args.env in V5_GRASPING_ENVS:
             assert not render_images
             success = False
-            scripted_grasping_V5(env, railrl_pool, railrl_success_pool)
+            scripted_grasping_V5(env, railrl_pool, railrl_success_pool,
+                                 noise=args.noise_std)
         elif args.env in V6_GRASPING_ENVS:
             assert not render_images
             success = False
-            scripted_grasping_V6(env, railrl_pool, railrl_success_pool)
+            scripted_grasping_V6(env, railrl_pool, railrl_success_pool,
+                                 noise=args.noise_std)
         elif args.env in V5_GRASPING_V0_PLACING_ENVS:
             assert not render_images
             success = False
