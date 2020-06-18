@@ -38,32 +38,73 @@ class Widow200GraspV6BoxV0RandObjEnv(Widow200GraspV6BoxV0Env):
     """
     def __init__(self,
                  *args,
+                 in_eval=False,
                  success_dist_threshold=0.04,
                  scaling_local_list=[0.3]*10,
+                 possible_train_objects="default",
+                 possible_test_objects="default",
                  **kwargs):
-        self.possible_objects = [
-            'smushed_dumbbell',
-            'jar',
-            'beer_bottle',
-            'mug',
-            'square_prism_bin',
-            'conic_bin',
-            'ball',
-            'shed',
-            'sack_vase',
-            'conic_cup'
-        ]
-        # chosen_object = np.random.choice(self.possible_objects)
+        self.in_eval = in_eval # True when doing evaluation
+        # so that we use novel test_objects.
+
+        if possible_train_objects == "default":
+            # Decided based on object_success_best_scaling.csv
+            self.possible_train_objects = [
+                'conic_cup',
+                'ball',
+                'sack_vase',
+                'fountain_vase',
+                'shed',
+                'circular_table',
+                'hex_deep_bowl',
+                'smushed_dumbbell',
+                'square_prism_bin',
+                'narrow_tray',
+            ]
+            self.possible_train_scaling_local_list = [
+                0.3, 0.5, 0.3, 0.3, 0.3, 0.2, 0.2, 0.3, 0.3, 0.2]
+        else:
+            assert isinstance(possible_train_objects, list)
+            self.possible_train_objects = possible_train_objects
+            self.possible_train_scaling_local_list = scaling_local_list
+
+        if possible_test_objects == "default":
+            self.possible_test_objects = [
+                'conic_bin',
+                'jar',
+                'gatorade',
+                'bunsen_burner',
+                'long_vase',
+            ]
+            self.possible_test_scaling_local_list = [0.2, 0.5, 0.5, 0.3, 0.3]
+        else:
+            assert isinstance(possible_test_objects, list)
+            self.possible_test_objects = possible_test_objects
+            self.possible_test_scaling_local_list = scaling_local_list
+
+        if self.in_eval:
+            self.possible_objects = self.possible_test_objects
+            self.possible_scaling_local_list = \
+                self.possible_test_scaling_local_list
+        else:
+            self.possible_objects = self.possible_train_objects
+            self.possible_scaling_local_list = \
+                self.possible_train_scaling_local_list
+
+        self.success_dist_threshold = success_dist_threshold
         super().__init__(*args,
             object_names=self.possible_objects,
-            success_dist_threshold=success_dist_threshold,
-            scaling_local_list=scaling_local_list,
+            success_dist_threshold=self.success_dist_threshold,
+            scaling_local_list=self.possible_scaling_local_list,
             **kwargs)
 
     def reset(self):
         """Currently only implemented for selecting 1 object at random"""
-        self.object_names = list([np.random.choice(self.possible_objects)])
-        print("self.object_names", self.object_names)
+        chosen_obj_idx = np.random.randint(0, len(self.possible_objects))
+        self.object_names = [self.possible_objects[chosen_obj_idx]]
+        self.scaling_local_list = [
+            self.possible_scaling_local_list[chosen_obj_idx]]
+        print("self.object_names", self.object_names, self.scaling_local_list)
         return super().reset()
 
 
@@ -90,8 +131,12 @@ if __name__ == "__main__":
         rewards = []
 
         for _ in range(env.scripted_traj_len):
-            ee_pos = obs[:3]
-            object_pos = obs[object_ind * 7 + 8: object_ind * 7 + 8 + 3]
+            if isinstance(obs, dict):
+                state_obs = obs[env.fc_input_key]
+                obj_obs = obs[env.object_obs_key]
+
+            ee_pos = state_obs[:3]
+            object_pos = obj_obs[object_ind * 7 : object_ind * 7 + 3]
 
             object_lifted = object_pos[2] > env._reward_height_thresh
             object_lifted_with_margin = object_pos[2] > (env._reward_height_thresh + margin)

@@ -45,6 +45,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
         self._height_threshold = -0.31
         self._reward_height_thresh = reward_height_threshold
         self.scripted_traj_len = 25
+        self._gripper_open = True
 
     def set_scaling_dicts(self):
         assert isinstance(self._scaling_local_list, list), (
@@ -189,18 +190,22 @@ class Widow200GraspV2Env(Widow200GraspEnv):
         self._prev_pos = bullet.get_link_state(self._robot_id, self._end_effector, 'pos')
         return observation, reward, done, info
 
-    def get_observation(self):
-        def append_obj_obs_array(observation):
-            object_list = self._objects.keys()
-            for object_name in object_list:
-                object_info = bullet.get_body_info(self._objects[object_name],
-                                                   quat_to_deg=False)
-                object_pos = object_info['pos']
-                object_theta = object_info['theta']
-                observation = np.concatenate(
-                    (observation, object_pos, object_theta))
-            return observation
+    def get_obj_obs_array(self):
+        obj_obs = None
+        object_list = self._objects.keys()
+        for object_name in object_list:
+            object_info = bullet.get_body_info(self._objects[object_name],
+                                               quat_to_deg=False)
+            object_pos = object_info['pos']
+            object_theta = object_info['theta']
+            if obj_obs is None:
+                obj_obs = np.concatenate((object_pos, object_theta))
+            else:
+                obj_obs = np.concatenate(
+                    (obj_obs, object_pos, object_theta))
+        return obj_obs
 
+    def get_gripper_tips_distance(self):
         left_tip_pos = bullet.get_link_state(
             self._robot_id, self._gripper_joint_name[0], keys='pos')
         right_tip_pos = bullet.get_link_state(
@@ -210,6 +215,11 @@ class Widow200GraspV2Env(Widow200GraspEnv):
 
         gripper_tips_distance = [np.linalg.norm(
             left_tip_pos - right_tip_pos)]
+
+        return gripper_tips_distance
+
+    def get_observation(self):
+        gripper_tips_distance = self.get_gripper_tips_distance()
         end_effector_pos = self.get_end_effector_pos()
         end_effector_theta = bullet.get_link_state(
             self._robot_id, self._end_effector, 'theta', quat_to_deg=False)
@@ -217,7 +227,9 @@ class Widow200GraspV2Env(Widow200GraspEnv):
         if self._observation_mode == 'state':
             observation = np.concatenate(
                 (end_effector_pos, end_effector_theta, gripper_tips_distance))
-            observation = append_obj_obs_array(observation)
+
+            observation = np.concatenate(observation, self.get_obj_obs_array())
+
         elif self._observation_mode == 'pixels':
             image_observation = self.render_obs()
             image_observation = np.float32(image_observation.flatten())/255.0
@@ -234,7 +246,9 @@ class Widow200GraspV2Env(Widow200GraspEnv):
             state_observation = np.concatenate(
                 (end_effector_pos, end_effector_theta, gripper_tips_distance))
 
-            state_observation = append_obj_obs_array(state_observation)
+            state_observation = np.concatenate(
+                (state_observation, self.get_obj_obs_array()))
+
             observation = {
                 'state': state_observation,
                 'image': image_observation,
