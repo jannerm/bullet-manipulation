@@ -13,7 +13,8 @@ import roboverse
 
 curr_dir = os.path.dirname(os.path.abspath(__file__))
 home_dir = os.path.dirname(curr_dir)
-filePath = home_dir + '/roboverse/envs/assets/ShapeNetCore'
+filePath = '/home/albert/dev/ShapeNet_novel'
+# filePath = home_dir + '/roboverse/envs/assets/ShapeNetCore'
 # filePath = home_dir + '/../bullet-manipulation/roboverse/envs/assets/ShapeNetCore'
 jsonPath = filePath + '/scaling.json'
 
@@ -23,12 +24,16 @@ with open(jsonPath, 'r') as fp:
     
 chosen_objects = []
 for root, dirs, files in os.walk(filePath+'/ShapeNetCore_vhacd'):
+    print("root, dirs, files", root, dirs, files)
     for d in dirs:
         for modelroot, modeldirs, modelfiles in os.walk(os.path.join(root, d)):
             for md in modeldirs:
+                print("modelroot, modeldirs, modelfiles", modelroot, modeldirs, modelfiles)
                 objects.append(os.path.join(modelroot, md))
             break
     break
+
+print("objects", objects)
 
 def new_reset(self):
         p.resetSimulation()
@@ -57,6 +62,8 @@ def render_object(objectPath, scaling):
     dirName = path[-2]
     collisionPath = '{0}/ShapeNetCore_vhacd/{1}/{2}/model.obj'.format(filePath, dirName, objectName)
     visualPath =  '{0}/ShapeNetCore.v2/{1}/{2}/models/model_normalized.obj'.format(filePath, dirName, objectName)
+    print("collisionPath", collisionPath)
+    print("visualPath", visualPath)
     load_obj(collisionPath, visualPath, [.75, 0, 0.15], [0, 0, 0, 1], scale=scaling)
     p.stepSimulation()
 
@@ -71,7 +78,7 @@ def json_dump():
         json.dump(scaling, fp)
 
 # SawyerReachEnv.reset = new_reset
-env = roboverse.make('SawyerGraspOne-v0', gui=True) # SawyerReachEnv(render=True, control_xyz_position_only=False)
+env = roboverse.make('Widow200GraspV6-v0', gui=True) # SawyerReachEnv(render=True, control_xyz_position_only=False)
 env.reset()
 pygame.init()
 screen = pygame.display.set_mode((100, 100))
@@ -79,6 +86,9 @@ time = pygame.time.get_ticks()
 index = 0
 scaleAmount = 0.1
 indexStep = 1
+
+# set scaling
+scaling[json_key(index)] = 0.2
 render_object(objects[index], scaling[json_key(index)])
 
 while True:
@@ -98,6 +108,7 @@ while True:
                 while index < 0:
                     index += len(objects)
                 env.reset()
+                scaling[json_key(index)] = 0.2
                 render_object(objects[index], scaling[json_key(index)])
                 print('Index: ', index)
                 print("objects[index]", objects[index])
