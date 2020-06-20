@@ -9,7 +9,7 @@ from roboverse.envs.serializable import Serializable
 class SawyerBaseEnv(gym.Env, Serializable):
 
     def __init__(self,
-                 img_dim=256,
+                 img_dim=96,
                  gui=False,
                  action_scale=.2,
                  action_repeat=10,
