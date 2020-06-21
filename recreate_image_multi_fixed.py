@@ -56,7 +56,8 @@ for i in range(len(data)):
 		env.step(a)
 		images.append(Image.fromarray(np.uint8(image)))
 		
-	
+	if not os.path.exists('videos_multi'):
+    	os.mkdir('videos_multi')
 	#video_save_path = os.path.join(".", "videos")
 	images[0].save('{}/{}.gif'.format("videos_multi", i),
 				format='GIF', append_images=images[1:],
