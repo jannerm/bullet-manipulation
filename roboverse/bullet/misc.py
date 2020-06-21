@@ -117,7 +117,7 @@ def render(height, width, view_matrix, projection_matrix,
                                  lightDirection=light_direction,
                                  renderer=renderer)
     _, _, img, depth, segmentation = img_tuple
-
+    #print("__________render___________")
     img = np.array(img).reshape([width, height, 4])
     img = img[:,:,:-1]
 

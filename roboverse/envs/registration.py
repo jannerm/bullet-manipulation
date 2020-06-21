@@ -11,7 +11,7 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
     },
     {
         'id': 'SawyerGraspOne-v0',
-        'entry_point': ('roboverse.envs.sawyer_grasp:SawyerGraspOneEnv'),
+        'entry_point': ('roboverse.envs.sawyer_grasp_random_multi_object:SawyerGraspOneEnv'),
         'kwargs': {'max_force': 100, 'action_scale': 0.05}
     },
     {
