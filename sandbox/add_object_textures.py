@@ -82,6 +82,12 @@ def add_image_as_texture(obj_shapenet_path, image_url):
     with open(model_mtl_file, "a") as f_in:
         f_in.write("map_Kd ../images/{}\n".format(texture_image_name))
 
+    # create a text file with the image url.
+    # A backup in case all the pngs get overridden.
+    image_url_text_file = os.path.join(obj_path, "images", "image_url.txt")
+    with open(image_url_text_file, "w") as f_out:
+        f_out.write(image_url)
+
 if __name__ == "__main__":
     bullet.connect()
     bullet.setup()
