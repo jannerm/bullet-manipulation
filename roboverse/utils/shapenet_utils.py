@@ -10,7 +10,7 @@ import importlib.util
 PATH = '/media/avi/data/Work/github/jannerm/bullet-manipulation/roboverse/envs/assets/ShapeNetCore'
 SHAPENET_ASSET_PATH = osp.join(
     osp.dirname(osp.abspath(__file__)), '../envs/assets/bullet-objects/ShapeNetCore')
-
+# SHAPENET_ASSET_PATH = '/home/albert/dev/bullet-objects/ShapeNetCore'
 
 def import_shapenet_metadata():
     metadata_spec = importlib.util.spec_from_file_location(
