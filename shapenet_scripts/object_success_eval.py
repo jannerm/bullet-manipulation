@@ -9,7 +9,7 @@ def run_and_test_object_success():
     print("Remember to rename the csv if it is already in the dir.")
     EPSILON = 0.05
     save_video = False
-    num_trials = 1
+    num_trials = 50
     objects_to_test = [
         'short_handle_cup',
         'curved_handle_cup',
