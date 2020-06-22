@@ -312,7 +312,7 @@ def scripted_grasping_V4(env, pool, success_pool):
     if rewards[-1] > 0:
         success_pool.add_path(path)
 
-def scripted_grasping_V5(env, pool, success_pool, noise=0.1):
+def scripted_grasping_V5(env, pool, success_pool, noise=0.2):
     observation = env.reset()
     object_ind = np.random.randint(0, env._num_objects)
     actions, observations, next_observations, rewards, terminals, infos = \
@@ -388,7 +388,7 @@ def scripted_grasping_V5(env, pool, success_pool, noise=0.1):
     if rewards[-1] > 0:
         success_pool.add_path(path)
 
-def scripted_grasping_V6(env, pool, success_pool, noise=0.1):
+def scripted_grasping_V6(env, pool, success_pool, noise=0.2):
     observation = env.reset()
     object_ind = np.random.randint(0, env._num_objects)
     margin = 0.025
@@ -475,7 +475,7 @@ def scripted_grasping_V6(env, pool, success_pool, noise=0.1):
     if rewards[-1] > 0:
         success_pool.add_path(path)
 
-def scripted_grasping_V6_placing_V0(env, pool, success_pool):
+def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
     observation = env.reset()
     object_ind = 0
     actions, observations, next_observations, rewards, terminals, infos = \
@@ -529,7 +529,7 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool):
         else:
             action = np.zeros((6,))
 
-        action += np.random.normal(scale=0.1, size=(6,))
+        action += np.random.normal(scale=noise, size=(6,))
         action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
 
         next_observation, reward, done, info = env.step(action)
@@ -692,7 +692,7 @@ def main(args):
             assert not render_images
             success = False
             scripted_grasping_V6_placing_V0(
-                env, railrl_pool, railrl_success_pool)
+                env, railrl_pool, railrl_success_pool, noise=args.noise_std)
         else:
             raise NotImplementedError
 
@@ -766,7 +766,7 @@ if __name__ == "__main__":
     parser.add_argument("-n", "--num-trajectories", type=int, default=2000)
     parser.add_argument("-p", "--num-parallel-threads", type=int, default=1)
     parser.add_argument("--num-timesteps", type=int, default=50)
-    parser.add_argument("--noise-std", type=float, default=0.1)
+    parser.add_argument("--noise-std", type=float, default=0.2)
     parser.add_argument("--video_save_frequency", type=int,
                         default=0, help="Set to zero for no video saving")
     parser.add_argument("--randomize", dest="randomize",
