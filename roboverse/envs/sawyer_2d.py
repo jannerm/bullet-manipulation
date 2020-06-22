@@ -30,9 +30,9 @@ class Sawyer2dEnv(gym.Env):
     ## @TODO : rewrite this so that it uses self._state_query
     def get_observation(self):
         ee_pos = bullet.get_link_state(self._env._sawyer, self._env._end_effector, 'pos')
-        bodies = sorted([v for k, v in self._objects.items() if not bullet.has_fixed_root(v)])
-        obj_pos = [bullet.get_body_info(body, 'pos') for body in bodies]
-
+        # bodies = sorted([v for k, v in self._objects.items() if not bullet.has_fixed_root(v)])
+        # obj_pos = [bullet.get_body_info(body, 'pos') for body in bodies]
+        obj_pos = self._env.get_object_positions()
         ee_pos = np.array(ee_pos[1:])
         obj_pos = np.array([pos[1:] for pos in obj_pos])
         observation = np.concatenate((ee_pos, obj_pos.flatten()))
@@ -50,21 +50,19 @@ class Sawyer2dEnv(gym.Env):
         act[0] = 0
         out = self._env.step(act, *args, **kwargs)
 
-        current_states = self._get_body_states()
-        for name, body in self._objects.items():
-            current = current_states[name]
-            init = self._init_states[name]
-
-            # x = init['pos'][0:1]
-            x = current['pos'][0:1]
-            center_x = init['pos'][0:1]
-            if np.abs(x[0] - center_x[0]) > 0.015:
-                x = center_x
-
-            yz = current['pos'][1:3]
-            theta = current['theta']
-            pos = x + yz
-            bullet.set_body_state(body, pos, theta)
+        # current_states = self._get_body_states()
+        # for name, body in self._objects.items():
+        #     current = current_states[name]
+        #     init = self._init_states[name]
+        #     x = init['pos'][0:1]
+        #     # x = current['pos'][0:1]
+        #     # center_x = init['pos'][0:1]
+        #     # if np.abs(x[0] - center_x[0]) > 0.015:
+        #     #     x = center_x
+        #     yz = current['pos'][1:3]
+        #     theta = current['theta']
+        #     pos = x + yz
+        #     bullet.set_body_state(body, pos, theta)
         obs = self.get_observation()
         rew = self._env.get_reward(obs)
         term = self._env.get_termination(obs)

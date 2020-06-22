@@ -73,13 +73,13 @@ env_id = 'SawyerLid2d-v0'
 #     gui=True
 # )
 
-from roboverse.envs.goal_conditioned.sawyer_lift import SawyerLiftEnvGC
+from roboverse.envs.goal_conditioned.sawyer_lift_gc import SawyerLiftEnvGC
 env_kwargs={
     'action_scale': .06, #.06
     'action_repeat': 10, #5
-    'timestep': 1./120, #1./240
+    'timestep': 1./120, #1./240 1/120
     'max_force': 1000, #1000
-    'solver_iterations': 150, #150
+    'solver_iterations': 500, #150
 
     'gui': True,  # False,
     'goal_mult': 0,
@@ -89,9 +89,10 @@ env_kwargs={
     'reset_obj_in_hand_rate': 0.0,
     'img_dim': 48,
     'goal_mode': 'obj_in_bowl',
-    'num_obj': 2, #2
+    'num_obj': 4, #2
 
-    'theta_rot': [180, 0, 90],
+    'use_rotated_gripper': True,
+    'use_wide_gripper': False,
 }
 env = SawyerLiftEnvGC(**env_kwargs)
 

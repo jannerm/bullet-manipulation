@@ -30,8 +30,8 @@ PDATA_PATH = pdata.getDataPath()
 
 ## robots
 
-# sawyer = loader(ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro.urdf')
-sawyer = loader(ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro_debug.urdf')
+sawyer = loader(ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro.urdf')
+sawyer_wide_gripper = loader(ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro_wide_gripper.urdf')
 
 
 ## pybullet_data objects
@@ -79,4 +79,25 @@ bowl_sliding = loader(ASSET_PATH, 'objects/bowl_sliding/bowl.urdf',
               pos=[.75, 0, -.3],
               scale=0.25)
 
+positions = [
+    [0.5, -0.25, -0.35],
+    [0.5, -0.125, -0.35],
+    [0.5, 0, -0.35],
+    [0.5, 0.125, -0.35],
+]
 
+spam_objs = []
+for i in range(4):
+    # obj = loader(ASSET_PATH, 'objects/spam/spam.urdf',
+    #               pos=[.75, -.4, -.3],
+    #               deg=[90,0,-90],
+    #               scale=0.018)
+    # obj = loader(ASSET_PATH, 'objects/spam/spam_planar.urdf',
+    #               pos=[.75, -.4, -.3],
+    #               deg=[90,0,-90],
+    #               scale=0.018)
+    obj = loader(ASSET_PATH, 'objects/spam/spam_2d.urdf',
+                  pos=positions[i],  # pos=[.75, -.4, -.3],
+                  deg=[90, 0, -90],
+                  scale=0.018)
+    spam_objs.append(obj)

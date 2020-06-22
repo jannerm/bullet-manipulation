@@ -21,7 +21,8 @@ class SawyerBaseEnv(gym.Env, Serializable):
                  pos_low=[.4,-.6,-.36],
                  max_force=1000.,
                  visualize=True,
-                 theta_rot=[180, 0, 0],
+                 use_rotated_gripper=False,
+                 use_wide_gripper=False,
                  ):
 
         self._gui = gui
@@ -37,7 +38,8 @@ class SawyerBaseEnv(gym.Env, Serializable):
         self._visualize = visualize
         self._id = 'SawyerBaseEnv'
 
-        self._theta_rot = theta_rot
+        self._use_rotated_gripper = use_rotated_gripper
+        self._use_wide_gripper = use_wide_gripper
 
         bullet.connect_headless(self._gui)
         self.set_reset_hook()
@@ -101,7 +103,10 @@ class SawyerBaseEnv(gym.Env, Serializable):
         bullet.setup_headless(self._timestep, solver_iterations=self._solver_iterations)
 
         self._prev_pos = np.array(self._pos_init)
-        self.theta = bullet.deg_to_quat(self._theta_rot)
+        if self._use_rotated_gripper:
+            self.theta = bullet.deg_to_quat([180, 0, 90])
+        else:
+            self.theta = bullet.deg_to_quat([180, 0, 0])
         bullet.position_control(self._sawyer, self._end_effector, self._prev_pos, self.theta)
         self._reset_hook(self)
         return self.get_observation()
@@ -128,7 +133,10 @@ class SawyerBaseEnv(gym.Env, Serializable):
         return bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
 
     def _load_meshes(self):
-        self._sawyer = bullet.objects.sawyer()
+        if self._use_wide_gripper:
+            self._sawyer = bullet.objects.sawyer_wide_gripper()
+        else:
+            self._sawyer = bullet.objects.sawyer()
         self._table = bullet.objects.table()
         self._objects = {}
         self._sensors = {}

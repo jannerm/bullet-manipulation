@@ -8,7 +8,8 @@ from roboverse.envs.sawyer_2d import Sawyer2dEnv
 class SawyerLiftEnvGC(Sawyer2dEnv):
 
     X_POS = .75
-    GROUND_Y = -0.355
+    # GROUND_Y = -0.355
+    GROUND_Y = -0.325
 
     def __init__(self, *args, reset_obj_in_hand_rate=0.5,
                  goal_mode='obj_in_air', reward_type='hand_dist+obj_dist', **kwargs):
@@ -31,6 +32,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         obj_id_to_put_in_hand = -1
         if (np.random.random() > 1 - self.reset_obj_in_hand_rate) and (self.num_obj > 0):
             obj_id_to_put_in_hand = np.random.choice(self.num_obj)
+
         for obj_id in range(self.num_obj):
             cube_reset_pos = np.random.uniform(
                 low=self._pos_low,
@@ -41,6 +43,10 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
                 cube_reset_pos = ee_reset_pos
             bullet.set_body_state(self._objects[self.get_obj_name(obj_id)],
                                   cube_reset_pos, deg=[90,0,-90])
+
+        # Allow the objects to settle down after they are dropped in sim
+        for _ in range(5):
+            self.step(np.zeros(4))
 
         obs = self.get_dict_observation()
         return obs
