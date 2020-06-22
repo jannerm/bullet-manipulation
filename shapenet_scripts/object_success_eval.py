@@ -118,7 +118,7 @@ def run_and_test_object_success():
 
     for obj, scaling in tqdm(obj_scaling_to_try):
         print("testing object", obj, scaling)
-        env = roboverse.make("Widow200GraspV5BoxPlaceV0RandObj-v0",
+        env = roboverse.make("Widow200GraspV6BoxPlaceV0RandObj-v0",
                              gui=False,
                              possible_train_objects=[obj],
                              scaling_local_list=[scaling],

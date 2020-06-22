@@ -24,8 +24,8 @@ V5_GRASPING_ENVS = ['Widow200GraspV5-v0',
 V6_GRASPING_ENVS = ['Widow200GraspV6-v0',
                     'Widow200GraspV6BoxV0-v0',
                     'Widow200GraspV6BoxV0RandObj-v0']
-V5_GRASPING_V0_PLACING_ENVS = ['Widow200GraspV5BoxPlaceV0-v0',
-                               'Widow200GraspV5BoxPlaceV0RandObj-v0']
+V6_GRASPING_V0_PLACING_ENVS = ['Widow200GraspV6BoxPlaceV0-v0',
+                               'Widow200GraspV6BoxPlaceV0RandObj-v0']
 
 NFS_PATH = '/nfs/kun1/users/avi/batch_rl_datasets/'
 
@@ -469,7 +469,7 @@ def scripted_grasping_V6(env, pool, success_pool, noise=0.1):
     if rewards[-1] > 0:
         success_pool.add_path(path)
 
-def scripted_grasping_V5_placing_V0(env, pool, success_pool):
+def scripted_grasping_V6_placing_V0(env, pool, success_pool):
     observation = env.reset()
     object_ind = 0
     actions, observations, next_observations, rewards, terminals, infos = \
@@ -618,7 +618,7 @@ def main(args):
     reward_type = 'sparse' if args.sparse else 'shaped'
     if args.env in (V2_GRASPING_ENVS +
         V4_GRASPING_ENVS + V5_GRASPING_ENVS +
-        V5_GRASPING_V0_PLACING_ENVS + V6_GRASPING_ENVS):
+        V6_GRASPING_V0_PLACING_ENVS + V6_GRASPING_ENVS):
         tranpose_image = True
     else:
         transpose_image = False
@@ -635,7 +635,7 @@ def main(args):
         success_pool = roboverse.utils.DemoPool()
     elif args.env in (V2_GRASPING_ENVS + V4_GRASPING_ENVS +
         V5_GRASPING_ENVS + V6_GRASPING_ENVS +
-        V5_GRASPING_V0_PLACING_ENVS):
+        V6_GRASPING_V0_PLACING_ENVS):
         if args.env in (V2_GRASPING_ENVS + V4_GRASPING_ENVS):
             observation_keys = ('image',)
         else:
@@ -682,10 +682,10 @@ def main(args):
             success = False
             scripted_grasping_V6(env, railrl_pool, railrl_success_pool,
                                  noise=args.noise_std)
-        elif args.env in V5_GRASPING_V0_PLACING_ENVS:
+        elif args.env in V6_GRASPING_V0_PLACING_ENVS:
             assert not render_images
             success = False
-            scripted_grasping_V5_placing_V0(
+            scripted_grasping_V6_placing_V0(
                 env, railrl_pool, railrl_success_pool)
         else:
             raise NotImplementedError
@@ -725,7 +725,7 @@ def main(args):
                               timestamp, pool.size))
     elif args.env in (V2_GRASPING_ENVS +
         V4_GRASPING_ENVS + V5_GRASPING_ENVS +
-        V6_GRASPING_ENVS + V5_GRASPING_V0_PLACING_ENVS):
+        V6_GRASPING_ENVS + V6_GRASPING_V0_PLACING_ENVS):
         path = osp.join(data_save_path,
                         '{}_pool_{}.pkl'.format(timestamp, pool_size))
         pickle.dump(railrl_pool, open(path, 'wb'), protocol=4)
@@ -734,7 +734,7 @@ def main(args):
                             timestamp, pool_size))
         pickle.dump(railrl_success_pool, open(path, 'wb'), protocol=4)
         if args.env in (V6_GRASPING_ENVS +
-            V5_GRASPING_V0_PLACING_ENVS):
+            V6_GRASPING_V0_PLACING_ENVS):
             # For non terminating envs: we reshape the rewards
             # array and count the number of trajectories with
             # a sucess in the last timestep.
@@ -755,7 +755,7 @@ if __name__ == "__main__":
                         choices=tuple(['SawyerGraspOne-v0', 'SawyerReach-v0'] +
                                        V2_GRASPING_ENVS + V4_GRASPING_ENVS +
                                        V5_GRASPING_ENVS + V6_GRASPING_ENVS +
-                                       V5_GRASPING_V0_PLACING_ENVS))
+                                       V6_GRASPING_V0_PLACING_ENVS))
     parser.add_argument("-d", "--data-save-directory", type=str)
     parser.add_argument("-n", "--num-trajectories", type=int, default=2000)
     parser.add_argument("-p", "--num-parallel-threads", type=int, default=1)
@@ -783,6 +783,6 @@ if __name__ == "__main__":
     elif args.env in V4_GRASPING_ENVS + V6_GRASPING_ENVS:
         args.num_timesteps = 25
         assert args.observation_mode != 'pixels'
-    elif args.env in V5_GRASPING_V0_PLACING_ENVS:
+    elif args.env in V6_GRASPING_V0_PLACING_ENVS:
         args.num_timesteps = 30
     main(args)
