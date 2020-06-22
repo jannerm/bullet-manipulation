@@ -1,5 +1,5 @@
 import gym
-from env_object_list import POSSIBLE_TRAIN_OBJECTS, POSSIBLE_TRAIN_SCALINGS
+from roboverse.envs.env_object_list import POSSIBLE_TRAIN_OBJECTS, POSSIBLE_TRAIN_SCALINGS
 
 SEQUENTIAL_ENVIRONMENT_SPECS = (
     {
