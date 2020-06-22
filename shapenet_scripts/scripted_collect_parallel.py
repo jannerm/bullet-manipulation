@@ -39,7 +39,7 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--env", type=str, required=True)
     parser.add_argument("-d", "--data-save-directory", type=str)
     parser.add_argument("-n", "--num-trajectories", type=int, default=2000)
-    parser.add_argument("--noise-std", type=float, default=0.1)
+    parser.add_argument("--noise-std", type=float, default=0.2)
     parser.add_argument("-p", "--num-parallel-threads", type=int, default=10)
     parser.add_argument("--sparse", dest="sparse", action="store_true",
                         default=False)
