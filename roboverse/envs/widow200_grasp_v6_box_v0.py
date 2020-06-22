@@ -1,4 +1,7 @@
 from roboverse.envs.widow200_grasp_v6 import Widow200GraspV6Env
+from roboverse.envs.env_object_list import (
+    POSSIBLE_TRAIN_OBJECTS, POSSIBLE_TRAIN_SCALINGS,
+    POSSIBLE_TEST_OBJECTS, POSSIBLE_TEST_SCALINGS)
 import roboverse.bullet as bullet
 import roboverse.utils as utils
 import numpy as np
@@ -40,7 +43,8 @@ class Widow200GraspV6BoxV0RandObjEnv(Widow200GraspV6BoxV0Env):
                  *args,
                  in_eval=False,
                  success_dist_threshold=0.04,
-                 scaling_local_list=[0.3]*10,
+                 train_scaling_list=[0.3]*10,
+                 test_scaling_list=[0.3]*10,
                  possible_train_objects="default",
                  possible_test_objects="default",
                  **kwargs):
@@ -49,38 +53,20 @@ class Widow200GraspV6BoxV0RandObjEnv(Widow200GraspV6BoxV0Env):
 
         if possible_train_objects == "default":
             # Decided based on object_success_best_scaling.csv
-            self.possible_train_objects = [
-                'conic_cup',
-                'ball',
-                'sack_vase',
-                'fountain_vase',
-                'shed',
-                'circular_table',
-                'hex_deep_bowl',
-                'smushed_dumbbell',
-                'square_prism_bin',
-                'narrow_tray',
-            ]
-            self.possible_train_scaling_local_list = [
-                0.3, 0.5, 0.3, 0.3, 0.3, 0.2, 0.2, 0.3, 0.3, 0.2]
+            self.possible_train_objects = POSSIBLE_TRAIN_OBJECTS[:10]
+            self.possible_train_scaling_local_list = POSSIBLE_TRAIN_SCALINGS[:10]
         else:
             assert isinstance(possible_train_objects, list)
             self.possible_train_objects = possible_train_objects
-            self.possible_train_scaling_local_list = scaling_local_list
+            self.possible_train_scaling_local_list = train_scaling_list
 
         if possible_test_objects == "default":
-            self.possible_test_objects = [
-                'conic_bin',
-                'jar',
-                'gatorade',
-                'bunsen_burner',
-                'long_vase',
-            ]
-            self.possible_test_scaling_local_list = [0.2, 0.5, 0.5, 0.3, 0.3]
+            self.possible_test_objects = POSSIBLE_TEST_OBJECTS[:10]
+            self.possible_test_scaling_local_list = POSSIBLE_TEST_SCALINGS[:10]
         else:
             assert isinstance(possible_test_objects, list)
             self.possible_test_objects = possible_test_objects
-            self.possible_test_scaling_local_list = scaling_local_list
+            self.possible_test_scaling_local_list = test_scaling_list
 
         if self.in_eval:
             self.possible_objects = self.possible_test_objects
