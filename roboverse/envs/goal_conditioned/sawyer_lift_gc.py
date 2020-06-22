@@ -199,6 +199,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
 
             obj_goal_dist = bullet.l2_dist(cube_pos, cube_goal)
             info['{}_dist'.format(self.get_obj_name(obj_id))] = obj_goal_dist
+            info['{}_success'.format(self.get_obj_name(obj_id))] = float(np.abs(cube_pos[0]) <= 0.09)
         return info
 
     def get_image(self, width, height):
