@@ -4,7 +4,7 @@ import roboverse.utils as utils
 import numpy as np
 
 
-class Widow200GraspV5BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
+class Widow200GraspV6BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
 
     def __init__(self,
                  *args,
@@ -80,7 +80,7 @@ class Widow200GraspV5BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
             object_gripper_success=object_gripper_success)
         return info
 
-class Widow200GraspV5BoxPlaceV0RandObjEnv(Widow200GraspV5BoxPlaceV0Env):
+class Widow200GraspV6BoxPlaceV0RandObjEnv(Widow200GraspV6BoxPlaceV0Env):
     """
     Generalization env. Randomly samples one of the following objects
     every time the env resets.
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     EPSILON = 0.05
     save_video = True
 
-    env = roboverse.make("Widow200GraspV5BoxPlaceV0RandObj-v0",
+    env = roboverse.make("Widow200GraspV6BoxPlaceV0RandObj-v0",
                          gui=True,
                          reward_type='sparse',
                          observation_mode='pixels_debug',)

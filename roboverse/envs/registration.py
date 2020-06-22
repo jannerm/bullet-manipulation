@@ -150,15 +150,15 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'reward_height_threshold': -.20}
     },
     {
-        'id': 'Widow200GraspV5BoxPlaceV0-v0',
-        'entry_point': ('roboverse.envs.widow200_grasp_v5_box_place_v0:Widow200GraspV5BoxPlaceV0Env'),
+        'id': 'Widow200GraspV6BoxPlaceV0-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v6_box_place_v0:Widow200GraspV6BoxPlaceV0Env'),
         'kwargs': {'max_force': 10,
                    'action_scale': 0.05,
                    'reward_height_threshold': -.20}
     },
     {
-        'id': 'Widow200GraspV5BoxPlaceV0RandObj-v0',
-        'entry_point': ('roboverse.envs.widow200_grasp_v5_box_place_v0:Widow200GraspV5BoxPlaceV0RandObjEnv'),
+        'id': 'Widow200GraspV6BoxPlaceV0RandObj-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v6_box_place_v0:Widow200GraspV6BoxPlaceV0RandObjEnv'),
         'kwargs': {'max_force': 10,
                    'action_scale': 0.05,
                    'reward_height_threshold': -.20}
