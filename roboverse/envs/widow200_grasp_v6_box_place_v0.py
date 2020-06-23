@@ -139,7 +139,7 @@ class Widow200GraspV6BoxPlaceV0RandObjEnv(Widow200GraspV6BoxPlaceV0Env):
         self.object_names = [self.possible_objects[chosen_obj_idx]]
         self.scaling_local_list = [
             self.possible_scaling_local_list[chosen_obj_idx]]
-        print("self.object_names", self.object_names, self.scaling_local_list)
+        # print("self.object_names", self.object_names, self.scaling_local_list)
         return super().reset()
 
 
