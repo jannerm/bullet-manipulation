@@ -154,6 +154,42 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'action_scale': 0.05,
                    'reward_height_threshold': -.275}
     },
+    # RANDOM OBJECT GRASP V6 ENVS
+    {
+        'id': 'Widow200GraspV6RandObj-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v6:Widow200GraspV6RandObjEnv'),
+        'kwargs': {'max_force': 10,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.275}
+    },
+    {
+        'id': 'Widow200GraspV6TenRandObj-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v6:Widow200GraspV6RandObjEnv'),
+        'kwargs': {'max_force': 10,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.275,
+                   'possible_train_objects': POSSIBLE_TRAIN_OBJECTS[:10],
+                   'train_scaling_list': POSSIBLE_TRAIN_SCALINGS[:10],}
+    },
+    {
+        'id': 'Widow200GraspV6TwentyRandObj-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v6:Widow200GraspV6RandObjEnv'),
+        'kwargs': {'max_force': 10,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.275,
+                   'possible_train_objects': POSSIBLE_TRAIN_OBJECTS[:20],
+                   'train_scaling_list': POSSIBLE_TRAIN_SCALINGS[:20],}
+    },
+    {
+        'id': 'Widow200GraspV6FortyRandObj-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v6:Widow200GraspV6RandObjEnv'),
+        'kwargs': {'max_force': 10,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.275,
+                   'possible_train_objects': POSSIBLE_TRAIN_OBJECTS[:40],
+                   'train_scaling_list': POSSIBLE_TRAIN_SCALINGS[:40],}
+    },
+    # END RANDOM OBJECT GRASP V6 ENVS
     {
         'id': 'Widow200GraspV5PlaceV0Env-v0',
         'entry_point': ('roboverse.envs.widow200_grasp_v5_and_place_v0:Widow200GraspV5AndPlaceV0Env'),

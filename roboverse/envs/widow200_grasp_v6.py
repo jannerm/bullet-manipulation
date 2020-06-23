@@ -1,4 +1,5 @@
 from roboverse.envs.widow200_grasp_v5 import Widow200GraspV5Env
+from roboverse.envs.rand_obj import RandObjEnv
 import roboverse.bullet as bullet
 import numpy as np
 import gym
@@ -11,10 +12,13 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
 
     def __init__(self,
                  *args,
+                 object_names=('beer_bottle',),
                  scaling_local_list=[0.5],
                  **kwargs):
+        self.object_names = object_names
         self.reward_height_threshold = -0.275
         super().__init__(*args,
+            object_names=self.object_names,
             scaling_local_list=scaling_local_list,
             **kwargs)
         self.terminates = False
@@ -60,11 +64,13 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
         done = False
         return observation, reward, done, info
 
+class Widow200GraspV6RandObjEnv(RandObjEnv, Widow200GraspV6Env):
+    """Grasping Env but with a random object each time."""
 
 if __name__ == "__main__":
     import roboverse
     import time
-    env = roboverse.make("Widow200GraspV6-v0",
+    env = roboverse.make("Widow200GraspV6RandObj-v0",
                          gui=True,
                          observation_mode='state',)
 
