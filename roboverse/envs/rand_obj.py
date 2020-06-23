@@ -11,7 +11,6 @@ class RandObjEnv:
     def __init__(self,
                  *args,
                  in_eval=False,
-                 success_dist_threshold=0.04,
                  train_scaling_list=[0.3]*10,
                  test_scaling_list=[0.3]*10,
                  possible_train_objects="default",
@@ -46,10 +45,8 @@ class RandObjEnv:
             self.possible_scaling_local_list = \
                 self.possible_train_scaling_local_list
 
-        self.success_dist_threshold = success_dist_threshold
         super().__init__(*args,
             object_names=self.possible_objects,
-            success_dist_threshold=self.success_dist_threshold,
             scaling_local_list=self.possible_scaling_local_list,
             **kwargs)
 
