@@ -19,9 +19,10 @@ bullet.setup()
 table = bullet.objects.table()
 # spam = bullet.objects.spam()
 # box = bullet.objects.box()
-# box_open_top = bullet.objects.box_open_top()
+box_open_top = bullet.objects.long_box_open_top()
+tray = bullet.objects.widow200_tray()
 
-object_names = ["stalagcite_chunk"]
+object_names = []
 
 object_path_dict = dict(
     [(obj, path) for obj, path in obj_path_map.items() if obj in object_names])
