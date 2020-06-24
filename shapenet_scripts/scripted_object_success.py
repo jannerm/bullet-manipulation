@@ -40,9 +40,10 @@ def run_and_test_object_success():
         for i in range(num_trials):
             obs = env.reset()
             # object_pos[2] = -0.30
-    
-            dist_thresh = 0.04 + np.random.normal(scale=0.01)
-    
+
+            dist_thresh = 0.045 + np.random.normal(scale=0.01)
+            dist_thresh = np.clip(dist_thresh, 0.035, 0.060)
+
             for _ in range(env.scripted_traj_len):
                 if isinstance(obs, dict):
                     state_obs = obs[env.fc_input_key]
