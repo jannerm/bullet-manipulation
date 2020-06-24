@@ -91,12 +91,18 @@ env_kwargs={
     'goal_mode': 'obj_in_bowl',
     'num_obj': 4, #2
 
-    'use_rotated_gripper': True, #False
-    'use_wide_gripper': False, #False
-    'soft_clip': True,
+    # 'use_rotated_gripper': False, #False
+    # 'use_wide_gripper': False, #False
+    # 'soft_clip': True,
+    #
+    # 'obj_urdf': 'spam_long',
+    # 'max_joint_velocity': 1.0,
 
-    'obj_urdf': 'spam_long',
-    'max_joint_velocity': 1.0,
+    'use_rotated_gripper': True,  # False
+    'use_wide_gripper': True,  # False
+    'soft_clip': True,
+    'obj_urdf': 'spam',
+    'max_joint_velocity': None,
 }
 env = SawyerLiftEnvGC(**env_kwargs)
 

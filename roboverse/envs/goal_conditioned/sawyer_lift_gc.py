@@ -317,7 +317,11 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             bullet.get_link_state(self._env._sawyer, l_grip_id, 'pos'))
         r_grip = np.array(
             bullet.get_link_state(self._env._sawyer, r_grip_id, 'pos'))
-        return (r_grip - l_grip)[1] * 10
+        if self._use_rotated_gripper:
+            result = (r_grip - l_grip)[0] * 10
+        else:
+            result = (r_grip - l_grip)[1] * 10
+        return result
 
     def get_2d_obj_pos(self, obj_id):
         return bullet.get_midpoint(self._objects[self.get_obj_name(obj_id)])[1:]
