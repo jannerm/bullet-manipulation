@@ -1,5 +1,7 @@
 import gym
-from roboverse.envs.env_object_list import POSSIBLE_TRAIN_OBJECTS, POSSIBLE_TRAIN_SCALINGS
+from roboverse.envs.env_object_list import (
+    POSSIBLE_TRAIN_OBJECTS, POSSIBLE_TRAIN_SCALINGS,
+    POSSIBLE_TEST_OBJECTS, POSSIBLE_TEST_SCALINGS)
 
 SEQUENTIAL_ENVIRONMENT_SPECS = (
     {
@@ -181,6 +183,15 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'train_scaling_list': POSSIBLE_TRAIN_SCALINGS[:5],}
     },
     {
+        'id': 'Widow200GraspV6TenSameTrainTestRandObj-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v6:Widow200GraspV6RandObjEnv'),
+        'kwargs': {'max_force': 10,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.275,
+                   'possible_train_objects': POSSIBLE_TEST_OBJECTS[:10], # Same Train and Test objs.
+                   'train_scaling_list': POSSIBLE_TEST_SCALINGS[:10],}
+    },
+    {
         'id': 'Widow200GraspV6TenRandObj-v0',
         'entry_point': ('roboverse.envs.widow200_grasp_v6:Widow200GraspV6RandObjEnv'),
         'kwargs': {'max_force': 10,
@@ -263,6 +274,15 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'train_scaling_list': POSSIBLE_TRAIN_SCALINGS[:5],}
     },
     {
+        'id': 'Widow200GraspV6BoxV0TenSameTrainTestRandObj-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v6_box_v0:Widow200GraspV6BoxV0RandObjEnv'),
+        'kwargs': {'max_force': 10,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.275,
+                   'possible_train_objects': POSSIBLE_TEST_OBJECTS[:10], # Same Train and test objs
+                   'train_scaling_list': POSSIBLE_TEST_SCALINGS[:10],}
+    },
+    {
         'id': 'Widow200GraspV6BoxV0TenRandObj-v0',
         'entry_point': ('roboverse.envs.widow200_grasp_v6_box_v0:Widow200GraspV6BoxV0RandObjEnv'),
         'kwargs': {'max_force': 10,
@@ -307,6 +327,15 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'reward_height_threshold': -.275,
                    'possible_train_objects': POSSIBLE_TRAIN_OBJECTS[:5],
                    'train_scaling_list': POSSIBLE_TRAIN_SCALINGS[:5],}
+    },
+    {
+        'id': 'Widow200GraspV6BoxPlaceV0TenSameTrainTestRandObj-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v6_box_place_v0:Widow200GraspV6BoxPlaceV0RandObjEnv'),
+        'kwargs': {'max_force': 10,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.275,
+                   'possible_train_objects': POSSIBLE_TEST_OBJECTS[:10], # Same Train and Test objs
+                   'train_scaling_list': POSSIBLE_TEST_SCALINGS[:10],}
     },
     {
         'id': 'Widow200GraspV6BoxPlaceV0TenRandObj-v0',
