@@ -33,7 +33,7 @@ class Widow200GraspV6BoxV0Env(Widow200GraspV6Env):
 
     def _load_meshes(self):
         super()._load_meshes()
-        self._box = bullet.objects.box_open_top()
+        self._box = bullet.objects.long_box_open_top()
 
 class Widow200GraspV6BoxV0RandObjEnv(RandObjEnv, Widow200GraspV6BoxV0Env):
     """
