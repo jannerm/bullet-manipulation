@@ -487,7 +487,8 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
     actions, observations, next_observations, rewards, terminals, infos = \
         [], [], [], [], [], []
 
-    dist_thresh = 0.04 + np.random.normal(scale=0.01)
+    dist_thresh = 0.045 + np.random.normal(scale=0.01)
+    dist_thresh = np.clip(dist_thresh, 0.035, 0.060)
 
     assert args.num_timesteps == env.scripted_traj_len, (
         "args.num_timesteps: {} != env.scripted_traj_len: {}".format(
@@ -796,5 +797,5 @@ if __name__ == "__main__":
         args.num_timesteps = 25
         assert args.observation_mode != 'pixels'
     elif args.env in V6_GRASPING_V0_PLACING_ENVS:
-        args.num_timesteps = 30
+        args.num_timesteps = 50
     main(args)
