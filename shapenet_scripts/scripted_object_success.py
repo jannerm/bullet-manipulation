@@ -31,7 +31,7 @@ def run_and_test_object_success():
         env = roboverse.make("Widow200GraspV6BoxPlaceV0RandObj-v0",
                              gui=True,
                              possible_train_objects=[obj],
-                             scaling_local_list=[scaling],
+                             train_scaling_list=[scaling],
                              reward_type='sparse',
                              observation_mode='pixels_debug',)
     
