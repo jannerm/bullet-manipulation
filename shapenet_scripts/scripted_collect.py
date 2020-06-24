@@ -488,7 +488,7 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
         [], [], [], [], [], []
 
     dist_thresh = 0.045 + np.random.normal(scale=0.01)
-    dist_thresh = max(dist_thresh, 0.035)
+    dist_thresh = np.clip(dist_thresh, 0.035, 0.060)
 
     assert args.num_timesteps == env.scripted_traj_len, (
         "args.num_timesteps: {} != env.scripted_traj_len: {}".format(
