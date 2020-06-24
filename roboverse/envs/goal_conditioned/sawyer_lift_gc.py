@@ -16,11 +16,11 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         self.reset_obj_in_hand_rate = reset_obj_in_hand_rate
         self.goal_mode = goal_mode
         self.reward_type = reward_type
-        super().__init__(*args, env='SawyerLiftMulti2d-v0', **kwargs)
+        super().__init__(*args, env='SawyerLiftMulti-v0', **kwargs)
         self.record_args(locals())
 
     def reset(self):
-        self._goal_pos = self.sample_goals(1)['state_desired_goal'][0]
+        self._goal_pos = self.sample_goals(batch_size=1, goal_mode='obj_in_bowl')['state_desired_goal'][0]
         self._env._pos_init[:] = np.random.uniform(
             low=self._env._pos_low,
             high=self._env._pos_high)
@@ -46,7 +46,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
 
         # Allow the objects to settle down after they are dropped in sim
         for _ in range(5):
-            self.step(np.zeros(4))
+            self.step(np.array([0, 0, 0, 1]))
 
         obs = self.get_dict_observation()
         return obs
@@ -236,23 +236,32 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
     def set_to_goal(self, goal):
         self.set_env_state(goal['state_desired_goal'])
 
-    def sample_goals(self, batch_size):
+    def sample_goals(self, batch_size, goal_mode=None):
+        if goal_mode is None:
+            goal_mode = self.goal_mode
+
         low = self._env._pos_low[1:]
         high = self._env._pos_high[1:]
 
-        if self.goal_mode == 'obj_in_air':
+        if goal_mode == 'uniform':
+            obj_goals = np.random.uniform(
+                low=low,
+                high=high,
+                size=(batch_size * self.num_obj, len(low))
+            ).reshape((batch_size, -1))
+        elif goal_mode == 'obj_in_air':
             high_ground = high.copy()
             high_ground[1] = low[1]
             # Have them all start off on the ground
             obj_goals = np.random.uniform(
                 low=low,
                 high=high_ground,
-                size=(batch_size * self.num_obj, len(low))
-            ).reshape((batch_size, -1))
+                size=(1 * self.num_obj, len(low))
+            ).reshape((1, -1))
 
             # Choose which ones should be in the air
             is_air = (
-                np.random.random(batch_size) > .5
+                np.random.random(1) > .5
             )
             num_in_air = is_air.sum()
             obj_id_in_air = np.random.choice(self.num_obj, num_in_air)
@@ -264,10 +273,24 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
                 size=num_in_air)
             # Make sure the objects is in the air
             # obj_goals[:, -1] = obj_goals[:, -1].clip(0, 1e10)
-        elif self.goal_mode == 'obj_in_bowl':
+        elif goal_mode == 'obj_in_bowl':
             obj_goals = np.tile(
                 bullet.get_midpoint(self._objects['bowl'])[1:],
                 (batch_size, self.num_obj))
+        elif goal_mode == 'uniform_and_obj_in_bowl':
+            num_uniform_goals = batch_size // 2
+            uniform_goals = np.random.uniform(
+                low=low,
+                high=high,
+                size=(num_uniform_goals * self.num_obj, len(low))
+            ).reshape((num_uniform_goals, -1))
+
+            num_obj_in_bowl_goals = batch_size - num_uniform_goals
+            obj_in_bowl_goals = np.tile(
+                bullet.get_midpoint(self._objects['bowl'])[1:],
+                (num_obj_in_bowl_goals, self.num_obj))
+            obj_goals = np.concatenate((uniform_goals, obj_in_bowl_goals))
+            np.random.shuffle(obj_goals)
         else:
             raise RuntimeError("Invalid goal mode: {}".format(self.goal_mode))
 

@@ -12,8 +12,10 @@ class Sawyer2dEnv(gym.Env):
                        pos_init=[.75, 0, 0],
                        pos_high=[.75,.4,.25],
                        pos_low=[.75,-.6,-.36],
+                       soft_clip=False,
                        **kwargs):
 
+        self._soft_clip = soft_clip
         self._env = gym.make(env, pos_init=pos_init, pos_high=pos_high, pos_low=pos_low, **kwargs)
         self._objects = self._env._objects
         self._init_states = self._get_body_states()
@@ -50,19 +52,35 @@ class Sawyer2dEnv(gym.Env):
         act[0] = 0
         out = self._env.step(act, *args, **kwargs)
 
-        # current_states = self._get_body_states()
         # for name, body in self._objects.items():
-        #     current = current_states[name]
-        #     init = self._init_states[name]
-        #     x = init['pos'][0:1]
-        #     # x = current['pos'][0:1]
-        #     # center_x = init['pos'][0:1]
-        #     # if np.abs(x[0] - center_x[0]) > 0.015:
-        #     #     x = center_x
-        #     yz = current['pos'][1:3]
-        #     theta = current['theta']
-        #     pos = x + yz
+        #     if 'bowl' in name:
+        #         continue
+        #     link = bullet.get_index_by_attribute(body, 'link_name', 'spam')
+        #     self._format_state_query()
+        #     state = bullet.get_link_state(body, link, ['pos', 'theta'])
+        #     theta = state['theta']
+        #     pos = state['pos']
+        #     print(pos)
         #     bullet.set_body_state(body, pos, theta)
+        # print()
+
+        if self._env._clip_obj_pos:
+            current_states = self._get_body_states()
+            for name, body in self._objects.items():
+                current = current_states[name]
+
+                if self._soft_clip:
+                    x = current['pos'][0:1]
+                    center_x = self._env._pos_init[0:1]
+                    if np.abs(x[0] - center_x[0]) > 0.015:
+                        x = center_x
+                else:
+                    x = self._env._pos_init[0:1] #init['pos'][0:1]
+
+                yz = current['pos'][1:3]
+                theta = current['theta']
+                pos = list(x) + list(yz)
+                bullet.set_body_state(body, pos, theta)
         obs = self.get_observation()
         rew = self._env.get_reward(obs)
         term = self._env.get_termination(obs)

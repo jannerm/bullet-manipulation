@@ -75,29 +75,16 @@ spam = loader(ASSET_PATH, 'objects/spam/spam.urdf',
               deg=[90,0,-90],
               scale=0.018)
 
+spam_long = loader(ASSET_PATH, 'objects/spam/spam_long.urdf',
+              pos=[.75, -.4, -.3],
+              deg=[90,0,-90],
+              scale=0.018)
+
+spam_2d = loader(ASSET_PATH, 'objects/spam/spam_2d.urdf',
+              pos=[.75, -.4, -.3],
+              deg=[90, 0, -90],
+              scale=0.018)
+
 bowl_sliding = loader(ASSET_PATH, 'objects/bowl_sliding/bowl.urdf',
               pos=[.75, 0, -.3],
               scale=0.25)
-
-positions = [
-    [0.5, -0.25, -0.35],
-    [0.5, -0.125, -0.35],
-    [0.5, 0, -0.35],
-    [0.5, 0.125, -0.35],
-]
-
-spam_objs = []
-for i in range(4):
-    # obj = loader(ASSET_PATH, 'objects/spam/spam.urdf',
-    #               pos=[.75, -.4, -.3],
-    #               deg=[90,0,-90],
-    #               scale=0.018)
-    # obj = loader(ASSET_PATH, 'objects/spam/spam_planar.urdf',
-    #               pos=[.75, -.4, -.3],
-    #               deg=[90,0,-90],
-    #               scale=0.018)
-    obj = loader(ASSET_PATH, 'objects/spam/spam_2d.urdf',
-                  pos=positions[i],  # pos=[.75, -.4, -.3],
-                  deg=[90, 0, -90],
-                  scale=0.018)
-    spam_objs.append(obj)

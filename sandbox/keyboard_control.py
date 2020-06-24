@@ -84,15 +84,19 @@ env_kwargs={
     'gui': True,  # False,
     'goal_mult': 0,
     'pos_init': [.75, -.3, 0],
-    'pos_high': [.75, .4, .3],
-    'pos_low': [.75, -.4, -.36],
-    'reset_obj_in_hand_rate': 0.0,
+    'pos_high': [.75, .4, .3], #[.75, .4, .3],
+    'pos_low': [.75, -.4, -.36], #[.75, -.4, -.36],
+    'reset_obj_in_hand_rate': 0.0, #0.0
     'img_dim': 48,
     'goal_mode': 'obj_in_bowl',
     'num_obj': 4, #2
 
-    'use_rotated_gripper': True,
-    'use_wide_gripper': False,
+    'use_rotated_gripper': True, #False
+    'use_wide_gripper': False, #False
+    'soft_clip': True,
+
+    'obj_urdf': 'spam_long',
+    'max_joint_velocity': 1.0,
 }
 env = SawyerLiftEnvGC(**env_kwargs)
 
