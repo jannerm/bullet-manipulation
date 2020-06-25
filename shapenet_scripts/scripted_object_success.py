@@ -11,6 +11,7 @@ def run_and_test_object_success():
     noise_std = 0.1
     num_trials = 20
     objects_to_test = [
+        'aero_cylinder',
         'jar',
         'gatorade',
         'conic_bin',
@@ -19,7 +20,7 @@ def run_and_test_object_success():
         'bunsen_burner',
     ]
 
-    scalings_to_try = [0.5]
+    scalings_to_try = [0.2]
 
     obj_scaling_to_try = (list(itertools.product(objects_to_test, scalings_to_try)))
 
@@ -98,6 +99,8 @@ def run_and_test_object_success():
                         (action, np.asarray([0., 0.7, 0.])))
                 else:
                     action = np.zeros((6,))
+
+                # print("object_pos", object_pos)
     
                 action[:3] += np.random.normal(scale=noise_std, size=(3,))
                 action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
