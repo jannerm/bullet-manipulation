@@ -9,10 +9,14 @@ def run_and_test_object_success():
     print("Remember to rename the csv if it is already in the dir.")
     EPSILON = 0.05
     noise_std = 0.1
-    num_trials = 50
+    num_trials = 20
     objects_to_test = [
-        'gatorade',
         'jar',
+        'gatorade',
+        'conic_bin',
+        'aero_cylinder',
+        'grill_trash_can',
+        'bunsen_burner',
     ]
 
     scalings_to_try = [0.5]
@@ -44,6 +48,9 @@ def run_and_test_object_success():
             dist_thresh = 0.045 + np.random.normal(scale=0.01)
             dist_thresh = np.clip(dist_thresh, 0.035, 0.060)
 
+            box_dist_thresh = 0.035 + np.random.normal(scale=0.01)
+            box_dist_thresh = np.clip(box_dist_thresh, 0.025, 0.05)
+
             for _ in range(env.scripted_traj_len):
                 if isinstance(obs, dict):
                     state_obs = obs[env.fc_input_key]
@@ -54,6 +61,9 @@ def run_and_test_object_success():
                 # object_pos += np.random.normal(scale=0.02, size=(3,))
     
                 object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
+                object_box_dist = np.linalg.norm(
+                    env._goal_position[:2] - object_pos[:2])
+
                 theta_action = 0.
                 object_goal_dist = np.linalg.norm(object_pos - env._goal_position)
     
@@ -68,17 +78,19 @@ def run_and_test_object_success():
                     if xy_diff > 0.02:
                         action[2] = 0.0
                     action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
-                elif env._gripper_open and not info['object_above_box_success']:
+                elif env._gripper_open and object_box_dist > box_dist_thresh:
                     # print('gripper closing')
                     action = (object_pos - ee_pos) * 7.0
                     action = np.concatenate(
                         (action, np.asarray([0., -0.7, 0.])))
-                elif not info['object_above_box_success']:
+                elif object_box_dist > box_dist_thresh:
                     # print(object_goal_dist)
                     action = (env._goal_position - object_pos)*7.0
                     # action = np.asarray([0., 0., 0.7])
+                    action[2] = 0.
                     action = np.concatenate(
                         (action, np.asarray([0., 0., 0.])))
+
                 elif not info['object_in_box_success']:
                     # object is now above the box.
                     action = (env._goal_position - object_pos)*7.0
