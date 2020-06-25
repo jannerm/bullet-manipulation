@@ -501,7 +501,7 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
         "args.num_timesteps: {} != env.scripted_traj_len: {}".format(
         args.num_timesteps, env.scripted_traj_len))
 
-    for _ in range(args.num_timesteps):
+    for t_ind in range(args.num_timesteps):
 
         if isinstance(observation, dict):
             object_pos = observation[env.object_obs_key][
@@ -809,5 +809,5 @@ if __name__ == "__main__":
         args.num_timesteps = 25
         assert args.observation_mode != 'pixels'
     elif args.env in V6_GRASPING_V0_PLACING_ENVS:
-        args.num_timesteps = 50
+        args.num_timesteps = 30
     main(args)
