@@ -28,8 +28,6 @@ class Widow200GraspV6BoxV0Env(Widow200GraspV6Env):
         self._object_position_high = (.82, -.07, -.20)
         self._object_position_low = (.78, -.125, -.20)
         self._success_dist_threshold = success_dist_threshold
-        self.box_high = np.array([0.83, .05, -.32])
-        self.box_low = np.array([0.77, -.03, -.345])
 
     def _load_meshes(self):
         super()._load_meshes()
