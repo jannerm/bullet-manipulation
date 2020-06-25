@@ -27,8 +27,8 @@ class Widow200GraspV6BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
         # self.set_scaling_dicts()
         self.set_box_pos_as_goal_pos()
         # self.obs_img_dim = 228
-        self.box_high = np.array([0.83, .05, -.32])
-        self.box_low = np.array([0.77, -.03, -.345])
+        self.box_high = np.array([0.875, .05, -.31])
+        self.box_low = np.array([0.77, -.03, -.355])
 
         # Params used for combine_railrl_pools.py
         self.terminates = False
