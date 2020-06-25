@@ -401,7 +401,8 @@ def scripted_grasping_V6(env, pool, success_pool, noise=0.2):
     actions, observations, next_observations, rewards, terminals, infos = \
         [], [], [], [], [], []
 
-    dist_thresh = 0.04 + np.random.normal(scale=0.01)
+    dist_thresh = 0.045 + np.random.normal(scale=0.01)
+    dist_thresh = np.clip(dist_thresh, 0.035, 0.060)
 
     for _ in range(args.num_timesteps):
 
@@ -446,7 +447,10 @@ def scripted_grasping_V6(env, pool, success_pool, noise=0.2):
             action = np.concatenate(
                 (action, np.asarray([0., 0., 0., 0.])))
 
-        action += np.random.normal(scale=noise, size=(6,))
+        # action += np.random.normal(scale=noise, size=(6,))
+        action[:3] += np.random.normal(scale=noise, size=(3,))
+        action[3] += np.random.normal(scale=noise*0.1)
+        action[4:] += np.random.normal(scale=noise, size=(2,))
         action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
 
         next_observation, reward, done, info = env.step(action)
