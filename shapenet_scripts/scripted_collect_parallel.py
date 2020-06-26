@@ -15,6 +15,8 @@ def get_data_save_directory(args):
 
     if args.sparse:
         data_save_directory += '_sparse_reward'
+    elif args.semisparse:
+        data_save_directory += '_semisparse_reward'
     else:
         data_save_directory += '_dense_reward'
 
@@ -43,12 +45,16 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--num-parallel-threads", type=int, default=10)
     parser.add_argument("--sparse", dest="sparse", action="store_true",
                         default=False)
+    parser.add_argument("--semisparse", dest="semisparse", action="store_true",
+                        default=False)
     parser.add_argument("--randomize", dest="randomize", action="store_true",
                         default=False)
     parser.add_argument("--random_actions", dest="random_actions",
                         action="store_true", default=False)
     parser.add_argument("-o", "--observation-mode", type=str, default='pixels')
     args = parser.parse_args()
+
+    assert args.semisparse != args.sparse
 
     num_trajectories_per_thread = int(
         args.num_trajectories / args.num_parallel_threads)
@@ -67,6 +73,8 @@ if __name__ == "__main__":
                ]
     if args.sparse:
         command.append('--sparse')
+    if args.semisparse:
+        command.append('--semisparse')
     if args.randomize:
         command.append('--randomize')
     if args.random_actions:

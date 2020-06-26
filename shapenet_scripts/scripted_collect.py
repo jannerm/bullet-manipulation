@@ -640,7 +640,14 @@ def main(args):
     if not os.path.exists(video_save_path) and args.video_save_frequency > 0:
         os.makedirs(video_save_path)
 
-    reward_type = 'sparse' if args.sparse else 'shaped'
+    if args.sparse:
+        reward_type = 'sparse'
+    elif args.semisparse:
+        reward_type = 'semisparse'
+        assert args.env in V6_GRASPING_V0_PLACING_ENVS
+    else:
+        reward_type = 'shaped'
+
     if args.env in (V2_GRASPING_ENVS +
         V4_GRASPING_ENVS + V5_GRASPING_ENVS +
         V6_GRASPING_V0_PLACING_ENVS + V6_GRASPING_ENVS):
@@ -795,12 +802,16 @@ if __name__ == "__main__":
     parser.add_argument("--gui", dest="gui", action="store_true", default=False)
     parser.add_argument("--sparse", dest="sparse", action="store_true",
                         default=False)
+    parser.add_argument("--semisparse", dest="semisparse", action="store_true",
+                        default=False)
     parser.add_argument("--non-markovian", dest="non_markovian",
                         action="store_true", default=False)
     parser.add_argument("-o", "--observation-mode", type=str, default='pixels',
                         choices=('state', 'pixels', 'pixels_debug'))
 
     args = parser.parse_args()
+
+    assert args.semisparse != args.sparse
 
     if args.env in V2_GRASPING_ENVS:
         args.num_timesteps = 20
