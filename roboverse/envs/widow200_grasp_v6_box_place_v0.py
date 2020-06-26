@@ -42,6 +42,13 @@ class Widow200GraspV6BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
     def get_reward(self, info):
         if self._reward_type in ['dense', 'shaped']:
             reward = -1.0*info['object_goal_dist']
+        elif self._reward_type == 'semisparse':
+            if info['object_in_box_success']:
+                reward = 1.0
+            elif info['object_grasped']:
+                reward = 0.2
+            else:
+                reward = 0.0
         elif self._reward_type == 'sparse':
             reward = float(info['object_in_box_success'])
         else:
@@ -64,6 +71,10 @@ class Widow200GraspV6BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
         object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
         object_gripper_success = int(
             object_gripper_dist < self._success_dist_threshold)
+        if object_gripper_success and object_pos[2] > -0.31:
+            object_grasped = True
+        else:
+            object_grasped = False
 
         object_goal_dist = np.linalg.norm(object_pos - self._goal_position)
         object_dist_success = int(object_goal_dist < self._success_dist_threshold)
@@ -81,7 +92,8 @@ class Widow200GraspV6BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
             object_in_box_success=object_in_box_success,
             object_above_box_success=object_above_box_sucess,
             object_gripper_dist=object_gripper_dist,
-            object_gripper_success=object_gripper_success)
+            object_gripper_success=object_gripper_success,
+            object_grasped=object_grasped)
         return info
 
 class Widow200GraspV6BoxPlaceV0RandObjEnv(RandObjEnv, Widow200GraspV6BoxPlaceV0Env):
@@ -98,9 +110,9 @@ if __name__ == "__main__":
     EPSILON = 0.05
     save_video = True
 
-    env = roboverse.make("Widow200GraspV6BoxPlaceV0RandObj-v0",
+    env = roboverse.make("Widow200GraspV6BoxPlaceV0-v0",
                          gui=True,
-                         reward_type='sparse',
+                         reward_type='semisparse',
                          observation_mode='pixels_debug',)
 
     object_ind = 0
@@ -159,7 +171,7 @@ if __name__ == "__main__":
             action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
             # print(action)
             obs, rew, done, info = env.step(action)
-            print("obs", obs)
+            print("rew", rew)
 
             img = env.render_obs()
             if save_video:
