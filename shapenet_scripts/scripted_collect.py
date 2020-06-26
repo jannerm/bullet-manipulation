@@ -809,5 +809,6 @@ if __name__ == "__main__":
         args.num_timesteps = 25
         assert args.observation_mode != 'pixels'
     elif args.env in V6_GRASPING_V0_PLACING_ENVS:
-        args.num_timesteps = 50
+        args.num_timesteps = 30
+        print("args.num_timesteps", args.num_timesteps)
     main(args)

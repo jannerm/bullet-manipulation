@@ -32,7 +32,7 @@ class Widow200GraspV6BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
 
         # Params used for combine_railrl_pools.py
         self.terminates = False
-        self.scripted_traj_len = 50
+        self.scripted_traj_len = 30
 
     def _load_meshes(self):
         super()._load_meshes()
