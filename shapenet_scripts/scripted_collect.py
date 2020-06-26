@@ -491,17 +491,13 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
     actions, observations, next_observations, rewards, terminals, infos = \
         [], [], [], [], [], []
 
-    dist_thresh = 0.045 + np.random.normal(scale=0.01)
-    dist_thresh = np.clip(dist_thresh, 0.035, 0.060)
-
-    box_dist_thresh = 0.035 + np.random.normal(scale=0.01)
-    box_dist_thresh = np.clip(box_dist_thresh, 0.025, 0.05)
+    dist_thresh = 0.04 + np.random.normal(scale=0.01)
 
     assert args.num_timesteps == env.scripted_traj_len, (
         "args.num_timesteps: {} != env.scripted_traj_len: {}".format(
         args.num_timesteps, env.scripted_traj_len))
 
-    for t_ind in range(args.num_timesteps):
+    for _ in range(args.num_timesteps):
 
         if isinstance(observation, dict):
             object_pos = observation[env.object_obs_key][
@@ -513,8 +509,6 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
             ee_pos = observation[:3]
 
         object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
-        object_box_dist = np.linalg.norm(env._goal_position[:2] - object_pos[:2])
-
         theta_action = 0.
         # theta_action = np.random.uniform()
 
@@ -527,15 +521,14 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
                 if xy_diff > 0.02:
                     action[2] = 0.0
                 action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
-        elif env._gripper_open and object_box_dist > box_dist_thresh:
+        elif env._gripper_open and not info['object_above_box_success']:
             # print('gripper closing')
             action = (object_pos - ee_pos) * 7.0
             action = np.concatenate(
                 (action, np.asarray([0., -0.7, 0.])))
-        elif object_box_dist > box_dist_thresh:
+        elif not info['object_above_box_success']:
             action = (env._goal_position - object_pos)*7.0
             # action = np.asarray([0., 0., 0.7])
-            action[2] = 0.
             action = np.concatenate(
                 (action, np.asarray([0., 0., 0.])))
         elif not info['object_in_box_success']:
@@ -545,10 +538,8 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
                 (action, np.asarray([0., 0.7, 0.])))
         else:
             action = np.zeros((6,))
-            action[2] = 0.5
 
-        action[:3] += np.random.normal(scale=noise, size=(3,))
-        action[4] += np.random.normal(scale=noise)
+        action += np.random.normal(scale=noise, size=(6,))
         action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
 
         next_observation, reward, done, info = env.step(action)

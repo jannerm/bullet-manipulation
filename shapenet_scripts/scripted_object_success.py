@@ -51,11 +51,7 @@ def run_and_test_object_success():
             obs = env.reset()
             # object_pos[2] = -0.30
 
-            dist_thresh = 0.045 + np.random.normal(scale=0.01)
-            dist_thresh = np.clip(dist_thresh, 0.035, 0.060)
-
-            box_dist_thresh = 0.035 + np.random.normal(scale=0.01)
-            box_dist_thresh = np.clip(box_dist_thresh, 0.025, 0.05)
+            dist_thresh = 0.04 + np.random.normal(scale=0.01)
 
             for _ in range(env.scripted_traj_len):
                 if isinstance(obs, dict):
@@ -67,36 +63,27 @@ def run_and_test_object_success():
                 # object_pos += np.random.normal(scale=0.02, size=(3,))
     
                 object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
-                object_box_dist = np.linalg.norm(
-                    env._goal_position[:2] - object_pos[:2])
-
                 theta_action = 0.
-                object_goal_dist = np.linalg.norm(object_pos - env._goal_position)
-    
+
                 info = env.get_info()
-                # theta_action = np.random.uniform()
-                # print(object_gripper_dist)
                 if (object_gripper_dist > dist_thresh and
-                    env._gripper_open and not info['object_above_box_success']):
-                    # print('approaching')
-                    action = (object_pos - ee_pos) * 7.0
-                    xy_diff = np.linalg.norm(action[:2]/7.0)
-                    if xy_diff > 0.02:
-                        action[2] = 0.0
-                    action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
-                elif env._gripper_open and object_box_dist > box_dist_thresh:
+                        env._gripper_open and not info['object_above_box_success']):
+                        # print('approaching')
+                        action = (object_pos - ee_pos) * 7.0
+                        xy_diff = np.linalg.norm(action[:2]/7.0)
+                        if xy_diff > 0.02:
+                            action[2] = 0.0
+                        action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
+                elif env._gripper_open and not info['object_above_box_success']:
                     # print('gripper closing')
                     action = (object_pos - ee_pos) * 7.0
                     action = np.concatenate(
                         (action, np.asarray([0., -0.7, 0.])))
-                elif object_box_dist > box_dist_thresh:
-                    # print(object_goal_dist)
+                elif not info['object_above_box_success']:
                     action = (env._goal_position - object_pos)*7.0
                     # action = np.asarray([0., 0., 0.7])
-                    action[2] = 0.
                     action = np.concatenate(
                         (action, np.asarray([0., 0., 0.])))
-
                 elif not info['object_in_box_success']:
                     # object is now above the box.
                     action = (env._goal_position - object_pos)*7.0
@@ -104,12 +91,8 @@ def run_and_test_object_success():
                         (action, np.asarray([0., 0.7, 0.])))
                 else:
                     action = np.zeros((6,))
-                    action[2] = 0.5
 
-                # print("object_pos", object_pos)
-    
-                action[:3] += np.random.normal(scale=noise, size=(3,))
-                action[4] += np.random.normal(scale=noise)
+                action += np.random.normal(scale=noise, size=(6,))
                 action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
                 obs, rew, done, info = env.step(action)
     
