@@ -94,6 +94,8 @@ def run_and_test_object_success():
                     action = np.zeros((6,))
 
                 action[:3] += np.random.normal(scale=noise, size=(3,))
+                action[4:] += np.random.normal(scale=noise, size=(2,))
+                # No noise for wrist theta
                 action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
                 obs, rew, done, info = env.step(action)
     
