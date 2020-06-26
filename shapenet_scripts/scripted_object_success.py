@@ -28,6 +28,7 @@ def run_and_test_object_success():
 
     # obj_scaling_to_try = (list(itertools.product(objects_to_test, scalings_to_try)))
     obj_scaling_to_try = list(zip(objects_to_test, scalings))
+    obj_scaling_to_try = [('gatorade', 0.5)]
 
     print("obj_scaling_to_try", obj_scaling_to_try)
 
@@ -92,7 +93,7 @@ def run_and_test_object_success():
                 else:
                     action = np.zeros((6,))
 
-                action += np.random.normal(scale=noise, size=(6,))
+                action[:3] += np.random.normal(scale=noise, size=(3,))
                 action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
                 obs, rew, done, info = env.step(action)
     
