@@ -12,7 +12,7 @@ class Widow200GraspV6BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
 
     def __init__(self,
                  *args,
-                 object_names=('jar',),
+                 object_names=('gatorade',),
                  scaling_local_list=[0.3],
                  success_dist_threshold=0.04,
                  **kwargs):
