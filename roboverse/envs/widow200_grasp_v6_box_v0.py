@@ -17,8 +17,8 @@ class Widow200GraspV6BoxV0Env(Widow200GraspV6Env):
 
     def __init__(self,
                  *args,
-                 object_names=('jar',),
-                 scaling_local_list=[0.3],
+                 object_names=('gatorade',),
+                 scaling_local_list=[0.5],
                  success_dist_threshold=0.04,
                  **kwargs):
         super().__init__(*args,
