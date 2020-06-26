@@ -8,21 +8,26 @@ from tqdm import tqdm
 def run_and_test_object_success():
     print("Remember to rename the csv if it is already in the dir.")
     EPSILON = 0.05
-    noise_std = 0.1
-    num_trials = 20
+    noise = 0.2
+    num_trials = 50
     objects_to_test = [
-        'aero_cylinder',
+        'conic_bin',
         'jar',
         'gatorade',
-        'conic_bin',
+        'bunsen_burner',
+        'long_vase',
+        'ringed_cup_oversized_base',
+        'square_rod_embellishment',
+        'elliptical_capsule',
         'aero_cylinder',
         'grill_trash_can',
-        'bunsen_burner',
     ]
 
-    scalings_to_try = [0.2]
+    # scalings_to_try = [0.2]
+    scalings = [0.2, 0.5, 0.5, 0.3, 0.3, 0.3, 0.3, 0.3, 0.2, 0.3]
 
-    obj_scaling_to_try = (list(itertools.product(objects_to_test, scalings_to_try)))
+    # obj_scaling_to_try = (list(itertools.product(objects_to_test, scalings_to_try)))
+    obj_scaling_to_try = list(zip(objects_to_test, scalings))
 
     print("obj_scaling_to_try", obj_scaling_to_try)
 
@@ -34,7 +39,7 @@ def run_and_test_object_success():
     for obj, scaling in tqdm(obj_scaling_to_try):
         print("testing object", obj, scaling)
         env = roboverse.make("Widow200GraspV6BoxPlaceV0RandObj-v0",
-                             gui=True,
+                             # gui=True,
                              possible_train_objects=[obj],
                              train_scaling_list=[scaling],
                              reward_type='sparse',
@@ -99,10 +104,12 @@ def run_and_test_object_success():
                         (action, np.asarray([0., 0.7, 0.])))
                 else:
                     action = np.zeros((6,))
+                    action[2] = 0.5
 
                 # print("object_pos", object_pos)
     
-                action[:3] += np.random.normal(scale=noise_std, size=(3,))
+                action[:3] += np.random.normal(scale=noise, size=(3,))
+                action[4] += np.random.normal(scale=noise)
                 action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
                 obs, rew, done, info = env.step(action)
     
