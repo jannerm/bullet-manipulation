@@ -148,8 +148,8 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
             for _ in range(5):
                 pos = bullet.get_link_state(self._robot_id, self._end_effector, 'pos')
                 pos = list(pos)
-                pos = np.clip(pos, self._pos_low, self._pos_high)
                 pos[2] += 0.05
+                pos = np.clip(pos, self._pos_low, self._pos_high)
                 self._simulate(pos, target_theta, gripper, delta_theta=0)
             self._gripper_open = False
         elif gripper_action <= 0.5 and gripper_action >= -0.5:
