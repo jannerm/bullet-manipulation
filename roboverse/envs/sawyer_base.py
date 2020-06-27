@@ -23,6 +23,7 @@ class SawyerBaseEnv(gym.Env, Serializable):
                  visualize=True,
                  use_rotated_gripper=False,
                  use_wide_gripper=False,
+                 lite_reset=False,
                  ):
 
         self._gui = gui
@@ -40,6 +41,9 @@ class SawyerBaseEnv(gym.Env, Serializable):
 
         self._use_rotated_gripper = use_rotated_gripper
         self._use_wide_gripper = use_wide_gripper
+
+        self._reset_count = 0
+        self._lite_reset = lite_reset
 
         bullet.connect_headless(self._gui)
         self.set_reset_hook()
@@ -88,13 +92,14 @@ class SawyerBaseEnv(gym.Env, Serializable):
         self.observation_space = gym.spaces.Box(-obs_high, obs_high)
 
     def reset(self):
+        if not self._lite_reset or self._reset_count == 0:
+            bullet.reset()
+            self._load_meshes()
 
-        bullet.reset()
-        self._load_meshes()
-
-        # Allow the objects to settle down after they are dropped in sim
-        for _ in range(10):
-            bullet.step()
+            # Allow the objects to settle down after they are dropped in sim
+            for _ in range(10):
+                bullet.step()
+        self._reset_count += 1
 
         self._end_effector = bullet.get_index_by_attribute(
             self._sawyer, 'link_name', 'gripper_site')

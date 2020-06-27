@@ -25,7 +25,8 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             low=self._env._pos_low,
             high=self._env._pos_high)
         super().reset()
-        self._env.open_gripper()
+        if not self._lite_reset:
+            self._env.open_gripper()
 
         ee_reset_pos = bullet.get_link_state(self._env._sawyer,
                                              self._env._end_effector, 'pos')
