@@ -67,13 +67,13 @@ def run_and_test_object_success():
 
                 info = env.get_info()
                 if (object_gripper_dist > dist_thresh and
-                        env._gripper_open and not info['object_above_box_success']):
-                        # print('approaching')
-                        action = (object_pos - ee_pos) * 7.0
-                        xy_diff = np.linalg.norm(action[:2]/7.0)
-                        if xy_diff > 0.02:
-                            action[2] = 0.0
-                        action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
+                    env._gripper_open and not info['object_above_box_success']):
+                    # print('approaching')
+                    action = (object_pos - ee_pos) * 7.0
+                    xy_diff = np.linalg.norm(action[:2]/7.0)
+                    if xy_diff > 0.02:
+                        action[2] = 0.0
+                    action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
                 elif env._gripper_open and not info['object_above_box_success']:
                     # print('gripper closing')
                     action = (object_pos - ee_pos) * 7.0
