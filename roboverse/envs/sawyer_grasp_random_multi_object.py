@@ -24,7 +24,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
 
                  observation_mode='state',
 
-                 obs_img_dim=96,
+                 obs_img_dim=48,
 
                  *args,
 
@@ -136,11 +136,11 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
 
             self._objects = {
 
-                'lego': bullet.objects.lego(pos=object_positions[0]),
+                'lego': bullet.objects.lego(pos=object_positions[0], rgba=[1, 0, 0, 1], scale=3),
 
-                'duck': bullet.objects.duck(pos=object_positions[1]),
+                'duck': bullet.objects.lego(pos=object_positions[1], rgba=[0, 1, 0, 1], scale=3),
 
-                'cube': bullet.objects.cube(pos=object_positions[2])
+                'cube': bullet.objects.lego(pos=object_positions[2], rgba=[0, 1, 1, 1], scale=3),
 
                 #'cube': bullet.objects.cube(pos=object_positions[3])
             }
@@ -357,7 +357,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
 
             # This mode passes in all the true state information + images
 
-            #image_observation = self.render_obs()
+            image_observation = self.render_obs()
 
 
 
@@ -389,7 +389,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
 
                 'state': state,
 
-                #'image': image_observation,
+                'image': image_observation,
 
                 'all_obj_pos': all_obj_pos
 
