@@ -539,7 +539,9 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
         else:
             action = np.zeros((6,))
 
-        action += np.random.normal(scale=noise, size=(6,))
+        action[:3] += np.random.normal(scale=noise, size=(3,))
+        action[4:] += np.random.normal(scale=noise, size=(2,))
+        # No noise for wrist theta, action[3]
         action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
 
         next_observation, reward, done, info = env.step(action)
