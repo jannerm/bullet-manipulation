@@ -534,8 +534,6 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
                 (action, np.asarray([0., -0.7, 0.])))
         elif object_box_dist > box_dist_thresh:
             action = (env._goal_position - object_pos)*7.0
-            # action = np.asarray([0., 0., 0.7])
-            action[2] = 0.
             action = np.concatenate(
                 (action, np.asarray([0., 0., 0.])))
         elif not info['object_in_box_success']:
@@ -548,7 +546,9 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
             action[2] = 0.5
 
         action[:3] += np.random.normal(scale=noise, size=(3,))
-        action[4] += np.random.normal(scale=noise)
+        action[3] += np.random.normal(scale=noise*0.1)
+        action[4:] += np.random.normal(scale=noise, size=(2,))
+
         action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
 
         next_observation, reward, done, info = env.step(action)
