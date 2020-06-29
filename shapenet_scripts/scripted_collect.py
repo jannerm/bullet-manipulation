@@ -492,6 +492,7 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
         [], [], [], [], [], []
 
     dist_thresh = 0.04 + np.random.normal(scale=0.01)
+    max_theta_action_magnitude = 0.2
     grasp_target_theta = np.random.uniform(-np.pi / 2, np.pi / 2)
 
     assert args.num_timesteps == env.scripted_traj_len, (

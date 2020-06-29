@@ -8,7 +8,7 @@ import os
 
 # buffer_path = "/home/albert/dev/bullet-manipulation-avi-master/data/data_Widow200GraspV6BoxPlaceV0-v0_pixels_debug_1_sparse_reward_scripted_actions_fixed_position_noise_std_0.1/2020-06-22T10-42-24/2020-06-22T10-42-24_pool_31.pkl"
 
-buffer_path = "/nfs/kun1/users/albert/batch_rl_datasets/jun28_Widow200GraspV6BoxPlaceV0TenSameTrainTestRandObj-v0_pixels_debug_40K_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl"
+buffer_path = "/nfs/kun1/users/albert/batch_rl_datasets/test_jun29_Widow200GraspV6BoxPlaceV0TenSameTrainTestRandObj-v0_pixels_debug_50_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl"
 
 def get_img_np_from_buffer(buffer_path, img_side):
     with open(buffer_path, 'rb') as f:
