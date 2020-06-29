@@ -9,7 +9,8 @@ def run_and_test_object_success():
     print("Remember to rename the csv if it is already in the dir.")
     EPSILON = 0.05
     noise = 0.2
-    num_trials = 50
+    num_trials = 1
+    max_theta_action_magnitude = 0.2
     objects_to_test = [
         'conic_bin',
         'jar',
@@ -53,6 +54,9 @@ def run_and_test_object_success():
             # object_pos[2] = -0.30
 
             dist_thresh = 0.04 + np.random.normal(scale=0.01)
+            grasp_target_theta = np.random.uniform(-np.pi / 2, np.pi / 2)
+            # Note that wrist angle is between [-pi, pi]
+            # print("grasp_target_theta", grasp_target_theta)
 
             for _ in range(env.scripted_traj_len):
                 if isinstance(obs, dict):
@@ -64,7 +68,13 @@ def run_and_test_object_success():
                 # object_pos += np.random.normal(scale=0.02, size=(3,))
     
                 object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
-                theta_action = 0.
+                theta = env.get_wrist_joint_angle() # -pi, pi
+                theta_action_pre_clip = grasp_target_theta - theta
+                theta_action = np.clip(
+                    theta_action_pre_clip,
+                    -max_theta_action_magnitude,
+                    max_theta_action_magnitude
+                )
 
                 info = env.get_info()
                 if (object_gripper_dist > dist_thresh and
@@ -74,6 +84,10 @@ def run_and_test_object_success():
                     xy_diff = np.linalg.norm(action[:2]/7.0)
                     if xy_diff > 0.02:
                         action[2] = 0.0
+
+                    # print("theta", theta)
+                    # print("theta_action_pre_clip", theta_action_pre_clip)
+                    # print("theta action post clip", theta_action)
                     action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
                 elif env._gripper_open and not info['object_above_box_success']:
                     # print('gripper closing')
@@ -93,7 +107,8 @@ def run_and_test_object_success():
                 else:
                     action = np.zeros((6,))
 
-                action += np.random.normal(scale=noise, size=(6,))
+                noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
+                action += np.random.normal(scale=noise_scalings)
                 action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
                 obs, rew, done, info = env.step(action)
     
