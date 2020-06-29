@@ -492,6 +492,7 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
         [], [], [], [], [], []
 
     dist_thresh = 0.04 + np.random.normal(scale=0.01)
+    grasp_target_theta = np.random.uniform(-np.pi / 2, np.pi / 2)
 
     assert args.num_timesteps == env.scripted_traj_len, (
         "args.num_timesteps: {} != env.scripted_traj_len: {}".format(
@@ -509,18 +510,23 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
             ee_pos = observation[:3]
 
         object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
-        theta_action = 0.
-        # theta_action = np.random.uniform()
+        theta = env.get_wrist_joint_angle() # -pi, pi
+        theta_action_pre_clip = grasp_target_theta - theta
+        theta_action = np.clip(
+            theta_action_pre_clip,
+            -max_theta_action_magnitude,
+            max_theta_action_magnitude
+        )
 
         info = env.get_info()
         if (object_gripper_dist > dist_thresh and
-                env._gripper_open and not info['object_above_box_success']):
-                # print('approaching')
-                action = (object_pos - ee_pos) * 7.0
-                xy_diff = np.linalg.norm(action[:2]/7.0)
-                if xy_diff > 0.02:
-                    action[2] = 0.0
-                action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
+            env._gripper_open and not info['object_above_box_success']):
+            # print('approaching')
+            action = (object_pos - ee_pos) * 7.0
+            xy_diff = np.linalg.norm(action[:2]/7.0)
+            if xy_diff > 0.02:
+                action[2] = 0.0
+            action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
         elif env._gripper_open and not info['object_above_box_success']:
             # print('gripper closing')
             action = (object_pos - ee_pos) * 7.0
@@ -539,7 +545,8 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
         else:
             action = np.zeros((6,))
 
-        action += np.random.normal(scale=noise, size=(6,))
+        noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
+        action += np.random.normal(scale=noise_scalings)
         action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
 
         next_observation, reward, done, info = env.step(action)
