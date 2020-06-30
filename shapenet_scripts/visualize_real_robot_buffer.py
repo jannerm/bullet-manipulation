@@ -133,8 +133,8 @@ def plot_grasp_locations_and_success(successful_grasp_locations, failed_grasp_lo
     ax.invert_xaxis() # invert the x axis.
     plt.savefig("plot_success_only.png")
 
-def save_leftmost_rightmost_grasp_success_video(grasp_locs_data, rewards_last_ts_array, image_array_by_grasp_and_time):
-    # Get index of leftmost grasp. max(grasp_locs[:,1])
+def save_extremes_grasp_success_video(grasp_locs_data, rewards_last_ts_array, image_array_by_grasp_and_time):
+    # Get index of leftmost and rightmost grasp. max(grasp_locs[:,1])
     grasp_locs_left_right_coord = np.where(rewards_last_ts_array.squeeze() == 1, grasp_locs_data[:,1], np.nan)
     print("grasp_locs_data[:,1].shape", grasp_locs_data[:,1].shape)
     print("rewards_last_ts_array.squeeze().shape", rewards_last_ts_array.squeeze().shape)
@@ -146,6 +146,17 @@ def save_leftmost_rightmost_grasp_success_video(grasp_locs_data, rewards_last_ts
     print("rightmost_grasp_loc", grasp_locs_data[rightmost_grasp_idx])
     save_video(image_array_by_grasp_and_time[leftmost_grasp_idx], "leftmost_grasp_success")
     save_video(image_array_by_grasp_and_time[rightmost_grasp_idx], "rightmost_grasp_success")
+
+    # get index of topmost and bottommost grasps.
+    grasp_locs_top_bottom_coord = np.where(rewards_last_ts_array.squeeze() == 1, grasp_locs_data[:,0], np.nan)
+    # nan-ify all failed grasp locations so that we ignore them during the argmax.
+    topmost_grasp_idx = np.nanargmax(grasp_locs_top_bottom_coord)
+    print("topmost_grasp_loc", grasp_locs_data[topmost_grasp_idx])
+    bottommost_grasp_idx = np.nanargmin(grasp_locs_top_bottom_coord)
+    print("bottommost_grasp_loc", grasp_locs_data[bottommost_grasp_idx])
+    save_video(image_array_by_grasp_and_time[topmost_grasp_idx], "topmost_grasp_success")
+    save_video(image_array_by_grasp_and_time[bottommost_grasp_idx], "bottommost_grasp_success")
+
 
 def save_video(img_array, name):
     images = [Image.fromarray(np.uint8(np.transpose(img_array[i], (1, 2, 0)) * 255)) for i in range(traj_len)]
@@ -178,4 +189,4 @@ if __name__ == "__main__":
     rewards_last_ts_array = load_rewards_into_array(rewards_data, traj_len)
     successful_grasp_locations, failed_grasp_locations = get_grasp_success_fail_locations(grasp_locs_data, rewards_last_ts_array)
     plot_grasp_locations_and_success(successful_grasp_locations, failed_grasp_locations)
-    save_leftmost_rightmost_grasp_success_video(grasp_locs_data, rewards_last_ts_array, image_array_by_grasp_and_time)
+    save_extremes_grasp_success_video(grasp_locs_data, rewards_last_ts_array, image_array_by_grasp_and_time)
