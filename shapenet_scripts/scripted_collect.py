@@ -493,6 +493,8 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
 
     dist_thresh = 0.045 + np.random.normal(scale=0.01)
     dist_thresh = np.clip(dist_thresh, 0.035, 0.060)
+    grasp_target_theta = np.random.uniform(-np.pi / 2, np.pi / 2)
+    max_theta_action_magnitude = 0.2
 
     box_dist_thresh = 0.035 + np.random.normal(scale=0.01)
     box_dist_thresh = np.clip(box_dist_thresh, 0.025, 0.05)
@@ -515,7 +517,13 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
         object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
         object_box_dist = np.linalg.norm(env._goal_position[:2] - object_pos[:2])
 
-        theta_action = 0.
+        theta = env.get_wrist_joint_angle() # -pi, pi
+        theta_action_pre_clip = grasp_target_theta - theta
+        theta_action = np.clip(
+            theta_action_pre_clip,
+            -max_theta_action_magnitude,
+            max_theta_action_magnitude
+        )
         # theta_action = np.random.uniform()
 
         info = env.get_info()
@@ -547,8 +555,8 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
             action = np.zeros((6,))
             action[2] = 0.5
 
-        action[:3] += np.random.normal(scale=noise, size=(3,))
-        action[4] += np.random.normal(scale=noise)
+        noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
+        action += np.random.normal(scale=noise_scalings)
         action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
 
         next_observation, reward, done, info = env.step(action)
