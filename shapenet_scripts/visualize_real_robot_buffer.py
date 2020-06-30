@@ -96,15 +96,18 @@ def plot_action_distribution(avg_action_traj, traj_len):
     plt.tight_layout()
     plt.savefig("plot.png")
 
-def plot_grasp_locations_and_success(grasp_locations_array, rewards_array):
-    # grasp_locations_array: (num_grasps, 3)
-    # rewards_array: (num_grasps, 1)
+def get_grasp_success_fail_locations(grasp_locations_array, rewards_array):
     print("grasp_locations_array.shape", grasp_locations_array.shape)
     assert grasp_locations_array.shape[0] == rewards_array.shape[0]
     success_idx = np.argwhere(rewards_array == 1)[:,0]
     fail_idx = np.argwhere(rewards_array == 0)[:,0]
     successful_grasp_locations = grasp_locations_array[success_idx]
     failed_grasp_locations = grasp_locations_array[fail_idx]
+    print("successful_grasp_locations.shape", successful_grasp_locations.shape)
+    print("failed_grasp_locations.shape", failed_grasp_locations.shape)
+    return successful_grasp_locations, failed_grasp_locations
+
+def plot_grasp_locations_and_success(successful_grasp_locations, failed_grasp_locations):
     print("successful_grasp_locations.shape", successful_grasp_locations.shape)
     print("failed_grasp_locations.shape", failed_grasp_locations.shape)
     fig = plt.figure(1)
@@ -130,18 +133,33 @@ def plot_grasp_locations_and_success(grasp_locations_array, rewards_array):
     ax.invert_xaxis() # invert the x axis.
     plt.savefig("plot_success_only.png")
 
-    
+def save_leftmost_rightmost_grasp_success_video(grasp_locs_data, rewards_last_ts_array, image_array_by_grasp_and_time):
+    # Get index of leftmost grasp. max(grasp_locs[:,1])
+    grasp_locs_left_right_coord = np.where(rewards_last_ts_array.squeeze() == 1, grasp_locs_data[:,1], np.nan)
+    print("grasp_locs_data[:,1].shape", grasp_locs_data[:,1].shape)
+    print("rewards_last_ts_array.squeeze().shape", rewards_last_ts_array.squeeze().shape)
+    print("grasp_locs_left_right_coord.shape", grasp_locs_left_right_coord.shape)
+    # nan-ify all failed grasp locations so that we ignore them during the argmax.
+    leftmost_grasp_idx = np.nanargmax(grasp_locs_left_right_coord)
+    print("leftmost_grasp_loc", grasp_locs_data[leftmost_grasp_idx])
+    rightmost_grasp_idx = np.nanargmin(grasp_locs_left_right_coord)
+    print("rightmost_grasp_loc", grasp_locs_data[rightmost_grasp_idx])
+    save_video(image_array_by_grasp_and_time[leftmost_grasp_idx], "leftmost_grasp_success")
+    save_video(image_array_by_grasp_and_time[rightmost_grasp_idx], "rightmost_grasp_success")
+
+def save_video(img_array, name):
+    images = [Image.fromarray(np.uint8(np.transpose(img_array[i], (1, 2, 0)) * 255)) for i in range(traj_len)]
+    images[0].save('data/{}.gif'.format(name),
+        save_all=True, append_images=images[1:], duration=traj_len*2, loop=0)
+
 def save_video_from_img_array(img_array_by_grasp_and_time, traj_len, num_rollouts_to_save):
     if not os.path.exists('data'):
         os.makedirs('data')
     for n in range(num_rollouts_to_save):
         # Save each 3 x 64 x 64 image array as 64 x 64 x 3 into a pillow image.
-        images = [Image.fromarray(np.uint8(np.transpose(img_array_by_grasp_and_time[n][i], (1, 2, 0)) * 255)) for i in range(traj_len)]
-        images[0].save('data/real_robot_rollout_{}.gif'.format(n),
-            save_all=True, append_images=images[1:], duration=traj_len*2, loop=0)
+        save_video(img_array_by_grasp_and_time[n], "real_robot_rollout_{}".format(n))
 
 if __name__ == "__main__":
-    img_side = 48
     traj_len = 15
     num_rollouts_to_save = 1
     actions_data = load_data_by_key(pool_path, "actions")
@@ -152,10 +170,12 @@ if __name__ == "__main__":
     # plot_action_distribution(avg_action_traj, traj_len)
 
     obs_data = load_data_by_key(pool_path, "observations")
-    # image_array_by_grasp_and_time = load_images_into_array(obs_data, traj_len)
+    image_array_by_grasp_and_time = load_images_into_array(obs_data, traj_len)
     # save_video_from_img_array(image_array_by_grasp_and_time, traj_len, num_rollouts_to_save)
 
     grasp_locs_data = load_goals_rewards_into_array(obs_data, actions_array_by_grasp_time, traj_len)
     rewards_data = load_data_by_key(pool_path, "rewards")
     rewards_last_ts_array = load_rewards_into_array(rewards_data, traj_len)
-    plot_grasp_locations_and_success(grasp_locs_data, rewards_last_ts_array)
+    successful_grasp_locations, failed_grasp_locations = get_grasp_success_fail_locations(grasp_locs_data, rewards_last_ts_array)
+    plot_grasp_locations_and_success(successful_grasp_locations, failed_grasp_locations)
+    save_leftmost_rightmost_grasp_success_video(grasp_locs_data, rewards_last_ts_array, image_array_by_grasp_and_time)
