@@ -111,9 +111,9 @@ def run_and_test_object_success():
                 action += np.random.normal(scale=noise_scalings)
                 action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
                 obs, rew, done, info = env.step(action)
-    
+
                 time.sleep(0.05)
-    
+
             num_successes += rew
             print('reward: {}'.format(rew))
             print('num_successes / i + 1: {}/{}'.format(num_successes, i + 1))
