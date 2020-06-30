@@ -46,7 +46,7 @@ class Widow200GraspV6BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
             if info['object_in_box_success']:
                 reward = 1.0
             elif info['object_grasped']:
-                reward = 0.2
+                reward = 0.5
             else:
                 reward = 0.0
         elif self._reward_type == 'sparse':
