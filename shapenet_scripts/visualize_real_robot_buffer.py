@@ -113,10 +113,23 @@ def plot_grasp_locations_and_success(grasp_locations_array, rewards_array):
     scatter_labels = ["failure", "success"]
     f = ax.scatter(failed_grasp_locations[:,1], failed_grasp_locations[:,0], s=5, facecolors='none', edgecolors='red', label=scatter_labels[0])
     s = ax.scatter(successful_grasp_locations[:,1], successful_grasp_locations[:,0], s=5, facecolors='green', edgecolors='green', label=scatter_labels[1])
-    fig.legend([s, f], labels=scatter_labels, loc='upper right', borderaxespad=0.1)
+    fig.legend([f, s], labels=scatter_labels, loc='upper right', borderaxespad=0.1)
     plt.tight_layout()
     ax.invert_xaxis() # invert the x axis.
-    plt.savefig("plot1.png")
+    plt.savefig("plot_success_fail.png")
+
+    # plot success only:
+    fig = plt.figure(2)
+    ax = fig.add_subplot(111)
+    plt.title("Successful Grasp Attempts")
+    scatter_labels = ["failure", "success"]
+    # f = ax.scatter(failed_grasp_locations[:,1], failed_grasp_locations[:,0], s=5, facecolors='none', edgecolors='red', label=scatter_labels[0])
+    s = ax.scatter(successful_grasp_locations[:,1], successful_grasp_locations[:,0], s=5, facecolors='green', edgecolors='green', label=scatter_labels[1])
+    # fig.legend([f, s], labels=scatter_labels, loc='upper right', borderaxespad=0.1)
+    plt.tight_layout()
+    ax.invert_xaxis() # invert the x axis.
+    plt.savefig("plot_success_only.png")
+
     
 def save_video_from_img_array(img_array_by_grasp_and_time, traj_len, num_rollouts_to_save):
     if not os.path.exists('data'):
