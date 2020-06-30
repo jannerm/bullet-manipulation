@@ -17,7 +17,7 @@ def get_img_np_from_buffer(buffer_path, img_side):
         img_np = rb._obs['image'].np_array
         num_ts = img_np.shape[0]
         print("img_np.shape", img_np.shape)
-        img_obs = img_np.reshape((num_ts, img_side, img_side, 3))
+        img_obs = img_np.reshape((num_ts, 3, img_side, img_side))
         return img_obs
 
 def save_video_from_img_obs(img_obs, img_side, traj_len, num_rollouts_to_save):
@@ -26,7 +26,7 @@ def save_video_from_img_obs(img_obs, img_side, traj_len, num_rollouts_to_save):
     for n in range(num_rollouts_to_save):
         images = []
         for i in range(traj_len):
-            img_fi = img_obs[n * traj_len + i]
+            img_fi = np.transpose(img_obs[n * traj_len + i], (1, 2, 0))
             img_fi_resized = skit.resize(img_fi, (img_side * 3, img_side * 3, 3))
             images.append(Image.fromarray(np.uint8(img_fi_resized*255)))
         images[0].save('data/rollout_{}.gif'.format(n),
