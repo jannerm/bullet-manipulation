@@ -18,6 +18,7 @@ class SawyerLiftMultiEnv(SawyerBaseEnv):
         self.num_obj = num_obj
         self._obj_urdf = obj_urdf
         self._max_joint_velocity = max_joint_velocity
+        self._bowl_pos = None
         if self._obj_urdf in ['spam', 'spam_long']:
             self._clip_obj_pos = True
         elif self._obj_urdf == 'spam_2d':
@@ -30,10 +31,18 @@ class SawyerLiftMultiEnv(SawyerBaseEnv):
         params = super().get_params()
         return params
 
+    def set_bowl_pos(self, bowl_pos):
+        self._bowl_pos = bowl_pos
+
     def _load_meshes(self):
         super()._load_meshes()
+
+        bowl_pos = self._bowl_pos
+        if bowl_pos is None:
+            bowl_pos = [.75, 0, -.3]
+
         self._objects.update({
-            'bowl':  bullet.objects.bowl(),
+            'bowl':  bullet.objects.bowl(pos=bowl_pos),
             # 'lid': bullet.objects.lid(),
         })
         colors = [

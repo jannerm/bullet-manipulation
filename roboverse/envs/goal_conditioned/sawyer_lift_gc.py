@@ -11,16 +11,53 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
     # GROUND_Y = -0.355
     GROUND_Y = -0.325
 
-    def __init__(self, *args, reset_obj_in_hand_rate=0.5,
-                 goal_mode='obj_in_air', reward_type='hand_dist+obj_dist', **kwargs):
+    def __init__(
+            self,
+            *args,
+            reset_obj_in_hand_rate=0.5,
+            goal_sampling_mode='obj_in_air',
+            reward_type='hand_dist+obj_dist',
+            random_bowl_pos=False,
+            sample_valid_rollout_goals=True,
+            **kwargs
+    ):
         self.reset_obj_in_hand_rate = reset_obj_in_hand_rate
-        self.goal_mode = goal_mode
+        self.goal_sampling_mode = goal_sampling_mode
         self.reward_type = reward_type
+        self.random_bowl_pos = random_bowl_pos
+        self.sample_valid_rollout_goals = sample_valid_rollout_goals
         super().__init__(*args, env='SawyerLiftMulti-v0', **kwargs)
         self.record_args(locals())
 
+    def sample_goal_for_rollout(self):
+        goals_dict = self.sample_goals(
+            batch_size=1,
+        )
+        goal = goals_dict['state_desired_goal'][0]
+
+        if self.sample_valid_rollout_goals:
+            self.set_env_state(goal)
+
+            # Allow the objects to settle down after they are dropped in sim
+            for _ in range(5):
+                self._env.step(np.array([0, 0, 0, 1]))
+
+            goal = self.get_env_state()
+
+        return goal
+
     def reset(self):
-        self._goal_pos = self.sample_goals(batch_size=1, goal_mode='obj_in_bowl')['state_desired_goal'][0]
+        ## set the box position
+        self._bowl_pos = [.75, 0.0, -.3]
+        if self.random_bowl_pos:
+            self._bowl_pos[1] = np.random.uniform(
+                low=-0.20,
+                high=0.20,
+            )
+        self._env.set_bowl_pos(self._bowl_pos)
+
+        self._goal_pos = self.sample_goal_for_rollout()
+
         self._env._pos_init[:] = np.random.uniform(
             low=self._env._pos_low,
             high=self._env._pos_high)
@@ -47,7 +84,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
 
         # Allow the objects to settle down after they are dropped in sim
         for _ in range(5):
-            self.step(np.array([0, 0, 0, 1]))
+            self._env.step(np.array([0, 0, 0, 1]))
 
         obs = self.get_dict_observation()
         return obs
@@ -101,8 +138,9 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
 
     def get_dict_observation(self):
         obs = self.get_observation()
+        bowl = self._bowl_pos[1:2]
         gripper = self.get_gripper_dist()
-        obs = np.r_[obs, gripper]
+        obs = np.r_[obs, bowl, gripper]
         achieved_goal = self.get_achieved_goal()
         return {
             'observation': obs,
@@ -217,7 +255,6 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         return self.get_achieved_goal()
 
     def set_env_state(self, state):
-        self.reset()
         goal_info = self.get_info_from_achieved_goal(state)
         bullet.position_control(
             self._sawyer,
@@ -237,20 +274,28 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
     def set_to_goal(self, goal):
         self.set_env_state(goal['state_desired_goal'])
 
-    def sample_goals(self, batch_size, goal_mode=None):
-        if goal_mode is None:
-            goal_mode = self.goal_mode
+    def sample_goals(self, batch_size, goal_sampling_mode=None):
+        if goal_sampling_mode is None:
+            goal_sampling_mode = self.goal_sampling_mode
 
         low = self._env._pos_low[1:]
         high = self._env._pos_high[1:]
 
-        if goal_mode == 'uniform':
+        if goal_sampling_mode == 'uniform':
             obj_goals = np.random.uniform(
                 low=low,
                 high=high,
                 size=(batch_size * self.num_obj, len(low))
             ).reshape((batch_size, -1))
-        elif goal_mode == 'obj_in_air':
+        elif goal_sampling_mode == 'ground':
+            high_ground = high.copy()
+            high_ground[1] = low[1] + 0.03
+            obj_goals = np.random.uniform(
+                low=low,
+                high=high_ground,
+                size=(batch_size * self.num_obj, len(low))
+            ).reshape((batch_size, -1))
+        elif goal_sampling_mode == 'obj_in_air':
             high_ground = high.copy()
             high_ground[1] = low[1]
             # Have them all start off on the ground
@@ -274,26 +319,13 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
                 size=num_in_air)
             # Make sure the objects is in the air
             # obj_goals[:, -1] = obj_goals[:, -1].clip(0, 1e10)
-        elif goal_mode == 'obj_in_bowl':
+        elif goal_sampling_mode == 'obj_in_bowl':
             obj_goals = np.tile(
-                bullet.get_midpoint(self._objects['bowl'])[1:],
+                # bullet.get_midpoint(self._objects['bowl'])[1:],
+                self._bowl_pos[1:],
                 (batch_size, self.num_obj))
-        elif goal_mode == 'uniform_and_obj_in_bowl':
-            num_uniform_goals = batch_size // 2
-            uniform_goals = np.random.uniform(
-                low=low,
-                high=high,
-                size=(num_uniform_goals * self.num_obj, len(low))
-            ).reshape((num_uniform_goals, -1))
-
-            num_obj_in_bowl_goals = batch_size - num_uniform_goals
-            obj_in_bowl_goals = np.tile(
-                bullet.get_midpoint(self._objects['bowl'])[1:],
-                (num_obj_in_bowl_goals, self.num_obj))
-            obj_goals = np.concatenate((uniform_goals, obj_in_bowl_goals))
-            np.random.shuffle(obj_goals)
         else:
-            raise RuntimeError("Invalid goal mode: {}".format(self.goal_mode))
+            raise RuntimeError("Invalid goal mode: {}".format(self.goal_sampling_mode))
 
         hand_goals = np.random.uniform(
             low=low,

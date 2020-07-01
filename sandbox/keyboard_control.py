@@ -88,8 +88,11 @@ env_kwargs={
     'pos_low': [.75, -.4, -.36], #[.75, -.4, -.36],
     'reset_obj_in_hand_rate': 0.0, #0.0
     'img_dim': 48,
-    'goal_mode': 'obj_in_bowl',
+
+    # 'goal_sampling_mode': 'obj_in_bowl',
+    'goal_sampling_mode': 'ground',
     'num_obj': 4, #2
+    'random_bowl_pos': True,
 
     # 'use_rotated_gripper': True, #False
     # 'use_wide_gripper': False, #False
@@ -97,17 +100,17 @@ env_kwargs={
     # 'obj_urdf': 'spam_long',
     # 'max_joint_velocity': 2.0,
 
-    'use_rotated_gripper': False,  # False
-    'use_wide_gripper': False,  # False
-    'soft_clip': False,
-    'obj_urdf': 'spam',
-    'max_joint_velocity': None,
-
-    # 'use_rotated_gripper': True,  # False
-    # 'use_wide_gripper': True,  # False
-    # 'soft_clip': True,
+    # 'use_rotated_gripper': False,  # False
+    # 'use_wide_gripper': False,  # False
+    # 'soft_clip': False,
     # 'obj_urdf': 'spam',
     # 'max_joint_velocity': None,
+
+    'use_rotated_gripper': True,  # False
+    'use_wide_gripper': True,  # False
+    'soft_clip': True,
+    'obj_urdf': 'spam',
+    'max_joint_velocity': None,
 }
 env = SawyerLiftEnvGC(**env_kwargs)
 
@@ -151,7 +154,7 @@ while True:
                 action = np.zeros(10)
             if action.any():
                 env.step(action[:4])
-                print(env.get_observation())
+                print(env.get_dict_observation()['state_observation'])
     if done:
         obs = env.reset()
     env.render()
