@@ -19,8 +19,9 @@ bullet.setup()
 table = bullet.objects.table()
 # spam = bullet.objects.spam()
 # box = bullet.objects.box()
-box_open_top = bullet.objects.long_box_open_top()
+# box_open_top = bullet.objects.long_box_open_top()
 tray = bullet.objects.widow200_tray()
+drawer = bullet.objects.drawer()
 
 object_names = []
 
