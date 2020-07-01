@@ -198,6 +198,22 @@ def _get_continuous_gripper_state(gripper, gripper_bounds, l_limits, r_limits):
     r_state = r_limits['low'] + percent_closed * (r_limits['high'] - r_limits['low'])
     return [l_state, r_state]
 
+#################
+####  drawer  ###
+#################
+
+def open_drawer(drawer):
+    slide_drawer(drawer, -1)
+
+def close_drawer(drawer):
+    slide_drawer(drawer, 1)
+
+def slide_drawer(drawer, command):
+    assert command in [-1, 1]
+    # -1 = open; 1 = close
+    joint_names = [bullet.get_joint_info(drawer, j, 'joint_name') for j in range(p.getNumJoints(drawer))]
+    drawer_frame_joint_idx = joint_names.index('base_frame_joint')
+    p.setJointMotorControl2(drawer, drawer_frame_joint_idx, controlMode=p.POSITION_CONTROL, targetPosition=command, force=10)
 
 #################
 #### pointmass###
