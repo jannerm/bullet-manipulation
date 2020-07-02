@@ -38,6 +38,7 @@ V6_GRASPING_V0_PLACING_ENVS = ['Widow200GraspV6BoxPlaceV0-v0',
                                'Widow200GraspV6BoxPlaceV0TenRandObj-v0',
                                'Widow200GraspV6BoxPlaceV0TwentyRandObj-v0',
                                'Widow200GraspV6BoxPlaceV0FortyRandObj-v0',]
+V6_GRASPING_V0_DRAWER_PLACING_ENVS = ["Widow200GraspV6DrawerPlaceV0-v0"]
 
 NFS_PATH = '/nfs/kun1/users/avi/batch_rl_datasets/'
 
@@ -525,8 +526,12 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
             # print('approaching')
             action = (object_pos - ee_pos) * 7.0
             xy_diff = np.linalg.norm(action[:2]/7.0)
-            if xy_diff > 0.02:
-                action[2] = 0.0
+            if "Drawer" in env._env_name:
+                if xy_diff > dist_thresh:
+                    action[2] = 0.4 # force upward action to avoid upper box
+            else:
+                if xy_diff > 0.02:
+                    action[2] = 0.0
             action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
         elif env._gripper_open and not info['object_above_box_success']:
             # print('gripper closing')
@@ -643,13 +648,15 @@ def main(args):
         reward_type = 'sparse'
     elif args.semisparse:
         reward_type = 'semisparse'
-        assert args.env in V6_GRASPING_V0_PLACING_ENVS
+        assert args.env in (V6_GRASPING_V0_PLACING_ENVS +
+            V6_GRASPING_V0_DRAWER_PLACING_ENVS)
     else:
         reward_type = 'shaped'
 
     if args.env in (V2_GRASPING_ENVS +
         V4_GRASPING_ENVS + V5_GRASPING_ENVS +
-        V6_GRASPING_V0_PLACING_ENVS + V6_GRASPING_ENVS):
+        V6_GRASPING_V0_PLACING_ENVS + V6_GRASPING_ENVS +
+        V6_GRASPING_V0_DRAWER_PLACING_ENVS):
         tranpose_image = True
     else:
         transpose_image = False
@@ -666,7 +673,8 @@ def main(args):
         success_pool = roboverse.utils.DemoPool()
     elif args.env in (V2_GRASPING_ENVS + V4_GRASPING_ENVS +
         V5_GRASPING_ENVS + V6_GRASPING_ENVS +
-        V6_GRASPING_V0_PLACING_ENVS):
+        V6_GRASPING_V0_PLACING_ENVS +
+        V6_GRASPING_V0_DRAWER_PLACING_ENVS):
         if args.env in (V2_GRASPING_ENVS + V4_GRASPING_ENVS):
             observation_keys = ('image',)
         else:
@@ -713,7 +721,7 @@ def main(args):
             success = False
             scripted_grasping_V6(env, railrl_pool, railrl_success_pool,
                                  noise=args.noise_std)
-        elif args.env in V6_GRASPING_V0_PLACING_ENVS:
+        elif args.env in V6_GRASPING_V0_PLACING_ENVS + V6_GRASPING_V0_DRAWER_PLACING_ENVS:
             assert not render_images
             success = False
             scripted_grasping_V6_placing_V0(
@@ -756,7 +764,8 @@ def main(args):
                               timestamp, pool.size))
     elif args.env in (V2_GRASPING_ENVS +
         V4_GRASPING_ENVS + V5_GRASPING_ENVS +
-        V6_GRASPING_ENVS + V6_GRASPING_V0_PLACING_ENVS):
+        V6_GRASPING_ENVS + V6_GRASPING_V0_PLACING_ENVS +
+        V6_GRASPING_V0_DRAWER_PLACING_ENVS):
         path = osp.join(data_save_path,
                         '{}_pool_{}.pkl'.format(timestamp, pool_size))
         pickle.dump(railrl_pool, open(path, 'wb'), protocol=4)
@@ -765,7 +774,8 @@ def main(args):
                             timestamp, pool_size))
         pickle.dump(railrl_success_pool, open(path, 'wb'), protocol=4)
         if args.env in (V6_GRASPING_ENVS +
-            V6_GRASPING_V0_PLACING_ENVS):
+            V6_GRASPING_V0_PLACING_ENVS +
+            V6_GRASPING_V0_DRAWER_PLACING_ENVS):
             # For non terminating envs: we reshape the rewards
             # array and count the number of trajectories with
             # a sucess in the last timestep.
@@ -786,7 +796,8 @@ if __name__ == "__main__":
                         choices=tuple(['SawyerGraspOne-v0', 'SawyerReach-v0'] +
                                        V2_GRASPING_ENVS + V4_GRASPING_ENVS +
                                        V5_GRASPING_ENVS + V6_GRASPING_ENVS +
-                                       V6_GRASPING_V0_PLACING_ENVS))
+                                       V6_GRASPING_V0_PLACING_ENVS +
+                                       V6_GRASPING_V0_DRAWER_PLACING_ENVS))
     parser.add_argument("-d", "--data-save-directory", type=str)
     parser.add_argument("-n", "--num-trajectories", type=int, default=2000)
     parser.add_argument("-p", "--num-parallel-threads", type=int, default=1)
@@ -820,4 +831,6 @@ if __name__ == "__main__":
         assert args.observation_mode != 'pixels'
     elif args.env in V6_GRASPING_V0_PLACING_ENVS:
         args.num_timesteps = 30
+    elif args.env in V6_GRASPING_V0_DRAWER_PLACING_ENVS:
+        args.num_timesteps = 50
     main(args)
