@@ -1,7 +1,9 @@
 import numpy as np
 import pybullet as p
 import pdb
+import time
 
+import roboverse
 from roboverse.bullet.queries import (
     get_joint_info,
     get_joint_state,
@@ -211,9 +213,12 @@ def close_drawer(drawer):
 def slide_drawer(drawer, command):
     assert command in [-1, 1]
     # -1 = open; 1 = close
-    joint_names = [bullet.get_joint_info(drawer, j, 'joint_name') for j in range(p.getNumJoints(drawer))]
+    joint_names = [get_joint_info(drawer, j, 'joint_name') for j in range(p.getNumJoints(drawer))]
     drawer_frame_joint_idx = joint_names.index('base_frame_joint')
-    p.setJointMotorControl2(drawer, drawer_frame_joint_idx, controlMode=p.POSITION_CONTROL, targetPosition=command, force=10)
+    for i in range(10):
+        p.setJointMotorControl2(drawer, drawer_frame_joint_idx, controlMode=p.POSITION_CONTROL, targetPosition=command, force=10)
+        time.sleep(0.01)
+        roboverse.bullet.step()
 
 #################
 #### pointmass###

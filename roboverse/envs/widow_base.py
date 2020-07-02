@@ -30,7 +30,7 @@ class WidowBaseEnv(gym.Env, Serializable):
         self._robot_name = 'widowx'
         self._gripper_joint_name = (
         'gripper_prismatic_joint_1', 'gripper_prismatic_joint_2')
-        if self._env_name == 'WidowX200GraspEnv':
+        if 'WidowX200' in self._env_name or 'Widow200' in self._env_name:
             self._gripper_joint_name = ('left_finger', 'right_finger')
 
         self._gripper_range = range(7, 9)
@@ -38,7 +38,7 @@ class WidowBaseEnv(gym.Env, Serializable):
 
         self._end_effector_link_name = 'gripper_rail_link'
 
-        if self._env_name == 'WidowX200GraspEnv':
+        if 'WidowX200' in self._env_name or 'Widow200' in self._env_name:
             self._end_effector_link_name = 'wx200/gripper_bar_link'
 
         self.obs_img_dim = img_dim
@@ -84,8 +84,7 @@ class WidowBaseEnv(gym.Env, Serializable):
         if self.downwards:
             self._robot_id = bullet.objects.widow_downwards()
         else:
-            # print("self._env_name", self._env_name)
-            if self._env_name in ['WidowX200GraspEnv', 'Widow200GraspV2Env']:
+            if 'WidowX200' in self._env_name or 'Widow200' in self._env_name:
                 self._robot_id = bullet.objects.widowx_200()
             else:
                 self._robot_id = bullet.objects.widow()
