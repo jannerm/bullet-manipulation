@@ -52,7 +52,7 @@ class Widow200GraspV6BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
             for i in range(3):
                 action = np.zeros((6,))
                 action[:3] += np.random.uniform(low=-1, high=+1, size=(3,))
-                self.step(action)
+                obs, _, _, _ = self.step(action)
         return obs
 
     def _load_meshes(self):
