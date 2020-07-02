@@ -10,8 +10,8 @@ class Widow200GraspV6DrawerPlaceV0Env(Widow200GraspV6BoxPlaceV0Env):
     """Task is to grasp object from open drawer and place on top of the drawer."""
     def __init__(self,
                  *args,
-                 object_names=('aero_cylinder',),
-                 scaling_local_list=[0.2],
+                 object_names=('gatorade',),
+                 scaling_local_list=[0.5],
                  success_dist_threshold=0.04,
                  **kwargs):
         super().__init__(*args,
@@ -19,17 +19,17 @@ class Widow200GraspV6DrawerPlaceV0Env(Widow200GraspV6BoxPlaceV0Env):
             scaling_local_list=scaling_local_list,
             **kwargs)
         self._env_name = "Widow200GraspV6DrawerPlaceV0Env"
-        self._object_position_high = (.82, -.07, -.2)
-        self._object_position_low = (.78, -.125, -.2)
+        self._object_position_high = (.85, -.11, -.2)
+        self._object_position_low = (.82, -.13, -.2)
         self._success_dist_threshold = success_dist_threshold
         # self._scaling_local_list = scaling_local_list
         # self.set_scaling_dicts()
         self.set_box_pos_as_goal_pos()
         # self.obs_img_dim = 228
-        self.box_high = np.array([0.8825, .05, -.21])
-        self.box_low = np.array([0.7775, -0.03, -.255])
+        self.box_high = np.array([0.895, .05, -.26])
+        self.box_low = np.array([0.79, -0.03, -.305])
         
-        self.scripted_traj_len = 30
+        self.scripted_traj_len = 50
 
     def _load_meshes(self):
         super()._load_meshes()
@@ -79,8 +79,8 @@ if __name__ == "__main__":
                 # print('approaching')
                 action = (object_pos - ee_pos) * 7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
-                if xy_diff > 0.02:
-                    action[2] = 0.1
+                if xy_diff > dist_thresh:
+                    action[2] = 0.4 # force upward action to avoid upper box
                 action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
             elif env._gripper_open and not info['object_above_box_success']:
                 # print('gripper closing')
@@ -88,7 +88,7 @@ if __name__ == "__main__":
                 action = np.concatenate(
                     (action, np.asarray([0., -0.7, 0.])))
             elif not info['object_above_box_success']:
-                print(object_goal_dist)
+                # print(object_goal_dist)
                 action = (env._goal_position - object_pos)*7.0
                 # action = np.asarray([0., 0., 0.7])
                 action = np.concatenate(

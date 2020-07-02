@@ -103,11 +103,11 @@ long_box_open_top = loader(ASSET_PATH, os.path.join(obj_dir, "box_open_top", "lo
               scale=0.1)
 
 lifted_long_box_open_top = loader(ASSET_PATH, os.path.join(obj_dir, "box_open_top", "long_box_open_top.urdf"),
-              pos=[0.83, 0.01, -.245],
+              pos=[0.8425, 0.01, -.295],
               scale=0.1)
 
 drawer = loader(ASSET_PATH, os.path.join(obj_dir, "drawer", "drawer.urdf"),
-              pos=[0.83, 0.01, -.29],
+              pos=[0.8425, 0.01, -.34],
               scale=0.1)
 
 # test_box = loader(ASSET_PATH, os.path.join(obj_dir, "box_open_top", "box_open_top.urdf"),
@@ -116,5 +116,10 @@ drawer = loader(ASSET_PATH, os.path.join(obj_dir, "drawer", "drawer.urdf"),
 
 widow200_tray = loader(ASSET_PATH, os.path.join(obj_dir, "tray", "tray.urdf"),
               pos=[0.8, -0.05, -0.36],
+              deg=[0, 0, 0],
+              scale=0.5)
+
+widow200_tray_large = loader(ASSET_PATH, os.path.join(obj_dir, "tray", "tray.urdf"),
+              pos=[0.82, -0.05, -0.41],
               deg=[0, 0, 0],
               scale=0.5)
