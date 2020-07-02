@@ -6,6 +6,10 @@ from roboverse.envs.env_object_list import (
 import roboverse.bullet as bullet
 import roboverse.utils as utils
 import numpy as np
+import os.path as osp
+
+OBJECT_IN_GRIPPER_PATH = osp.join(osp.dirname(osp.realpath(__file__)),
+                'assets/bullet-objects/bullet_saved_states/objects_in_gripper/')
 
 
 class Widow200GraspV6BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
@@ -43,7 +47,7 @@ class Widow200GraspV6BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
     def reset(self):
         obs = super().reset()
         if self.place_only:
-            bullet.restore_state('/home/avi/object_hold.bullet')
+            bullet.restore_state(osp.join(OBJECT_IN_GRIPPER_PATH, 'gatorade.bullet'))
             self._gripper_open = False
             for i in range(3):
                 action = np.zeros((6,))
