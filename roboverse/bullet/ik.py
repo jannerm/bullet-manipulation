@@ -199,6 +199,9 @@ def _get_continuous_gripper_state(gripper, gripper_bounds, l_limits, r_limits):
     return [l_state, r_state]
 
 
+def restore_state(filename):
+    p.restoreState(fileName=filename)
+
 #################
 #### pointmass###
 #################
