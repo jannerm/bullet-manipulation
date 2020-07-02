@@ -44,6 +44,7 @@ if __name__ == "__main__":
     import time
 
     EPSILON = 0.05
+    noise = 0.2
     save_video = True
 
     env = roboverse.make("Widow200GraspV6DrawerPlaceV0-v0",
@@ -57,6 +58,8 @@ if __name__ == "__main__":
         # object_pos[2] = -0.30
 
         dist_thresh = 0.04 + np.random.normal(scale=0.01)
+        max_theta_action_magnitude = 0.2
+        grasp_target_theta = np.random.uniform(-np.pi / 2, np.pi / 2)
 
         images = [] # new video at the start of each trajectory.
 
@@ -68,8 +71,13 @@ if __name__ == "__main__":
             # object_pos += np.random.normal(scale=0.02, size=(3,))
 
             object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
-            theta_action = 0.
-            object_goal_dist = np.linalg.norm(object_pos - env._goal_position)
+            theta = env.get_wrist_joint_angle() # -pi, pi
+            theta_action_pre_clip = grasp_target_theta - theta
+            theta_action = np.clip(
+                theta_action_pre_clip,
+                -max_theta_action_magnitude,
+                max_theta_action_magnitude
+            )
 
             info = env.get_info()
             # theta_action = np.random.uniform()
@@ -101,7 +109,8 @@ if __name__ == "__main__":
             else:
                 action = np.zeros((6,))
 
-            action[:3] += np.random.normal(scale=0.1, size=(3,))
+            noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
+            action += np.random.normal(scale=noise_scalings)
             action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
             # print(action)
             obs, rew, done, info = env.step(action)
