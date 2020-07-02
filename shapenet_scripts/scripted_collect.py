@@ -39,6 +39,8 @@ V6_GRASPING_V0_PLACING_ENVS = ['Widow200GraspV6BoxPlaceV0-v0',
                                'Widow200GraspV6BoxPlaceV0TwentyRandObj-v0',
                                'Widow200GraspV6BoxPlaceV0FortyRandObj-v0',]
 
+V6_GRASPING_V0_PLACING_ONLY_ENVS = ['Widow200GraspV6BoxPlaceOnlyV0-v0',]
+
 NFS_PATH = '/nfs/kun1/users/avi/batch_rl_datasets/'
 
 def scripted_non_markovian_grasping(env, pool, render_images):
@@ -648,26 +650,16 @@ def main(args):
     else:
         reward_type = 'shaped'
 
-    if args.env in (V2_GRASPING_ENVS +
-        V4_GRASPING_ENVS + V5_GRASPING_ENVS +
-        V6_GRASPING_V0_PLACING_ENVS + V6_GRASPING_ENVS):
-        tranpose_image = True
-    else:
-        transpose_image = False
-        assert False # are you sure you want to do this
-
     env = roboverse.make(args.env, reward_type=reward_type,
                          gui=args.gui, randomize=args.randomize,
                          observation_mode=args.observation_mode,
-                         transpose_image=tranpose_image)
+                         transpose_image=True)
 
     num_success = 0
     if args.env == 'SawyerGraspOne-v0' or args.env == 'SawyerReach-v0':
         pool = roboverse.utils.DemoPool()
         success_pool = roboverse.utils.DemoPool()
-    elif args.env in (V2_GRASPING_ENVS + V4_GRASPING_ENVS +
-        V5_GRASPING_ENVS + V6_GRASPING_ENVS +
-        V6_GRASPING_V0_PLACING_ENVS):
+    else:
         if args.env in (V2_GRASPING_ENVS + V4_GRASPING_ENVS):
             observation_keys = ('image',)
         else:
@@ -714,7 +706,7 @@ def main(args):
             success = False
             scripted_grasping_V6(env, railrl_pool, railrl_success_pool,
                                  noise=args.noise_std)
-        elif args.env in V6_GRASPING_V0_PLACING_ENVS:
+        elif args.env in V6_GRASPING_V0_PLACING_ENVS or args.env in V6_GRASPING_V0_PLACING_ONLY_ENVS:
             assert not render_images
             success = False
             scripted_grasping_V6_placing_V0(
@@ -755,9 +747,7 @@ def main(args):
         success_pool.save(params, data_save_path,
                           '{}_pool_{}_success_only.pkl'.format(
                               timestamp, pool.size))
-    elif args.env in (V2_GRASPING_ENVS +
-        V4_GRASPING_ENVS + V5_GRASPING_ENVS +
-        V6_GRASPING_ENVS + V6_GRASPING_V0_PLACING_ENVS):
+    else:
         path = osp.join(data_save_path,
                         '{}_pool_{}.pkl'.format(timestamp, pool_size))
         pickle.dump(railrl_pool, open(path, 'wb'), protocol=4)
@@ -766,7 +756,7 @@ def main(args):
                             timestamp, pool_size))
         pickle.dump(railrl_success_pool, open(path, 'wb'), protocol=4)
         if args.env in (V6_GRASPING_ENVS +
-            V6_GRASPING_V0_PLACING_ENVS):
+            V6_GRASPING_V0_PLACING_ENVS + V6_GRASPING_V0_PLACING_ONLY_ENVS):
             # For non terminating envs: we reshape the rewards
             # array and count the number of trajectories with
             # a sucess in the last timestep.
@@ -783,11 +773,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-e", "--env", type=str,
-                        choices=tuple(['SawyerGraspOne-v0', 'SawyerReach-v0'] +
-                                       V2_GRASPING_ENVS + V4_GRASPING_ENVS +
-                                       V5_GRASPING_ENVS + V6_GRASPING_ENVS +
-                                       V6_GRASPING_V0_PLACING_ENVS))
+    parser.add_argument("-e", "--env", type=str)
     parser.add_argument("-d", "--data-save-directory", type=str)
     parser.add_argument("-n", "--num-trajectories", type=int, default=2000)
     parser.add_argument("-p", "--num-parallel-threads", type=int, default=1)
@@ -821,4 +807,6 @@ if __name__ == "__main__":
         assert args.observation_mode != 'pixels'
     elif args.env in V6_GRASPING_V0_PLACING_ENVS:
         args.num_timesteps = 30
+    elif args.env in V6_GRASPING_V0_PLACING_ONLY_ENVS:
+        args.num_timesteps = 10
     main(args)
