@@ -107,7 +107,8 @@ if __name__ == "__main__":
             ee_pos = state_obs[:3]
             object_pos = obj_obs[object_ind * 7 : object_ind * 7 + 3]
             handle_pos = env.get_handle_pos()
-            object_lifted_with_margin = object_pos[2] > (env._reward_height_thresh + margin)
+            object_lifted_with_margin = object_pos[2] > (
+                env._reward_height_thresh + margin)
             # object_pos += np.random.normal(scale=0.02, size=(3,))
 
             object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
@@ -120,9 +121,6 @@ if __name__ == "__main__":
                 max_theta_action_magnitude
             )
 
-            info = env.get_info()
-            # theta_action = np.random.uniform()
-            # print(object_gripper_dist)
             if (gripper_handle_dist > dist_thresh
                 and not env.is_drawer_opened(widely=drawer_never_opened)):
                 print('approaching handle')
