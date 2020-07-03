@@ -1,5 +1,5 @@
-from roboverse.envs.widow200_grasp_v6_box_place_v0 import (
-    Widow200GraspV6BoxPlaceV0Env)
+from roboverse.envs.widow200_grasp_v6_box_v0 import (
+    Widow200GraspV6BoxV0Env)
 from roboverse.envs.rand_obj import RandObjEnv
 import roboverse.bullet as bullet
 import roboverse.utils as utils
@@ -7,8 +7,8 @@ import numpy as np
 import time
 import roboverse
 
-class Widow200GraspV6DrawerPlaceV0Env(Widow200GraspV6BoxPlaceV0Env):
-    """Task is to grasp object from open drawer and place on top of the drawer."""
+class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
+    """Task is to open drawer, then grasp object inside it."""
     def __init__(self,
                  *args,
                  object_names=('gatorade',),
@@ -19,20 +19,17 @@ class Widow200GraspV6DrawerPlaceV0Env(Widow200GraspV6BoxPlaceV0Env):
             object_names=object_names,
             scaling_local_list=scaling_local_list,
             **kwargs)
-        self._env_name = "Widow200GraspV6DrawerPlaceV0Env"
-        self._object_position_high = (.84, -.11, -.2)
-        self._object_position_low = (.82, -.13, -.2)
+        self._env_name = "Widow200GraspV6DrawerOpenV0Env"
+        self._object_position_high = (.85, -.11, -.3)
+        self._object_position_low = (.82, -.13, -.3)
         self._success_dist_threshold = success_dist_threshold
         # self._scaling_local_list = scaling_local_list
         # self.set_scaling_dicts()
-        self.set_box_pos_as_goal_pos()
         # self.obs_img_dim = 228
-        self.box_high = np.array([0.895, .05, -.26])
-        self.box_low = np.array([0.79, -0.03, -.305])
         
-        self.scripted_traj_len = 50
+        self.scripted_traj_len = 30
 
-        self.close_drawer_on_reset = False
+        self.close_drawer_on_reset = True
 
     def _load_meshes(self):
         super()._load_meshes()
@@ -44,18 +41,49 @@ class Widow200GraspV6DrawerPlaceV0Env(Widow200GraspV6BoxPlaceV0Env):
         drawer_bottom_link_idx = link_names.index('base')
         drawer_bottom_pos = bullet.get_link_state(
             self._drawer, drawer_bottom_link_idx, "pos")
-        return drawer_bottom_pos
+        return np.array(drawer_bottom_pos)
 
-    def is_drawer_opened(self):
-        opened_thresh = -0.05
+    def get_handle_pos(self):
+        link_names = [bullet.get_joint_info(self._drawer, j, 'link_name')
+            for j in range(bullet.p.getNumJoints(self._drawer))]
+        handle_link_idx = link_names.index('handle_r')
+        handle_pos = bullet.get_link_state(
+            self._drawer, handle_link_idx, "pos")
+        return np.array(handle_pos)
+
+    def is_drawer_opened(self, widely=False):
+        opened_thresh = -0.05 if not widely else -0.1
         return self.get_drawer_bottom_pos()[1] < opened_thresh
+
+    def get_info(self):
+        info = {}
+
+        # object gripper dist
+        assert self._num_objects == 1
+        object_name = list(self._objects.keys())[0]
+        object_info = bullet.get_body_info(self._objects[object_name],
+                                           quat_to_deg=False)
+        object_pos = np.asarray(object_info['pos'])
+        ee_pos = np.array(self.get_end_effector_pos())
+        object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
+        info['object_gripper_dist'] = object_gripper_dist
+
+        info['is_drawer_opened'] = int(self.is_drawer_opened())
+        info['is_drawer_opened_widely'] = int(self.is_drawer_opened(widely=True))
+        info['drawer_y_pos'] = self.get_drawer_bottom_pos()[1] # y coord
+
+        # gripper-handle dist
+        ee_pos = np.array(self.get_end_effector_pos())
+        gripper_handle_dist = np.linalg.norm(ee_pos - self.get_handle_pos())
+        info['gripper_handle_dist'] = gripper_handle_dist
+        return info
 
 if __name__ == "__main__":
     EPSILON = 0.05
     noise = 0.2
     save_video = True
 
-    env = roboverse.make("Widow200GraspV6DrawerPlaceV0-v0",
+    env = roboverse.make("Widow200GraspV6DrawerOpenV0-v0",
                          gui=True,
                          reward_type='sparse',
                          observation_mode='pixels_debug',)
@@ -72,14 +100,15 @@ if __name__ == "__main__":
         images = [] # new video at the start of each trajectory.
 
         for _ in range(env.scripted_traj_len):
-            print("drawer pos", env.get_drawer_bottom_pos(), env.is_drawer_opened())
             state_obs = obs[env.fc_input_key]
             obj_obs = obs[env.object_obs_key]
             ee_pos = state_obs[:3]
             object_pos = obj_obs[object_ind * 7 : object_ind * 7 + 3]
+            handle_pos = env.get_handle_pos()
             # object_pos += np.random.normal(scale=0.02, size=(3,))
 
             object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
+            gripper_handle_dist = np.linalg.norm(handle_pos - ee_pos)
             theta = env.get_wrist_joint_angle() # -pi, pi
             theta_action_pre_clip = grasp_target_theta - theta
             theta_action = np.clip(
@@ -91,39 +120,33 @@ if __name__ == "__main__":
             info = env.get_info()
             # theta_action = np.random.uniform()
             # print(object_gripper_dist)
-            if (object_gripper_dist > dist_thresh and
-                env._gripper_open and not info['object_above_box_success']):
-                # print('approaching')
-                action = (object_pos - ee_pos) * 7.0
+            if (gripper_handle_dist > dist_thresh
+                and not env.is_drawer_opened()):
+                print('approaching handle')
+                action = (handle_pos - ee_pos) * 7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
                 if xy_diff > dist_thresh:
                     action[2] = 0.4 # force upward action to avoid upper box
-                action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
-            elif env._gripper_open and not info['object_above_box_success']:
-                # print('gripper closing')
-                action = (object_pos - ee_pos) * 7.0
-                action = np.concatenate(
-                    (action, np.asarray([0., -0.7, 0.])))
-            elif not info['object_above_box_success']:
-                # print(object_goal_dist)
-                action = (env._goal_position - object_pos)*7.0
+                # Don't rotate wrist while going for the handle
+                action = np.concatenate((action, np.asarray([0.,0.,0.])))
+            elif not env.is_drawer_opened(widely=True):
+                print("opening drawer")
+                action = np.array([0, -0.8, 0])
                 # action = np.asarray([0., 0., 0.7])
                 action = np.concatenate(
                     (action, np.asarray([0., 0., 0.])))
-            elif not info['object_in_box_success']:
-                # object is now above the box.
-                action = (env._goal_position - object_pos)*7.0
-                action = np.concatenate(
-                    (action, np.asarray([0., 0.7, 0.])))
             else:
-                action = np.zeros((6,))
+                print("Lift upward")
+                action = np.array([0, 0, 0.7])
+                action = np.concatenate(
+                    (action, np.asarray([0., 0., 0.])))
 
             noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
             action += np.random.normal(scale=noise_scalings)
             action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
             # print(action)
             obs, rew, done, info = env.step(action)
-            print("rew", rew)
+            # print("rew", rew)
 
             img = env.render_obs()
             if save_video:
@@ -133,7 +156,6 @@ if __name__ == "__main__":
 
         print('object pos: {}'.format(object_pos))
         print('reward: {}'.format(rew))
-        print('distance: {}'.format(info['object_goal_dist']))
         print('--------------------')
 
         if save_video:

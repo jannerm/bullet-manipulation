@@ -7,6 +7,7 @@ from roboverse.bullet.misc import load_obj
 from roboverse.utils.shapenet_utils import load_shapenet_object, \
     import_shapenet_metadata
 import os.path as osp
+import time
 
 REWARD_NEGATIVE = -1.0
 REWARD_POSITIVE = 10.0
@@ -146,9 +147,8 @@ class Widow200GraspV2Env(Widow200GraspEnv):
             for _ in range(10):
                 bullet.step()
 
-        if "Drawer" in self._env_name:
-            pass
-            # bullet.close_drawer(self._drawer)
+        if "Drawer" in self._env_name and self.close_drawer_on_reset:
+            bullet.close_drawer(self._drawer)
 
     def step(self, action):
         action = np.asarray(action)
