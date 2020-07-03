@@ -82,6 +82,12 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
         info['gripper_handle_dist'] = gripper_handle_dist
         return info
 
+class Widow200GraspV6DrawerOpenV0RandObjEnv(RandObjEnv, Widow200GraspV6DrawerOpenV0Env):
+    """
+    Generalization env. Randomly samples one of the following objects
+    every time the env resets for the V6DrawerPlace task.
+    """
+
 if __name__ == "__main__":
     EPSILON = 0.05
     noise = 0.2
