@@ -87,7 +87,7 @@ class SawyerBaseEnv(gym.Env, Serializable):
 
         obs = self.reset()
         observation_dim = len(obs)
-        obs_bound = 100
+        obs_bound = 1
         obs_high = np.ones(observation_dim) * obs_bound
         self.observation_space = gym.spaces.Box(-obs_high, obs_high)
 

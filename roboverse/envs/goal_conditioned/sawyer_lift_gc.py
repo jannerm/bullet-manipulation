@@ -3,6 +3,7 @@ import gym
 from gym.spaces import Dict
 
 import roboverse.bullet as bullet
+import pybullet as p
 from roboverse.envs.sawyer_2d import Sawyer2dEnv
 
 class SawyerLiftEnvGC(Sawyer2dEnv):
@@ -17,15 +18,17 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             reset_obj_in_hand_rate=0.5,
             goal_sampling_mode='obj_in_air',
             reward_type='hand_dist+obj_dist',
-            random_bowl_pos=False,
+            random_init_bowl_pos=False,
             sample_valid_rollout_goals=True,
+            bowl_bounds=[-0.20, 0.20],
             **kwargs
     ):
         self.reset_obj_in_hand_rate = reset_obj_in_hand_rate
         self.goal_sampling_mode = goal_sampling_mode
         self.reward_type = reward_type
-        self.random_bowl_pos = random_bowl_pos
+        self.random_init_bowl_pos = random_init_bowl_pos
         self.sample_valid_rollout_goals = sample_valid_rollout_goals
+        self.bowl_bounds = bowl_bounds
         super().__init__(*args, env='SawyerLiftMulti-v0', **kwargs)
         self.record_args(locals())
 
@@ -49,10 +52,10 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
     def reset(self):
         ## set the box position
         self._bowl_pos = [.75, 0.0, -.3]
-        if self.random_bowl_pos:
+        if self.random_init_bowl_pos:
             self._bowl_pos[1] = np.random.uniform(
-                low=-0.20,
-                high=0.20,
+                low=self.bowl_bounds[0],
+                high=self.bowl_bounds[1],
             )
         self._env.set_bowl_pos(self._bowl_pos)
 
@@ -111,10 +114,16 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         obj_achieved_goals = np.r_[[
             self.get_2d_obj_pos(obj_id) for obj_id in range(self.num_obj)]
         ].flatten()
-        return np.r_[
+        achieved_goal = np.r_[
             self.get_2d_hand_pos(),
             obj_achieved_goals,
         ]
+        if self._sliding_bowl:
+            achieved_goal = np.r_[
+                achieved_goal,
+                self.get_bowl_position()[1],
+            ]
+        return achieved_goal
 
     def get_info_from_achieved_goal(self, achieved_goal):
         goal_info = self.get_info_from_achieved_goals(achieved_goal[None])
@@ -129,19 +138,29 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         info = {
             'hand_pos': hand_pos,
         }
-        assert achieved_goals.shape[1] == (1 + self.num_obj) * 2
+        if self._sliding_bowl:
+            assert achieved_goals.shape[1] == (1 + self.num_obj) * 2 + 1
+        else:
+            assert achieved_goals.shape[1] == (1 + self.num_obj) * 2
         for cube_id in range(self.num_obj):
             idx_start = (1 + cube_id) * 2
             idx_end = idx_start + 2
             info[self.get_obj_name(cube_id)] = achieved_goals[:, idx_start:idx_end]
+        if self._sliding_bowl:
+            info['bowl_pos'] = achieved_goals[:,-1]
         return info
 
     def get_dict_observation(self):
         obs = self.get_observation()
-        bowl = self._bowl_pos[1:2]
+        bowl = self.get_bowl_position()[1]
         gripper = self.get_gripper_dist()
         obs = np.r_[obs, bowl, gripper]
         achieved_goal = self.get_achieved_goal()
+
+        # clip the observations, in case objects fall off table
+        obs = np.clip(obs, -1, 1)
+        achieved_goal = np.clip(achieved_goal, -1, 1)
+
         return {
             'observation': obs,
             'desired_goal': self._goal_pos,
@@ -207,6 +226,8 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             )
             if 'obj_dist' in rewards:
                 dist += obj_dist
+        if self._sliding_bowl and 'obj_dist' in rewards:
+            dist += np.abs(achieved_goal_info['bowl_pos'] - desired_goal_info['bowl_pos'])
 
         reward = -dist
         return reward
@@ -239,6 +260,8 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             obj_goal_dist = bullet.l2_dist(cube_pos, cube_goal)
             info['{}_dist'.format(self.get_obj_name(obj_id))] = obj_goal_dist
             info['{}_success'.format(self.get_obj_name(obj_id))] = float(np.abs(cube_pos[0]) <= 0.09)
+        if self._sliding_bowl:
+            info['bowl_dist'] = np.abs(achieved_goal_info['bowl_pos'] - desired_goal_info['bowl_pos'])
         return info
 
     def get_image(self, width, height):
@@ -270,6 +293,16 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
                       goal_info[self.get_obj_name(obj_id)]],
                 deg=[90,0,-90],
             )
+        if self._sliding_bowl:
+            bullet.set_body_state(
+                self._objects['bowl'],
+                [0.75, goal_info['bowl_pos'], -0.3],
+                deg=[0,0,0]
+            )
+
+            # set the joint position to 0
+            link = bullet.get_index_by_attribute(self._objects['bowl'], 'link_name', 'base')
+            p.resetJointState(self._objects['bowl'], link, 0)
 
     def set_to_goal(self, goal):
         self.set_env_state(goal['state_desired_goal'])
@@ -280,6 +313,17 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
 
         low = self._env._pos_low[1:]
         high = self._env._pos_high[1:]
+
+        if self._sliding_bowl:
+            bowl_goals = np.random.uniform(
+                low=self.bowl_bounds[0],
+                high=self.bowl_bounds[1],
+                size=(batch_size, 1))
+        else:
+            bowl_goals = np.random.uniform(
+                low=self._bowl_pos[1],
+                high=self._bowl_pos[1],
+                size=(batch_size, 1))
 
         if goal_sampling_mode == 'uniform':
             obj_goals = np.random.uniform(
@@ -320,10 +364,18 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             # Make sure the objects is in the air
             # obj_goals[:, -1] = obj_goals[:, -1].clip(0, 1e10)
         elif goal_sampling_mode == 'obj_in_bowl':
+            # obj_goals = np.tile(
+            #     # bullet.get_midpoint(self._objects['bowl'])[1:],
+            #     self._bowl_pos[1:],
+            #     (batch_size, self.num_obj))
+            obj_goals = np.c_[
+                bowl_goals,
+                self._bowl_pos[2] * np.ones(batch_size),
+            ]
             obj_goals = np.tile(
-                # bullet.get_midpoint(self._objects['bowl'])[1:],
-                self._bowl_pos[1:],
-                (batch_size, self.num_obj))
+                obj_goals,
+                (1, self.num_obj)
+            )
         else:
             raise RuntimeError("Invalid goal mode: {}".format(self.goal_sampling_mode))
 
@@ -336,6 +388,11 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             hand_goals,
             obj_goals,
         ]
+        if self._sliding_bowl:
+            goals_2d = np.c_[
+                goals_2d,
+                bowl_goals,
+            ]
         return {
             'state_desired_goal': goals_2d,
             'desired_goal': goals_2d,
@@ -370,7 +427,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         act_high = np.ones(act_dim) * act_bound
         self.action_space = gym.spaces.Box(-act_high, act_high)
 
-        obs_bound = 100
+        obs_bound = 1
         obs_high = np.ones(len(obs['observation'])) * obs_bound
         obs_space = gym.spaces.Box(-obs_high, obs_high)
 

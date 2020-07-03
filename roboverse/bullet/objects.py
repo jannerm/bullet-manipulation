@@ -37,7 +37,7 @@ sawyer_wide_gripper = loader(ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/s
 ## pybullet_data objects
 
 table = loader(PDATA_PATH, 'table/table.urdf',
-               pos=[.75, -.2, -1],
+               pos=[.75, 0, -1], #[.75, -.2, -1]
                quat=[0, 0, 0.707107, 0.707107],
                scale=1.0)
 
@@ -55,10 +55,10 @@ lego = loader(PDATA_PATH, 'lego/lego.urdf',
 
 ## custom objects
 
-# bowl = loader(ASSET_PATH, 'objects/bowl/bowl.urdf',
+# bowl = loader(ASSET_PATH, 'objects/bowl/bowl_tall.urdf',
 #               pos=[.75, 0, -.3],
 #               scale=0.25)
-bowl = loader(ASSET_PATH, 'objects/bowl/bowl_short.urdf',
+bowl = loader(ASSET_PATH, 'objects/bowl/bowl.urdf',
               pos=[.75, 0, -.3],
               scale=0.25)
 
@@ -85,6 +85,6 @@ spam_2d = loader(ASSET_PATH, 'objects/spam/spam_2d.urdf',
               deg=[90, 0, -90],
               scale=0.018)
 
-bowl_sliding = loader(ASSET_PATH, 'objects/bowl_sliding/bowl.urdf',
+bowl_sliding = loader(ASSET_PATH, 'objects/bowl/bowl_sliding.urdf',
               pos=[.75, 0, -.3],
               scale=0.25)
