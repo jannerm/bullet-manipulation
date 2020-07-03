@@ -15,9 +15,13 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
                  scaling_local_list=[0.5],
                  success_dist_threshold=0.04,
                  **kwargs):
+        camera_target_pos = [1.05, -0.05, -0.1]
+        camera_pitch = -50
         super().__init__(*args,
             object_names=object_names,
             scaling_local_list=scaling_local_list,
+            camera_target_pos=camera_target_pos,
+            camera_pitch=camera_pitch,
             **kwargs)
         self._env_name = "Widow200GraspV6DrawerOpenV0Env"
         self._object_position_high = (.83, -.11, -.3)
