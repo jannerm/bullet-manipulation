@@ -57,12 +57,16 @@ class WidowBaseEnv(gym.Env, Serializable):
         self._max_force = max_force
         self._visualize = visualize
         self._img_dim = img_dim
+        self.camera_target_pos = camera_target_pos
+        self.camera_distance = camera_distance
+        self.camera_pitch = camera_pitch
 
         bullet.connect_headless(self._gui)
         self._load_meshes()
 
-        view_matrix_args = dict(target_pos=camera_target_pos, distance=camera_distance,
-                                yaw=90, pitch=camera_pitch, roll=0, up_axis_index=2)
+        view_matrix_args = dict(target_pos=self.camera_target_pos,
+                                distance=self.camera_distance, yaw=90,
+                                pitch=self.camera_pitch, roll=0, up_axis_index=2)
         self._view_matrix = bullet.get_view_matrix(
             **view_matrix_args)
         self._projection_matrix = bullet.get_projection_matrix(
