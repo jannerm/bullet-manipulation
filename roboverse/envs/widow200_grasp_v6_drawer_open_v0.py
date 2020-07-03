@@ -20,14 +20,14 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
             scaling_local_list=scaling_local_list,
             **kwargs)
         self._env_name = "Widow200GraspV6DrawerOpenV0Env"
-        self._object_position_high = (.85, -.11, -.3)
-        self._object_position_low = (.82, -.13, -.3)
+        self._object_position_high = (.83, -.11, -.3)
+        self._object_position_low = (.81, -.13, -.3)
         self._success_dist_threshold = success_dist_threshold
         # self._scaling_local_list = scaling_local_list
         # self.set_scaling_dicts()
         # self.obs_img_dim = 228
         
-        self.scripted_traj_len = 30
+        self.scripted_traj_len = 50
 
         self.close_drawer_on_reset = True
 
@@ -81,6 +81,7 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
 if __name__ == "__main__":
     EPSILON = 0.05
     noise = 0.2
+    margin = 0.025
     save_video = True
 
     env = roboverse.make("Widow200GraspV6DrawerOpenV0-v0",
@@ -96,6 +97,7 @@ if __name__ == "__main__":
         dist_thresh = 0.04 + np.random.normal(scale=0.01)
         max_theta_action_magnitude = 0.2
         grasp_target_theta = np.random.uniform(-np.pi / 2, np.pi / 2)
+        drawer_never_opened = True
 
         images = [] # new video at the start of each trajectory.
 
@@ -105,6 +107,7 @@ if __name__ == "__main__":
             ee_pos = state_obs[:3]
             object_pos = obj_obs[object_ind * 7 : object_ind * 7 + 3]
             handle_pos = env.get_handle_pos()
+            object_lifted_with_margin = object_pos[2] > (env._reward_height_thresh + margin)
             # object_pos += np.random.normal(scale=0.02, size=(3,))
 
             object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
@@ -121,7 +124,7 @@ if __name__ == "__main__":
             # theta_action = np.random.uniform()
             # print(object_gripper_dist)
             if (gripper_handle_dist > dist_thresh
-                and not env.is_drawer_opened()):
+                and not env.is_drawer_opened(widely=drawer_never_opened)):
                 print('approaching handle')
                 action = (handle_pos - ee_pos) * 7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
@@ -129,17 +132,45 @@ if __name__ == "__main__":
                     action[2] = 0.4 # force upward action to avoid upper box
                 # Don't rotate wrist while going for the handle
                 action = np.concatenate((action, np.asarray([0.,0.,0.])))
-            elif not env.is_drawer_opened(widely=True):
+            elif not env.is_drawer_opened(widely=drawer_never_opened):
                 print("opening drawer")
-                action = np.array([0, -0.8, 0])
+                action = np.array([0, -1.0, 0])
                 # action = np.asarray([0., 0., 0.7])
                 action = np.concatenate(
                     (action, np.asarray([0., 0., 0.])))
-            else:
+            elif (object_gripper_dist > dist_thresh
+                and env._gripper_open and gripper_handle_dist < 1.5 * dist_thresh):
                 print("Lift upward")
-                action = np.array([0, 0, 0.7])
+                drawer_never_opened = False
+                action = np.array([0, 0, 0.7]) # force upward action to avoid upper box
+                action = np.concatenate(
+                    (action, np.asarray([theta_action, 0., 0.])))
+            elif object_gripper_dist > dist_thresh and env._gripper_open:
+                print("Move toward object")
+                action = (object_pos - ee_pos) * 7.0
+                xy_diff = np.linalg.norm(action[:2]/7.0)
+                if xy_diff > dist_thresh:
+                    action[2] = 0.1
+                action = np.concatenate(
+                    (action, np.asarray([theta_action, 0., 0.])))
+            elif env._gripper_open:
+                # print('gripper closing')
+                action = (object_pos - ee_pos) * 7.0
+                action = np.concatenate(
+                    (action, np.asarray([0., -0.7, 0.])))
+            elif not object_lifted_with_margin:
+                # print('raise object upward')
+                action = np.asarray([0., 0., 0.7])
                 action = np.concatenate(
                     (action, np.asarray([0., 0., 0.])))
+            else:
+                # Move above tray's xy-center.
+                tray_info = roboverse.bullet.get_body_info(
+                    env._tray, quat_to_deg=False)
+                tray_center = np.asarray(tray_info['pos'])
+                action = (tray_center - ee_pos)[:2]
+                action = np.concatenate(
+                    (action, np.asarray([0., 0., 0., 0.])))
 
             noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
             action += np.random.normal(scale=noise_scalings)
