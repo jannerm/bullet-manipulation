@@ -50,6 +50,12 @@ class Widow200GraspV6DrawerPlaceV0Env(Widow200GraspV6BoxPlaceV0Env):
         opened_thresh = -0.05
         return self.get_drawer_bottom_pos()[1] < opened_thresh
 
+class Widow200GraspV6DrawerPlaceV0RandObjEnv(RandObjEnv, Widow200GraspV6DrawerPlaceV0Env):
+    """
+    Generalization env. Randomly samples one of the following objects
+    every time the env resets for the V6DrawerPlace task.
+    """
+
 if __name__ == "__main__":
     EPSILON = 0.05
     noise = 0.2
