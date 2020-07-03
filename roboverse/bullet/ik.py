@@ -210,15 +210,33 @@ def open_drawer(drawer):
 def close_drawer(drawer):
     slide_drawer(drawer, 1)
 
-def slide_drawer(drawer, command):
-    assert command in [-1, 1]
+def slide_drawer(drawer, direction):
+    assert direction in [-1, 1]
     # -1 = open; 1 = close
     joint_names = [get_joint_info(drawer, j, 'joint_name') for j in range(p.getNumJoints(drawer))]
     drawer_frame_joint_idx = joint_names.index('base_frame_joint')
-    for i in range(10):
-        p.setJointMotorControl2(drawer, drawer_frame_joint_idx, controlMode=p.POSITION_CONTROL, targetPosition=command, force=10)
+    num_ts = 20
+    command = np.clip(10 * direction,
+            -10 * np.abs(direction), 0.75 * np.abs(direction))
+    # enable fast opening; slow closing
+    print("command", command)
+    p.setJointMotorControl2(
+        drawer,
+        drawer_frame_joint_idx,
+        controlMode=p.VELOCITY_CONTROL,
+        targetVelocity=command,
+        force=10
+    )
+    for i in range(num_ts):
         time.sleep(0.01)
         roboverse.bullet.step()
+    p.setJointMotorControl2(
+        drawer,
+        drawer_frame_joint_idx,
+        controlMode=p.VELOCITY_CONTROL,
+        targetVelocity=0,
+        force=10
+    )
 
 #################
 #### pointmass###

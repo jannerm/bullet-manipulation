@@ -120,6 +120,6 @@ widow200_tray = loader(ASSET_PATH, os.path.join(obj_dir, "tray", "tray.urdf"),
               scale=0.5)
 
 widow200_tray_large = loader(ASSET_PATH, os.path.join(obj_dir, "tray", "tray.urdf"),
-              pos=[0.82, -0.05, -0.41],
+              pos=[0.82, -0.05, -0.42],
               deg=[0, 0, 0],
               scale=0.5)
