@@ -588,7 +588,7 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
     if rewards[-1] > 0:
         success_pool.add_path(path)
 
-def scripted_grasping_V6(env, pool, success_pool, noise=0.2):
+def scripted_grasping_V6_opening_V0(env, pool, success_pool, noise=0.2):
     observation = env.reset()
     object_ind = np.random.randint(0, env._num_objects)
     margin = 0.025
@@ -612,6 +612,7 @@ def scripted_grasping_V6(env, pool, success_pool, noise=0.2):
                          object_ind * 7 + 8: object_ind * 7 + 8 + 3]
             ee_pos = observation[:3]
 
+        handle_pos = env.get_handle_pos()
         object_lifted_with_margin = object_pos[2] > (
             env._reward_height_thresh + margin)
 
