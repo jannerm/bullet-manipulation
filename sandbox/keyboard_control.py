@@ -92,7 +92,7 @@ env_kwargs={
     # 'goal_sampling_mode': 'obj_in_bowl',
     'goal_sampling_mode': 'ground',
     'num_obj': 4, #2
-    'random_init_bowl_pos': False,
+    'random_init_bowl_pos': True,
     'sliding_bowl': True,
 
     # 'use_rotated_gripper': True, #False

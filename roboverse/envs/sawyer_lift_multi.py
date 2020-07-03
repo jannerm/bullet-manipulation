@@ -20,7 +20,7 @@ class SawyerLiftMultiEnv(SawyerBaseEnv):
         self._obj_urdf = obj_urdf
         self._max_joint_velocity = max_joint_velocity
         self._sliding_bowl = sliding_bowl
-        self._bowl_pos = None
+        # self._bowl_pos = None
         if self._obj_urdf in ['spam', 'spam_long']:
             self._clip_obj_pos = True
         elif self._obj_urdf == 'spam_2d':
@@ -33,20 +33,17 @@ class SawyerLiftMultiEnv(SawyerBaseEnv):
         params = super().get_params()
         return params
 
-    def set_bowl_pos(self, bowl_pos):
-        self._bowl_pos = bowl_pos
-
     def _load_meshes(self):
         super()._load_meshes()
 
-        bowl_pos = self._bowl_pos
-        if bowl_pos is None:
-            bowl_pos = [.75, 0, -.3]
+        # bowl_pos = self._bowl_pos
+        # if bowl_pos is None:
+        #     bowl_pos = [.75, 0, -.3]
 
         if self._sliding_bowl:
-            self._objects['bowl'] = bullet.objects.bowl_sliding(pos=bowl_pos)
+            self._objects['bowl'] = bullet.objects.bowl_sliding() #pos=bowl_pos
         else:
-            self._objects['bowl'] = bullet.objects.bowl(pos=bowl_pos)
+            self._objects['bowl'] = bullet.objects.bowl() #pos=bowl_pos
 
         colors = [
             [1, 0, 0, 1],
@@ -122,6 +119,14 @@ class SawyerLiftMultiEnv(SawyerBaseEnv):
         else:
             state = bullet.get_body_info(self._objects['bowl'], ['pos', 'theta'])
         return state['pos']
+
+    def set_bowl_position(self, pos):
+        bullet.set_body_state(self._objects['bowl'], pos, deg=[0, 0, 0])
+
+        if self._sliding_bowl:
+            # set the joint position to 0
+            link = bullet.get_index_by_attribute(self._objects['bowl'], 'link_name', 'base')
+            p.resetJointState(self._objects['bowl'], link, 0)
 
     def get_reward(self, observation):
         """Dummy reward for sawyer lift multi env

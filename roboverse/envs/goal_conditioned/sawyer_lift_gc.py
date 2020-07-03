@@ -57,7 +57,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
                 low=self.bowl_bounds[0],
                 high=self.bowl_bounds[1],
             )
-        self._env.set_bowl_pos(self._bowl_pos)
+        # self._env.set_bowl_pos(self._bowl_pos)
 
         self._goal_pos = self.sample_goal_for_rollout()
 
@@ -84,6 +84,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
                 cube_reset_pos = ee_reset_pos
             bullet.set_body_state(self._objects[self.get_obj_name(obj_id)],
                                   cube_reset_pos, deg=[90,0,-90])
+        self.set_bowl_position(self._bowl_pos)
 
         # Allow the objects to settle down after they are dropped in sim
         for _ in range(5):
@@ -259,7 +260,8 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
 
             obj_goal_dist = bullet.l2_dist(cube_pos, cube_goal)
             info['{}_dist'.format(self.get_obj_name(obj_id))] = obj_goal_dist
-            info['{}_success'.format(self.get_obj_name(obj_id))] = float(np.abs(cube_pos[0]) <= 0.09)
+            info['{}_success'.format(self.get_obj_name(obj_id))] = \
+                float(np.abs(cube_pos[0] - self._bowl_pos[1]) <= 0.09)
         if self._sliding_bowl:
             info['bowl_dist'] = np.abs(achieved_goal_info['bowl_pos'] - desired_goal_info['bowl_pos'])
         return info
@@ -294,15 +296,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
                 deg=[90,0,-90],
             )
         if self._sliding_bowl:
-            bullet.set_body_state(
-                self._objects['bowl'],
-                [0.75, goal_info['bowl_pos'], -0.3],
-                deg=[0,0,0]
-            )
-
-            # set the joint position to 0
-            link = bullet.get_index_by_attribute(self._objects['bowl'], 'link_name', 'base')
-            p.resetJointState(self._objects['bowl'], link, 0)
+            self.set_bowl_position([0.75, goal_info['bowl_pos'], -0.3])
 
     def set_to_goal(self, goal):
         self.set_env_state(goal['state_desired_goal'])
