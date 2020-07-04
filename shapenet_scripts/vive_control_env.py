@@ -101,7 +101,7 @@ def collect_one_trajectory(env, env2, pool, render_images):
         agent_infos=[],
         env_infos=[],
     )
-    #events = p.getVREvents()
+    #events = p.getVrREvents()
     #e = events[0]
     #prev_pos = e[POSITION]
     #prev_pos = list(prev_pos)
