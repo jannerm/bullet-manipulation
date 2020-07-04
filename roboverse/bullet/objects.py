@@ -59,7 +59,7 @@ lego = loader(PDATA_PATH, 'lego/lego.urdf',
               pos=[.75, .2, -.3],
               quat=[0, 0, 1, 0],
               rgba=[1, 0, 0, 1],
-              scale=3)
+              scale=1.2)
 
 
 ## custom objects
@@ -74,7 +74,7 @@ lid = loader(ASSET_PATH, 'objects/bowl/lid.urdf',
 
 cube = loader(ASSET_PATH, 'objects/cube/cube.urdf',
               pos=[.75, -.4, -.3],
-              scale=0.1)
+              scale=0.05)
 
 spam = loader(ASSET_PATH, 'objects/spam/spam.urdf',
               pos=[.75, -.4, -.3],
