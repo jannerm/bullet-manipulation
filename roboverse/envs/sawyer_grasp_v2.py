@@ -44,6 +44,7 @@ class SawyerGraspV2Env(SawyerBaseEnv):
                  object_ids = [0, 1, 25, 30, 50, 215, 255, 265, 300, 310],
                  single_obj_reward=False,
                  fix_obj_position=None,
+                 trimodal=True,
                  trimodal_positions=None,
                  *args,
                  **kwargs
@@ -56,7 +57,7 @@ class SawyerGraspV2Env(SawyerBaseEnv):
         """
 
         self._observation_mode = observation_mode
-        self._num_objects = 3
+        self._num_objects = num_objects
         self.obs_img_dim = obs_img_dim
         self.image_shape = (obs_img_dim, obs_img_dim)
         self._transpose_image = transpose_image
@@ -70,6 +71,7 @@ class SawyerGraspV2Env(SawyerBaseEnv):
         self._fix_obj_position = fix_obj_position
         self._trimodal_positions = trimodal_positions
         self._single_obj_reward = single_obj_reward
+        self.trimodal = trimodal
 
         # TODO(avi) optimize the view matrix
         self._view_matrix_obs = bullet.get_view_matrix(
@@ -88,6 +90,7 @@ class SawyerGraspV2Env(SawyerBaseEnv):
 
         super().__init__(*args, **kwargs)
         self.theta = bullet.deg_to_quat([180, 0, 90])
+
 
     def _set_action_space(self):
         act_dim = 4
@@ -132,35 +135,42 @@ class SawyerGraspV2Env(SawyerBaseEnv):
             xyz_min=self._pos_low, xyz_max=self._pos_high,
             visualize=False, rgba=[0,1,0,.1])
 
-
         self._end_effector = bullet.get_index_by_attribute(
             self._sawyer, 'link_name', 'gripper_site')
+        if self.trimodal:
+            min_distance_threshold = 0.08
+            if self.randomize:
+                object_positions = []
 
-        min_distance_threshold = 0.08
-        if self.randomize:
-            object_positions = []
+                while len(object_positions) < self._num_objects:
+                    new_pos = np.random.uniform(low=self._object_position_low, high=self._object_position_high)
+                    okay = True
+                    for pos in object_positions:
+                        print(np.linalg.norm(pos - new_pos))
+                        if np.linalg.norm(pos - new_pos) < min_distance_threshold:
+                            okay = False
+                    if okay:
+                        object_positions.append(new_pos)
 
-            while len(object_positions) < self._num_objects:
-                new_pos = np.random.uniform(low=self._object_position_low, high=self._object_position_high)
-                okay = True
-                for pos in object_positions:
-                    print(np.linalg.norm(pos - new_pos))
-                    if np.linalg.norm(pos - new_pos) < min_distance_threshold:
-                        okay = False
-                if okay:
-                    object_positions.append(new_pos)
-            self._trimodal_positions = object_positions
+            else:
+                object_positions = self._trimodal_positions
 
-        else:
-            object_positions = self._trimodal_positions
-
-        self._objects = {
-            0: bullet.objects.lego(pos=object_positions[0], rgba=[1, 0, 0, 1],),
-            1: bullet.objects.lego(pos=object_positions[1], rgba=[0, 1, 0, 1],),
-            2: bullet.objects.lego(pos=object_positions[2], rgba=[0, 1, 1, 1],)
-        }
-
-        for _ in range(200):
+            self._objects = {
+                0: bullet.objects.cube(pos=object_positions[0], rgba=[1, 0, 0, 1], scale=0.03),
+                1: bullet.objects.cube(pos=object_positions[1], rgba=[0, 1, 0, 1], scale=0.03),
+                2: bullet.objects.cube(pos=object_positions[2], rgba=[0, 1, 1, 1], scale=0.03)
+            }
+        else: #single
+            if self.randomize:
+                object_position = np.random.uniform(
+                    low=self._object_position_low, high=self._object_position_high)
+            else:
+                print(self._fix_obj_position)
+                object_position = self._fix_obj_position
+            self._objects = {
+                0: bullet.objects.lego(pos=object_position)
+            }
+        for _ in range(50):
             bullet.step()
 
         """
