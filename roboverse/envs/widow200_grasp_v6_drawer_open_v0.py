@@ -24,8 +24,8 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
             camera_pitch=camera_pitch,
             **kwargs)
         self._env_name = "Widow200GraspV6DrawerOpenV0Env"
-        self._object_position_high = (.83, -.11, -.3)
-        self._object_position_low = (.81, -.13, -.3)
+        self._object_position_high = (.84, -.11, -.29)
+        self._object_position_low = (.84, -.13, -.29)
         self._success_dist_threshold = success_dist_threshold
         # self._scaling_local_list = scaling_local_list
         # self.set_scaling_dicts()
@@ -124,12 +124,6 @@ if __name__ == "__main__":
             object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
             gripper_handle_dist = np.linalg.norm(handle_pos - ee_pos)
             theta = env.get_wrist_joint_angle() # -pi, pi
-            theta_action_pre_clip = grasp_target_theta - theta
-            theta_action = np.clip(
-                theta_action_pre_clip,
-                -max_theta_action_magnitude,
-                max_theta_action_magnitude
-            )
 
             if (gripper_handle_dist > dist_thresh
                 and not env.is_drawer_opened(widely=drawer_never_opened)):
@@ -138,8 +132,13 @@ if __name__ == "__main__":
                 xy_diff = np.linalg.norm(action[:2]/7.0)
                 if xy_diff > dist_thresh:
                     action[2] = 0.4 # force upward action to avoid upper box
-                # Don't rotate wrist while going for the handle
-                action = np.concatenate((action, np.asarray([0.,0.,0.])))
+                # Rotate Wrist toward theta = np/2:
+                theta_action = np.clip(
+                    (np.pi / 2) - theta,
+                    -max_theta_action_magnitude,
+                    max_theta_action_magnitude
+                )
+                action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
             elif not env.is_drawer_opened(widely=drawer_never_opened):
                 print("opening drawer")
                 action = np.array([0, -1.0, 0])
@@ -151,6 +150,12 @@ if __name__ == "__main__":
                 print("Lift upward")
                 drawer_never_opened = False
                 action = np.array([0, 0, 0.7]) # force upward action to avoid upper box
+                theta_action_pre_clip = grasp_target_theta - theta
+                theta_action = np.clip(
+                    theta_action_pre_clip,
+                    -max_theta_action_magnitude,
+                    max_theta_action_magnitude
+                )
                 action = np.concatenate(
                     (action, np.asarray([theta_action, 0., 0.])))
             elif object_gripper_dist > dist_thresh and env._gripper_open:
