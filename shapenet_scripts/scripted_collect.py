@@ -12,34 +12,10 @@ from railrl.data_management.env_replay_buffer import EnvReplayBuffer
 from railrl.data_management.obs_dict_replay_buffer import \
     ObsDictReplayBuffer
 
+from roboverse.envs.env_list import *
+
 OBJECT_NAME = 'lego'
 EPSILON = 0.05
-V2_GRASPING_ENVS = ['SawyerGraspV2-v0',
-                    'SawyerGraspTenV2-v0',
-                    'SawyerGraspOneV2-v0']
-V4_GRASPING_ENVS = ['SawyerGraspOneV4-v0']
-V5_GRASPING_ENVS = ['Widow200GraspV5-v0',
-                    'Widow200GraspFiveV5-v0',
-                    'Widow200GraspV5RandObj-v0']
-V6_GRASPING_ENVS = ['Widow200GraspV6-v0',
-                    'Widow200GraspV6BoxV0-v0',
-                    'Widow200GraspV6BoxV0RandObj-v0',
-                    'Widow200GraspV6BoxV0OneRandObj-v0',
-                    'Widow200GraspV6BoxV0FiveRandObj-v0',
-                    'Widow200GraspV6BoxV0TenSameTrainTestRandObj-v0',
-                    'Widow200GraspV6BoxV0TenRandObj-v0',
-                    'Widow200GraspV6BoxV0TwentyRandObj-v0',
-                    'Widow200GraspV6BoxV0FortyRandObj-v0']
-V6_GRASPING_V0_PLACING_ENVS = ['Widow200GraspV6BoxPlaceV0-v0',
-                               'Widow200GraspV6BoxPlaceV0RandObj-v0',
-                               'Widow200GraspV6BoxPlaceV0OneRandObj-v0',
-                               'Widow200GraspV6BoxPlaceV0FiveRandObj-v0',
-                               'Widow200GraspV6BoxPlaceV0TenSameTrainTestRandObj-v0',
-                               'Widow200GraspV6BoxPlaceV0TenRandObj-v0',
-                               'Widow200GraspV6BoxPlaceV0TwentyRandObj-v0',
-                               'Widow200GraspV6BoxPlaceV0FortyRandObj-v0',]
-
-V6_GRASPING_V0_PLACING_ONLY_ENVS = ['Widow200GraspV6BoxPlaceOnlyV0-v0',]
 
 NFS_PATH = '/nfs/kun1/users/avi/batch_rl_datasets/'
 
