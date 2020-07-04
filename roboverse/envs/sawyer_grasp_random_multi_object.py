@@ -5,7 +5,7 @@ import numpy as np
 from roboverse.envs.sawyer_base import SawyerBaseEnv
 
 
-
+import gym
 
 
 class SawyerGraspOneEnv(SawyerBaseEnv):
@@ -19,6 +19,8 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
                  reward_type='shaped',
 
                  reward_min=-2.5,
+
+                 num_objects=3,
 
                  randomize=True,
 
@@ -94,6 +96,9 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
 
         self.obs_img_dim = obs_img_dim
 
+        self.image_length = obs_img_dim * obs_img_dim * 3
+        self._num_objects = num_objects
+
         print(self.obs_img_dim)
 
         self._view_matrix_obs = bullet.get_view_matrix(
@@ -136,18 +141,25 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
 
             self._objects = {
 
+                # 'lego': bullet.objects.lego(pos=object_positions[0]),
+                #
+                # 'duck': bullet.objects.duck(pos=object_positions[1]),
+                #
+                # 'cube': bullet.objects.cube(pos=object_positions[2])
+
                 'lego': bullet.objects.lego(pos=object_positions[0], rgba=[1, 0, 0, 1], scale=3),
-
                 'duck': bullet.objects.lego(pos=object_positions[1], rgba=[0, 1, 0, 1], scale=3),
-
                 'cube': bullet.objects.lego(pos=object_positions[2], rgba=[0, 1, 1, 1], scale=3),
 
                 #'cube': bullet.objects.cube(pos=object_positions[3])
             }
 
-            choice = np.random.randint(3)
+            # choice = np.random.randint(3)
+            choice = 2
 
             self._object = self._obj_list[choice]
+
+            print("current obj: ", self._object)
 
             object_position = object_positions[choice]
 
@@ -170,7 +182,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
             self._object = 'lego'
 
 
-        # set goal_pos to be directly above the randomized position 
+        # set goal_pos to be directly above the randomized position
 
         # of lego, rather than a fixed position
 
@@ -211,6 +223,34 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
 
         return observation, reward, done, info
 
+
+    def _set_action_space(self):
+        act_dim = 4
+        act_bound = 1
+        act_high = np.ones(act_dim) * act_bound
+        self.action_space = gym.spaces.Box(-act_high, act_high)
+
+    def _set_spaces(self):
+        self._set_action_space()
+        # obs = self.reset()
+        if self._observation_mode == 'state':
+            observation_dim = 7 + 1 + 7 * self._num_objects
+            obs_bound = 100
+            obs_high = np.ones(observation_dim) * obs_bound
+            self.observation_space = gym.spaces.Box(-obs_high, obs_high)
+        elif self._observation_mode == 'pixels' or self._observation_mode == 'pixels_debug':
+            img_space = gym.spaces.Box(0, 1, (self.image_length,), dtype=np.float32)
+            if self._observation_mode == 'pixels':
+                observation_dim = 7
+            elif self._observation_mode == 'pixels_debug':
+                observation_dim = 7 + 1 + 7 * self._num_objects
+            obs_bound = 100
+            obs_high = np.ones(observation_dim) * obs_bound
+            state_space = gym.spaces.Box(-obs_high, obs_high)
+            spaces = {'image': img_space, 'state': state_space}
+            self.observation_space = gym.spaces.Dict(spaces)
+        else:
+            raise NotImplementedError
 
 
     def get_info(self):
@@ -300,6 +340,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
 
 
     def get_observation(self):
+        print(self._object, self._goal_pos)
 
         left_tip_pos = bullet.get_link_state(
 
@@ -342,6 +383,13 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         elif self._observation_mode == 'pixels':
 
             image_observation = self.render_obs()
+            # from PIL import Image
+            # pth = '/home/gaoyuezhou/Desktop/debug_images'
+            # import imageio;
+            # imageio.imwrite('{}/prev.png'.format(pth), image_observation)
+            # import pdb; pdb.set_trace()
+
+            image_observation = np.float32(image_observation.flatten()) / 255.0
 
             observation = {
 
@@ -358,6 +406,8 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
             # This mode passes in all the true state information + images
 
             image_observation = self.render_obs()
+
+            image_observation = np.float32(image_observation.flatten()) / 255.0
 
 
 
