@@ -596,12 +596,6 @@ def scripted_grasping_V6_opening_V0(env, pool, success_pool, noise=0.2):
         object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
         gripper_handle_dist = np.linalg.norm(handle_pos - ee_pos)
         theta = env.get_wrist_joint_angle() # -pi, pi
-        theta_action_pre_clip = grasp_target_theta - theta
-        theta_action = np.clip(
-            theta_action_pre_clip,
-            -max_theta_action_magnitude,
-            max_theta_action_magnitude
-        )
 
         if (gripper_handle_dist > dist_thresh
             and not env.is_drawer_opened(widely=drawer_never_opened)):
@@ -610,8 +604,13 @@ def scripted_grasping_V6_opening_V0(env, pool, success_pool, noise=0.2):
             xy_diff = np.linalg.norm(action[:2]/7.0)
             if xy_diff > dist_thresh:
                 action[2] = 0.4 # force upward action to avoid upper box
-            # Don't rotate wrist while going for the handle
-            action = np.concatenate((action, np.asarray([0.,0.,0.])))
+            # Rotate Wrist toward theta = np/2:
+            theta_action = np.clip(
+                (np.pi / 2) - theta,
+                -max_theta_action_magnitude,
+                max_theta_action_magnitude
+            )
+            action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
         elif not env.is_drawer_opened(widely=drawer_never_opened):
             # print("opening drawer")
             action = np.array([0, -1.0, 0])
@@ -623,6 +622,12 @@ def scripted_grasping_V6_opening_V0(env, pool, success_pool, noise=0.2):
             # print("Lift upward")
             drawer_never_opened = False
             action = np.array([0, 0, 0.7]) # force upward action to avoid upper box
+            theta_action_pre_clip = grasp_target_theta - theta
+            theta_action = np.clip(
+                theta_action_pre_clip,
+                -max_theta_action_magnitude,
+                max_theta_action_magnitude
+            )
             action = np.concatenate(
                 (action, np.asarray([theta_action, 0., 0.])))
         elif object_gripper_dist > dist_thresh and env._gripper_open:
