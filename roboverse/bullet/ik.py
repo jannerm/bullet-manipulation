@@ -200,6 +200,10 @@ def _get_continuous_gripper_state(gripper, gripper_bounds, l_limits, r_limits):
     r_state = r_limits['low'] + percent_closed * (r_limits['high'] - r_limits['low'])
     return [l_state, r_state]
 
+
+def restore_state(filename):
+    p.restoreState(fileName=filename)
+
 #################
 ####  drawer  ###
 #################
