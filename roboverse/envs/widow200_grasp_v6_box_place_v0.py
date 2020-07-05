@@ -6,6 +6,10 @@ from roboverse.envs.env_object_list import (
 import roboverse.bullet as bullet
 import roboverse.utils as utils
 import numpy as np
+import os.path as osp
+
+OBJECT_IN_GRIPPER_PATH = osp.join(osp.dirname(osp.realpath(__file__)),
+                'assets/bullet-objects/bullet_saved_states/objects_in_gripper/')
 
 
 class Widow200GraspV6BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
@@ -15,6 +19,7 @@ class Widow200GraspV6BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
                  object_names=('gatorade',),
                  scaling_local_list=[0.5],
                  success_dist_threshold=0.04,
+                 place_only=False,
                  **kwargs):
         super().__init__(*args,
             object_names=object_names,
@@ -32,7 +37,23 @@ class Widow200GraspV6BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
 
         # Params used for combine_railrl_pools.py
         self.terminates = False
-        self.scripted_traj_len = 30
+        self.place_only = place_only
+
+        if self.place_only:
+            self.scripted_traj_len = 10
+        else:
+            self.scripted_traj_len = 30
+
+    def reset(self):
+        obs = super().reset()
+        if self.place_only:
+            bullet.restore_state(osp.join(OBJECT_IN_GRIPPER_PATH, 'gatorade.bullet'))
+            self._gripper_open = False
+            for i in range(3):
+                action = np.zeros((6,))
+                action[:3] += np.random.uniform(low=-1, high=+1, size=(3,))
+                obs, _, _, _ = self.step(action)
+        return obs
 
     def _load_meshes(self):
         super()._load_meshes()
@@ -47,7 +68,7 @@ class Widow200GraspV6BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
             if info['object_in_box_success']:
                 reward = 1.0
             elif info['object_grasped']:
-                reward = 0.2
+                reward = 0.5
             else:
                 reward = 0.0
         elif self._reward_type == 'sparse':
@@ -114,7 +135,8 @@ if __name__ == "__main__":
     env = roboverse.make("Widow200GraspV6BoxPlaceV0-v0",
                          gui=True,
                          reward_type='semisparse',
-                         observation_mode='pixels_debug',)
+                         observation_mode='pixels_debug',
+                         place_only=True)
 
     object_ind = 0
     for i in range(50):
