@@ -16,7 +16,6 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
                  scaling_local_list=[0.5],
                  **kwargs):
         self.object_names = object_names
-        self.gripper_goal_location = np.asarray([0.81, -0.05, -0.15])
         self.reward_height_threshold = -0.275
         super().__init__(*args,
             object_names=self.object_names,
