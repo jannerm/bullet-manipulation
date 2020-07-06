@@ -49,10 +49,9 @@ class Widow200GraspV6BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
         if self.place_only:
             bullet.restore_state(osp.join(OBJECT_IN_GRIPPER_PATH, 'gatorade.bullet'))
             self._gripper_open = False
-            for i in range(3):
-                action = np.zeros((6,))
-                action[:3] += np.random.uniform(low=-1, high=+1, size=(3,))
-                obs, _, _, _ = self.step(action)
+            action = np.zeros((6,))
+            action[:4] += np.random.normal(scale=0.1, size=(4,))
+            obs, _, _, _ = self.step(action)
         return obs
 
     def _load_meshes(self):

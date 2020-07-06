@@ -14,6 +14,7 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
         self.fc_input_key = "robot_state"
         self.object_obs_key = "object_state"
 
+        self.gripper_goal_location = np.asarray([0.81, -0.05, -0.15])
         super().__init__(*args, **kwargs)
 
     def _set_action_space(self):
@@ -146,10 +147,7 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
                 self._simulate(pos, target_theta, gripper, delta_theta=0)
             # we will also lift the object up a little
             for _ in range(5):
-                pos = bullet.get_link_state(self._robot_id, self._end_effector, 'pos')
-                pos = list(pos)
-                pos = np.clip(pos, self._pos_low, self._pos_high)
-                pos[2] += 0.05
+                pos = list(self.gripper_goal_location)
                 self._simulate(pos, target_theta, gripper, delta_theta=0)
             self._gripper_open = False
         elif gripper_action <= 0.5 and gripper_action >= -0.5:
