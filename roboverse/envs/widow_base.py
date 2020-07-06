@@ -16,7 +16,7 @@ class WidowBaseEnv(gym.Env, Serializable):
                  solver_iterations=150,
                  gripper_bounds=[-1, 1],
                  pos_init=[0.5, 0, -0.2],
-                 pos_high=[1, .4, -0.15],
+                 pos_high=[1, .4, -0.2],
                  pos_low=[.4, -.6, -.36],
                  max_force=1000.,
                  visualize=True,
