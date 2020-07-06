@@ -13,7 +13,7 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
         self.cnn_input_key = "image"
         self.fc_input_key = "robot_state"
         self.object_obs_key = "object_state"
-
+        self.gripper_goal_location = np.asarray([0.81, -0.05, -0.15])
         super().__init__(*args, **kwargs)
 
     def _set_action_space(self):
@@ -146,13 +146,7 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
                 self._simulate(pos, target_theta, gripper, delta_theta=0)
             # we will also lift the object up a little
             for _ in range(5):
-                if self.use_goal_location_for_reward is not None:
-                    pos = list(self.gripper_goal_location)
-                else:
-                    pos = list(self.get_end_effector_pos())
-                    pos[2] += 0.05
-                    pos = np.clip(pos, self._pos_low, self._pos_high)
-
+                pos = list(self.gripper_goal_location)
                 self._simulate(pos, target_theta, gripper, delta_theta=0)
 
             self._gripper_open = False
