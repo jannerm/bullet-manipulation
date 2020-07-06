@@ -146,11 +146,15 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
                 self._simulate(pos, target_theta, gripper, delta_theta=0)
             # we will also lift the object up a little
             for _ in range(5):
-                pos = bullet.get_link_state(self._robot_id, self._end_effector, 'pos')
-                pos = list(pos)
-                pos[2] += 0.05
-                pos = np.clip(pos, self._pos_low, self._pos_high)
+                if self.use_goal_location_for_reward is not None:
+                    pos = list(self.gripper_goal_location)
+                else:
+                    pos = list(self.get_end_effector_pos())
+                    pos[2] += 0.05
+                    pos = np.clip(pos, self._pos_low, self._pos_high)
+
                 self._simulate(pos, target_theta, gripper, delta_theta=0)
+
             self._gripper_open = False
         elif gripper_action <= 0.5 and gripper_action >= -0.5:
             # maintain current status
