@@ -8,7 +8,7 @@ from roboverse.envs.sawyer_base import SawyerBaseEnv
 class SawyerLiftMultiEnv(SawyerBaseEnv):
 
     def __init__(self, goal_pos=None, *args, goal_mult=4, bonus=0, min_reward=-3.,
-                 num_obj=2, obj_urdf='spam', max_joint_velocity=None, sliding_bowl=False,
+                 num_obj=2, obj_urdf='spam', max_joint_velocity=None, sliding_bowl=False, heavy_bowl=False,
                  **kwargs):
         self.record_args(locals())
         self._goal_pos = goal_pos
@@ -20,6 +20,7 @@ class SawyerLiftMultiEnv(SawyerBaseEnv):
         self._obj_urdf = obj_urdf
         self._max_joint_velocity = max_joint_velocity
         self._sliding_bowl = sliding_bowl
+        self._heavy_bowl = heavy_bowl
         # self._bowl_pos = None
         if self._obj_urdf in ['spam', 'spam_long']:
             self._clip_obj_pos = True
@@ -41,9 +42,12 @@ class SawyerLiftMultiEnv(SawyerBaseEnv):
         #     bowl_pos = [.75, 0, -.3]
 
         if self._sliding_bowl:
-            self._objects['bowl'] = bullet.objects.bowl_sliding() #pos=bowl_pos
+            if self._heavy_bowl:
+                self._objects['bowl'] = bullet.objects.bowl_sliding_heavy()
+            else:
+                self._objects['bowl'] = bullet.objects.bowl_sliding()
         else:
-            self._objects['bowl'] = bullet.objects.bowl() #pos=bowl_pos
+            self._objects['bowl'] = bullet.objects.bowl()
 
         colors = [
             [1, 0, 0, 1],

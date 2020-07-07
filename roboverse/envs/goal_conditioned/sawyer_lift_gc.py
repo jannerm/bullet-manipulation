@@ -262,6 +262,12 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             info['{}_dist'.format(self.get_obj_name(obj_id))] = obj_goal_dist
             info['{}_success'.format(self.get_obj_name(obj_id))] = \
                 float(np.abs(cube_pos[0] - self._bowl_pos[1]) <= 0.09)
+
+            if self._sliding_bowl:
+                info['bowl_{}_dist'.format(self.get_obj_name(obj_id))] = np.abs(
+                    achieved_goal_info['bowl_pos'] - cube_pos[0]
+                )
+
         if self._sliding_bowl:
             info['bowl_dist'] = np.abs(achieved_goal_info['bowl_pos'] - desired_goal_info['bowl_pos'])
         return info
@@ -305,6 +311,40 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         if goal_sampling_mode is None:
             goal_sampling_mode = self.goal_sampling_mode
 
+        assert goal_sampling_mode in [
+            'uniform',
+            'ground',
+            'obj_in_bowl',
+            '50p_ground__50p_obj_in_bowl',
+        ]
+
+        if goal_sampling_mode == '50p_ground__50p_obj_in_bowl':
+            if batch_size == 1:
+                if np.random.uniform() <= 0.5:
+                    return self.sample_goals(1, goal_sampling_mode='ground')
+                else:
+                    return self.sample_goals(1, goal_sampling_mode='obj_in_bowl')
+            else:
+                num_ground_goals = batch_size // 2
+                num_obj_in_bowl_goals = batch_size - num_ground_goals
+
+                ground_goals = self.sample_goals(
+                    num_ground_goals,
+                    goal_sampling_mode='ground'
+                )
+                obj_in_bowl_goals = self.sample_goals(
+                    num_obj_in_bowl_goals,
+                    goal_sampling_mode='obj_in_bowl'
+                )
+
+                goals = {}
+                for key in ground_goals.keys():
+                    goals[key] = np.vstack((
+                        ground_goals[key],
+                        obj_in_bowl_goals[key]
+                    ))
+                return goals
+
         low = self._env._pos_low[1:]
         high = self._env._pos_high[1:]
 
@@ -333,41 +373,12 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
                 high=high_ground,
                 size=(batch_size * self.num_obj, len(low))
             ).reshape((batch_size, -1))
-        elif goal_sampling_mode == 'obj_in_air':
-            high_ground = high.copy()
-            high_ground[1] = low[1]
-            # Have them all start off on the ground
-            obj_goals = np.random.uniform(
-                low=low,
-                high=high_ground,
-                size=(1 * self.num_obj, len(low))
-            ).reshape((1, -1))
-
-            # Choose which ones should be in the air
-            is_air = (
-                np.random.random(1) > .5
-            )
-            num_in_air = is_air.sum()
-            obj_id_in_air = np.random.choice(self.num_obj, num_in_air)
-            y_idx = (len(low) - 1)
-            obj_goal_in_air_idx = (obj_id_in_air) * len(low) + y_idx
-            obj_goals[is_air, obj_goal_in_air_idx] = np.random.uniform(
-                low=low[1],
-                high=high[1],
-                size=num_in_air)
-            # Make sure the objects is in the air
-            # obj_goals[:, -1] = obj_goals[:, -1].clip(0, 1e10)
         elif goal_sampling_mode == 'obj_in_bowl':
-            # obj_goals = np.tile(
-            #     # bullet.get_midpoint(self._objects['bowl'])[1:],
-            #     self._bowl_pos[1:],
-            #     (batch_size, self.num_obj))
-            obj_goals = np.c_[
-                bowl_goals,
-                self._bowl_pos[2] * np.ones(batch_size),
-            ]
             obj_goals = np.tile(
-                obj_goals,
+                np.c_[
+                    bowl_goals,
+                    self._bowl_pos[2] * np.ones(batch_size),
+                ],
                 (1, self.num_obj)
             )
         else:

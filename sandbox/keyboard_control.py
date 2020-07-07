@@ -83,17 +83,24 @@ env_kwargs={
 
     'gui': True,  # False,
     'goal_mult': 0,
-    'pos_init': [.75, -.3, 0],
-    'pos_high': [.75, .4, .3], #[.75, .4, .3],
-    'pos_low': [.75, -.4, -.36], #[.75, -.4, -.36],
+    # 'pos_init': [.75, -.3, 0],
+    # 'pos_high': [.75, .4, .3], #[.75, .4, .3],
+    # 'pos_low': [.75, -.4, -.36], #[.75, -.4, -.36],
+
+    'pos_init': [.75, -.3, -.10],
+    'pos_high': [.75, .4, 0.0],  # [.75, .4, .3],
+    'pos_low': [.75, -.4, -.36],  # [.75, -.4, -.36],
+
     'reset_obj_in_hand_rate': 0.0, #0.0
     'img_dim': 48,
 
-    # 'goal_sampling_mode': 'obj_in_bowl',
-    'goal_sampling_mode': 'ground',
-    'num_obj': 4, #2
+    'num_obj': 4,  # 2
+
+    'goal_sampling_mode': 'obj_in_bowl',
+    # 'goal_sampling_mode': 'ground',
     'random_init_bowl_pos': True,
     'sliding_bowl': True,
+    'heavy_bowl': True,
 
     # 'use_rotated_gripper': True, #False
     # 'use_wide_gripper': False, #False
@@ -156,6 +163,9 @@ while True:
             if action.any():
                 env.step(action[:4])
                 print(env.get_dict_observation()['state_observation'])
+                # print(env.get_dict_observation()['state_achieved_goal'])
+                # print(env.get_dict_observation()['state_desired_goal'])
+                # print()
     if done:
         obs = env.reset()
     env.render()
