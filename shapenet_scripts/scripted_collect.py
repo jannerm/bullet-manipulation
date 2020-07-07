@@ -706,7 +706,7 @@ def main(args):
         reward_type = 'sparse'
     elif args.semisparse:
         reward_type = 'semisparse'
-        assert args.env in V6_GRASPING_V0_PLACING_ENVS
+        assert args.env in V6_GRASPING_V0_PLACING_ENVS + V6_GRASPING_V0_PLACING_ONLY_ENVS
     else:
         reward_type = 'shaped'
 
