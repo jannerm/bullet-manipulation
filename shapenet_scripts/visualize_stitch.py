@@ -123,12 +123,29 @@ def plot_trajs_dots_2dims(dim0, dim1, dims_name, pick_success_obs, place_success
     plot_dots(place_success_obs[:,:,dim0], place_success_obs[:,:,dim1], num_to_plot, "darkorange", dot="first")
     plot_trajs(pick_place_success_obs[:,:,dim0], pick_place_success_obs[:,:,dim1], num_to_plot // 10, "blue", dims_name, zorder=2)
     plot_dots(pick_place_first_lifted_pos[:,dim0], pick_place_first_lifted_pos[:,dim1], num_to_plot // 10, "darkblue", dot=None)
-    plt.savefig("stitch_data/{}.png".format(dims_name))
+    plt.savefig("{}/{}.png".format(OUTPUT_DIR, dims_name))
 
 def plot_all_trajs_and_dots(pick_success_obs, place_success_obs, pick_place_success_obs, pick_place_first_lifted_pos, num_to_plot):
     dims_list_to_plot = [(0, 1, "xy"), (1, 2, "yz"), (0, 2, "xz")]
     for dim0, dim1, dims_name in dims_list_to_plot:
         plot_trajs_dots_2dims(dim0, dim1, dims_name, pick_success_obs, place_success_obs, pick_place_success_obs, pick_place_first_lifted_pos, num_to_plot)
+
+def get_avg_theta_traj(obs_traj_array):
+    assert obs_traj_array.shape[2] == 5
+    print("obs_traj_array.shape", obs_traj_array.shape)
+    theta_idx = 3
+    return np.mean(obs_traj_array[:,:,theta_idx], axis=0)
+
+def plot_avg_theta(pick_avg_theta_traj, place_avg_theta_traj, pick_place_avg_theta_traj):
+    plt.figure(next(plot_num_counter))
+    plt.title("Average Theta")
+    plt.plot(list(range(len(pick_avg_theta_traj))), pick_avg_theta_traj, label="Avg Pick Theta")
+    plt.plot(list(np.array(list(range(len(place_avg_theta_traj)))) + len(pick_avg_theta_traj)), place_avg_theta_traj, label="Avg Place Theta")
+    plt.plot(list(range(len(pick_place_avg_theta_traj))), pick_place_avg_theta_traj, label="Avg Pick Place Theta")
+    plt.legend(loc=3)
+    plt.xlabel("Timestep")
+    plt.ylabel("Theta")
+    plt.savefig("{}/{}.png".format(OUTPUT_DIR, "avg_theta"))
 
 num_to_plot = 500
 place_starting_img = []
@@ -172,6 +189,14 @@ pick_place_first_lifted_pos = get_obs_first_reward(pick_place_successful_obs_arr
 print("pick_place_first_lifted_pos.shape", pick_place_first_lifted_pos.shape)
 
 plot_all_trajs_and_dots(pick_successful_obs_array, place_successful_obs_array, pick_place_successful_obs_array, pick_place_first_lifted_pos, num_to_plot=num_to_plot)
+
+pick_avg_theta = get_avg_theta_traj(pick_successful_obs_array)
+print("pick_avg_theta", pick_avg_theta)
+place_avg_theta = get_avg_theta_traj(place_successful_obs_array)
+print("place_avg_theta", place_avg_theta)
+pick_place_avg_theta = get_avg_theta_traj(pick_place_successful_obs_array)
+print("pick_place_avg_theta", pick_place_avg_theta)
+plot_avg_theta(pick_avg_theta, place_avg_theta, pick_place_avg_theta)
 
 # for i in range(0, pick._rewards.shape[0], 5):
 #     if pick._rewards[i] > 0.0:
