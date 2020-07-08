@@ -482,7 +482,7 @@ def scripted_grasping_V7(env, pool, success_pool, noise=0.2):
             ee_pos = observation[env.fc_input_key][:3]
         else:
             object_pos = observation[
-                         object_ind * 7 + 8: object_ind * 7 + 8 + 3]
+                         object_ind * 7 + 5: object_ind * 7 + 5 + 3]
             ee_pos = observation[:3]
 
         # object_lifted_with_margin = object_pos[2] > (env._reward_height_thresh + margin)

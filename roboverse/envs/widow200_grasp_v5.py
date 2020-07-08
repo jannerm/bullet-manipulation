@@ -34,11 +34,12 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
         obs_bound = 100
         robot_obs_high = np.ones(robot_obs_dim) * obs_bound
         obj_obs_high = np.ones(obj_obs_dim) * obs_bound
+        full_state_high = np.ones(obj_obs_dim + robot_obs_dim) * obs_bound
         robot_obs_space = gym.spaces.Box(-robot_obs_high, robot_obs_high)
         obj_obs_space = gym.spaces.Box(-obj_obs_high, obj_obs_high)
         if self._observation_mode == 'state':
-            spaces = {self.fc_input_key: robot_obs_space, self.object_obs_key: obj_obs_space}
-            self.observation_space = gym.spaces.Dict(spaces)
+            self.observation_space = gym.spaces.Box(
+                -full_state_high, full_state_high)
         elif self._observation_mode == 'pixels' or self._observation_mode == 'pixels_debug':
             img_space = gym.spaces.Box(0, 1, (self.image_length,), dtype=np.float32)
             if self._observation_mode == 'pixels':
@@ -86,13 +87,10 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
         if self._observation_mode == 'state':
             state_observation = np.concatenate(
                 (end_effector_pos, wrist_joint_angle, gripper_open))
-
             object_observation = self.get_obj_obs_array()
-
-            observation = {
-                self.fc_input_key: state_observation,
-                self.object_obs_key: object_observation,
-            }
+            observation = np.concatenate(
+                (state_observation, object_observation)
+            )
 
         elif self._observation_mode == 'pixels':
             image_observation = self.render_obs()
