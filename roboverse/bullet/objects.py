@@ -91,3 +91,8 @@ bowl_sliding = loader(ASSET_PATH, 'objects/bowl/bowl_sliding.urdf',
 bowl_sliding_heavy = loader(ASSET_PATH, 'objects/bowl/bowl_sliding_heavy.urdf',
               pos=[.75, 0, -.3],
               scale=0.25)
+
+
+lid_2d = loader(ASSET_PATH, 'objects/bowl/lid_2d.urdf',
+              pos=[.75, 0, -.2],
+              scale=0.25)

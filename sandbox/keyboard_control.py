@@ -88,7 +88,7 @@ env_kwargs={
     # 'pos_low': [.75, -.4, -.36], #[.75, -.4, -.36],
 
     'pos_init': [.75, -.3, -.10],
-    'pos_high': [.75, .4, 0.0],  # [.75, .4, .3],
+    'pos_high': [.75, .4, .3],  # [.75, .4, .3],
     'pos_low': [.75, -.4, -.36],  # [.75, -.4, -.36],
 
     'reset_obj_in_hand_rate': 0.0, #0.0
@@ -101,6 +101,8 @@ env_kwargs={
     'random_init_bowl_pos': True,
     'sliding_bowl': True,
     'heavy_bowl': True,
+
+    'bowl_bounds': [-0.40, 0.40],
 
     # 'use_rotated_gripper': True, #False
     # 'use_wide_gripper': False, #False

@@ -41,6 +41,11 @@ class SawyerLiftMultiEnv(SawyerBaseEnv):
         # if bowl_pos is None:
         #     bowl_pos = [.75, 0, -.3]
 
+        # lid_obj = bullet.objects.lid_2d()
+        # self._objects['lid'] = lid_obj
+        # numJoints = p.getNumJoints(lid_obj)
+        # p.setJointMotorControl2(lid_obj, numJoints - 2, p.VELOCITY_CONTROL, force=0)
+
         if self._sliding_bowl:
             if self._heavy_bowl:
                 self._objects['bowl'] = bullet.objects.bowl_sliding_heavy()

@@ -20,7 +20,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             reward_type='hand_dist+obj_dist',
             random_init_bowl_pos=False,
             sample_valid_rollout_goals=True,
-            bowl_bounds=[-0.20, 0.20],
+            bowl_bounds=[-0.40, 0.40],
             **kwargs
     ):
         self.reset_obj_in_hand_rate = reset_obj_in_hand_rate
