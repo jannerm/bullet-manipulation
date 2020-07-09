@@ -94,7 +94,7 @@ env_kwargs={
     'reset_obj_in_hand_rate': 0.0, #0.0
     'img_dim': 48,
 
-    'num_obj': 4,  # 2
+    'num_obj': 5,  # 2
 
     'goal_sampling_mode': 'obj_in_bowl',
     # 'goal_sampling_mode': 'ground',
