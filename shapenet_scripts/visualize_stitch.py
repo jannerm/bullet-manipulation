@@ -13,8 +13,10 @@ import itertools as it
 # FILE_PICK = '/media/avi/data/Work/github/jannerm/bullet-manipulation/data/july6_test_4_Widow200GraspV7BoxV0-v0_pixels_debug_50_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
 # FILE_PLACE = '/media/avi/data/Work/github/jannerm/bullet-manipulation/data/july6_test_2_Widow200GraspV6BoxPlaceOnlyV0-v0_pixels_debug_50_sparse_reward_scripted_actions_fixed_position_noise_std_0.05/railrl_consolidated.pkl'
 # OUTPUT_DIR = '/media/avi/data/Work/data/stitch_debug_v7_part2/'
-FILE_PICK = '/nfs/kun1/users/avi/batch_rl_datasets/july6_Widow200GraspV7BoxV0-v0_pixels_debug_40K_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
-FILE_PLACE = '/nfs/kun1/users/avi/batch_rl_datasets/july6_Widow200GraspV6BoxPlaceOnlyV0-v0_pixels_debug_40K_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
+# FILE_PICK = '/nfs/kun1/users/avi/batch_rl_datasets/july6_Widow200GraspV7BoxV0-v0_pixels_debug_40K_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
+# FILE_PLACE = '/nfs/kun1/users/avi/batch_rl_datasets/july6_Widow200GraspV6BoxPlaceOnlyV0-v0_pixels_debug_40K_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
+FILE_PICK = '/nfs/kun1/users/albert/batch_rl_datasets/jul8_ik_theta_Widow200GraspV7BoxV0-v0_pixels_debug_40K_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
+FILE_PLACE = '/nfs/kun1/users/albert/batch_rl_datasets/jul8_ik_theta_Widow200GraspV6BoxPlaceOnlyV0-v0_pixels_debug_40K_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
 FILE_PICK_PLACE = '/nfs/kun1/users/albert/batch_rl_datasets/jun26_Widow200GraspV6BoxPlaceV0-v0_pixels_debug_10K_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
 OUTPUT_DIR = 'stitch_data'
 PICK_STATE_ARRAY = osp.join(OUTPUT_DIR, "pick_robot_state.npy")
