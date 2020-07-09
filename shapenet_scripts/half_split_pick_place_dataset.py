@@ -26,7 +26,6 @@ def add_all_data_into_buffer(pool, rewards_by_traj, actions_by_traj,
     trunc_traj_len = rewards_by_traj.shape[1] # the truncated one; original / 2
     print("trunc_traj_len", trunc_traj_len)
     for i in range(num_trajs):
-        print("list(actions_by_traj[i])", list(actions_by_traj[i]))
         path = dict(
             rewards=list(rewards_by_traj[i]),
             actions=list(actions_by_traj[i]),
@@ -37,6 +36,14 @@ def add_all_data_into_buffer(pool, rewards_by_traj, actions_by_traj,
                                state_obs_key:n_robot_states_by_traj[i][j]} for j in range(trunc_traj_len)],
         )
         pool.add_path(path)
+
+    del rewards_by_traj
+    del actions_by_traj
+    del terminals_by_traj
+    del images_by_traj
+    del robot_states_by_traj
+    del n_images_by_traj
+    del n_robot_states_by_traj
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -76,6 +83,8 @@ if __name__ == "__main__":
     n_images_by_traj = reshape_array_by_traj(input_pool._next_obs[image_obs_key][:pool_size], num_trajs, traj_len, image=True)
     n_robot_states_by_traj = reshape_array_by_traj(input_pool._next_obs[state_obs_key][:pool_size], num_trajs, traj_len)
 
+    del input_pool
+
     # print("np.squeeze(rewards_by_traj)", np.squeeze(rewards_by_traj))
     rewards_by_traj_pt0, rewards_by_traj_pt1 = split_half(rewards_by_traj)
     # print("np.squeeze(rewards_by_traj_pt0)", np.squeeze(rewards_by_traj_pt0))
@@ -86,6 +95,14 @@ if __name__ == "__main__":
     robot_states_by_traj_pt0, robot_states_by_traj_pt1 = split_half(robot_states_by_traj)
     n_images_by_traj_pt0, n_images_by_traj_pt1 = split_half(n_images_by_traj)
     n_robot_states_by_traj_pt0, n_robot_states_by_traj_pt1 = split_half(n_robot_states_by_traj)
+
+    del rewards_by_traj
+    del actions_by_traj
+    del terminals_by_traj
+    del images_by_traj
+    del robot_states_by_traj
+    del n_images_by_traj
+    del n_robot_states_by_traj
 
     add_all_data_into_buffer(pool_pick, rewards_by_traj_pt0, actions_by_traj_pt0,
         terminals_by_traj_pt0, images_by_traj_pt0, robot_states_by_traj_pt0,
