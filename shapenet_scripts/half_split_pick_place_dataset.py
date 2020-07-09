@@ -111,63 +111,6 @@ if __name__ == "__main__":
         terminals_by_traj_pt1, images_by_traj_pt1, robot_states_by_traj_pt1,
         n_images_by_traj_pt1, n_robot_states_by_traj_pt1)
 
-    # for j in range(mid_point):
-    #     start = j*traj_len
-    #     end = start + traj_len
-    #     path = dict(
-    #         rewards=[],
-    #         actions=[],
-    #         terminals=[],
-    #         observations=[],
-    #         next_observations=[],
-    #     )
-    #     for i in range(start, end):
-    #         path['rewards'].append(input_pool._rewards[i])
-    #         path['actions'].append(input_pool._actions[i])
-    #         path['terminals'].append(input_pool._terminals[i])
-    #         path['observations'].append(
-    #             {image_obs_key: input_pool._obs[image_obs_key][i],
-    #              state_obs_key: input_pool._obs[state_obs_key][i]}
-    #         )
-    #         path['next_observations'].append(
-    #             {image_obs_key: input_pool._next_obs[image_obs_key][i],
-    #              state_obs_key: input_pool._next_obs[state_obs_key][i]}
-    #         )
-
-    #         if input_pool._actions[i][4] < -0.5:
-    #             pool_pick.add_path(path)
-    #             break
-
-    # for j in range(mid_point, num_traj):
-    #     start = j*traj_len
-    #     end = start + traj_len
-    #     path = dict(
-    #         rewards=[],
-    #         actions=[],
-    #         terminals=[],
-    #         observations=[],
-    #         next_observations=[],
-    #     )
-    #     add_data = False
-    #     for i in range(start+1, end):
-    #         if input_pool._actions[i-1][4] < -0.5:
-    #             add_data = True
-    #         if add_data:
-    #             path['rewards'].append(input_pool._rewards[i])
-    #             path['actions'].append(input_pool._actions[i])
-    #             path['terminals'].append(input_pool._terminals[i])
-    #             path['observations'].append(
-    #                 {image_obs_key: input_pool._obs[image_obs_key][i],
-    #                  state_obs_key: input_pool._obs[state_obs_key][i]}
-    #             )
-    #             path['next_observations'].append(
-    #                 {image_obs_key: input_pool._next_obs[image_obs_key][i],
-    #                  state_obs_key: input_pool._next_obs[state_obs_key][i]}
-    #             )
-
-    #     if len(path['rewards']) > 0:
-    #         pool_place.add_path(path)
-
     save_file_place = osp.join(input_buffer_dir, 'pool_place.pkl')
     pickle.dump(pool_place, open(save_file_place, 'wb'), protocol=4)
     print('Pick size: {}'.format(pool_pick._top))
