@@ -163,6 +163,24 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'action_scale': 0.05,
                    'reward_height_threshold': -.275}
     },
+    {
+        'id': 'Widow200GraspV7BoxV0TenRandObj-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v7_box_v0:Widow200GraspV7BoxV0RandObjEnv'),
+        'kwargs': {'max_force': 10,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.275,
+                   'possible_train_objects': POSSIBLE_TRAIN_OBJECTS[:10],
+                   'train_scaling_list': POSSIBLE_TRAIN_SCALINGS[:10], }
+    },
+    {
+        'id': 'Widow200GraspV7BoxV0TenSameTrainTestRandObj-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v7_box_v0:Widow200GraspV7BoxV0RandObjEnv'),
+        'kwargs': {'max_force': 10,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.275,
+                   'possible_train_objects': POSSIBLE_TEST_OBJECTS[:10], # Same Train and test objs
+                   'train_scaling_list': POSSIBLE_TEST_SCALINGS[:10],}
+    },
     # RANDOM OBJECT GRASP V6 ENVS
     {
         'id': 'Widow200GraspV6RandObj-v0',
