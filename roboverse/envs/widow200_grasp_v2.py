@@ -137,7 +137,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
 
         if "Drawer" in self._env_name:
             self._drawer = bullet.objects.drawer()
-            bullet.open_drawer(self._drawer)
+            bullet.open_drawer(self._drawer, noisy_open=self.noisily_open_drawer)
 
         for idx in indexes:
             object_name = self.object_names[idx]
