@@ -403,8 +403,12 @@ def scripted_grasping_V6(env, pool, success_pool, noise=0.2):
             # print('approaching')
             action = (object_pos - ee_pos) * 7.0
             xy_diff = np.linalg.norm(action[:2] / 7.0)
-            if xy_diff > 0.02:
-                action[2] = 0.0
+            if "Drawer" in env._env_name:
+                if xy_diff > dist_thresh:
+                    action[2] = 0.4 # force upward action to avoid upper box
+            else:
+                if xy_diff > 0.02:
+                    action[2] = 0.0
             action = np.concatenate(
                 (action, np.asarray([theta_action, 0., 0.])))
         elif env._gripper_open:
@@ -776,6 +780,117 @@ def scripted_grasping_V6_opening_V0(env, pool, success_pool, noise=0.2):
     if rewards[-1] > 0:
         success_pool.add_path(path)
 
+def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
+    observation = env.reset()
+    object_ind = np.random.randint(0, env._num_objects)
+    margin = 0.025
+    actions, observations, next_observations, rewards, terminals, infos = \
+        [], [], [], [], [], []
+
+    dist_thresh = 0.04 + np.random.normal(scale=0.01)
+    dist_thresh = np.clip(dist_thresh, 0.035, 0.060)
+    max_theta_action_magnitude = 0.2
+    grasp_target_theta = np.random.uniform(-np.pi / 2, np.pi / 2)
+    drawer_never_opened = True
+
+    for _ in range(args.num_timesteps):
+
+        if isinstance(observation, dict):
+            object_pos = observation[env.object_obs_key][
+                         object_ind * 7 : object_ind * 7 + 3]
+            ee_pos = observation[env.fc_input_key][:3]
+        else:
+            object_pos = observation[
+                         object_ind * 7 + 8: object_ind * 7 + 8 + 3]
+            ee_pos = observation[:3]
+
+        handle_pos = env.get_handle_pos()
+        object_lifted_with_margin = object_pos[2] > (
+            env._reward_height_thresh + margin)
+
+        object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
+        gripper_handle_dist = np.linalg.norm(handle_pos - ee_pos)
+        theta = env.get_wrist_joint_angle() # -pi, pi
+
+        if (gripper_handle_dist > dist_thresh
+            and not env.is_drawer_opened(widely=drawer_never_opened)):
+            # print('approaching handle')
+            action = (handle_pos - ee_pos) * 7.0
+            xy_diff = np.linalg.norm(action[:2]/7.0)
+            if xy_diff > dist_thresh:
+                action[2] = 0.4 # force upward action to avoid upper box
+            # Rotate Wrist toward theta = np/2:
+            theta_action = np.clip(
+                (np.pi / 2) - theta,
+                -max_theta_action_magnitude,
+                max_theta_action_magnitude
+            )
+            action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
+        elif not env.is_drawer_opened(widely=drawer_never_opened):
+            # print("opening drawer")
+            action = np.array([0, -1.0, 0])
+            # action = np.asarray([0., 0., 0.7])
+            action = np.concatenate(
+                (action, np.asarray([0., 0., 0.])))
+        elif (object_gripper_dist > dist_thresh
+            and env._gripper_open and gripper_handle_dist < 1.5 * dist_thresh):
+            # print("Lift upward")
+            drawer_never_opened = False
+            action = np.array([0, 0, 0.7]) # force upward action to avoid upper box
+            theta_action_pre_clip = grasp_target_theta - theta
+            theta_action = np.clip(
+                theta_action_pre_clip,
+                -max_theta_action_magnitude,
+                max_theta_action_magnitude
+            )
+            action = np.concatenate(
+                (action, np.asarray([theta_action, 0., 0.])))
+        else:
+            # Move above tray's xy-center.
+            tray_info = roboverse.bullet.get_body_info(
+                env._tray, quat_to_deg=False)
+            tray_center = np.asarray(tray_info['pos'])
+            action = (tray_center - ee_pos)[:2]
+            action = np.concatenate(
+                (action, np.asarray([0., 0., 0., 0.])))
+
+
+        noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
+        action += np.random.normal(scale=noise_scalings)
+        action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
+
+        next_observation, reward, done, info = env.step(action)
+
+        actions.append(action)
+        observations.append(observation)
+        rewards.append(reward)
+        terminals.append(done)
+        infos.append(info)
+        next_observations.append(next_observation)
+
+        observation = next_observation
+
+        if done:
+            break
+
+    path = dict(
+        actions=actions,
+        rewards=np.asarray(rewards).reshape((-1, 1)),
+        terminals=np.asarray(terminals).reshape((-1, 1)),
+        infos=infos,
+        observations=observations,
+        next_observations=next_observations,
+    )
+
+    if not isinstance(observation, dict):
+        path_length = len(rewards)
+        path['agent_infos'] = np.asarray([{} for i in range(path_length)])
+        path['env_infos'] = np.asarray([{} for i in range(path_length)])
+
+    pool.add_path(path)
+    if rewards[-1] > 0:
+        success_pool.add_path(path)
+
 def scripted_markovian_reaching(env, pool, render_images):
     observation = env.reset()
     if args.randomize:
@@ -848,9 +963,16 @@ def main(args):
         V6_GRASPING_V0_PLACING_ENVS + V6_GRASPING_ENVS +
         V6_GRASPING_V0_PLACING_ONLY_ENVS +
         V6_GRASPING_V0_DRAWER_PLACING_ENVS +
-        V6_GRASPING_V0_DRAWER_OPENING_ENVS)
+        V6_GRASPING_V0_DRAWER_OPENING_ENVS +
+        V6_GRASPING_V0_DRAWER_OPENING_ONLY_ENVS +
+        V6_GRASPING_V0_DRAWER_GRASPING_ONLY_ENVS)
 
-    env = roboverse.make(args.env, reward_type=reward_type,
+    if args.env in PROXY_ENVS_MAP:
+        roboverse_env_name = PROXY_ENVS_MAP[args.env]
+    else:
+        roboverse_env_name = args.env
+
+    env = roboverse.make(roboverse_env_name, reward_type=reward_type,
                          gui=args.gui, randomize=args.randomize,
                          observation_mode=args.observation_mode,
                          transpose_image=True)
@@ -901,7 +1023,8 @@ def main(args):
             success = False
             scripted_grasping_V5(env, railrl_pool, railrl_success_pool,
                                  noise=args.noise_std)
-        elif args.env in V6_GRASPING_ENVS:
+        elif args.env in (V6_GRASPING_ENVS +
+            V6_GRASPING_V0_DRAWER_GRASPING_ONLY_ENVS):
             assert not render_images
             success = False
             scripted_grasping_V6(env, railrl_pool, railrl_success_pool,
@@ -917,6 +1040,11 @@ def main(args):
             assert not render_images
             success = False
             scripted_grasping_V6_opening_V0(
+                env, railrl_pool, railrl_success_pool, noise=args.noise_std)
+        elif args.env in V6_GRASPING_V0_DRAWER_OPENING_ONLY_ENVS:
+            assert not render_images
+            success = False
+            scripted_grasping_V6_opening_only_V0(
                 env, railrl_pool, railrl_success_pool, noise=args.noise_std)
         elif args.env in V7_GRASPING_ENVS:
             assert not render_images
@@ -971,7 +1099,9 @@ def main(args):
             V6_GRASPING_V0_PLACING_ENVS +
             V6_GRASPING_V0_PLACING_ONLY_ENVS +
             V6_GRASPING_V0_DRAWER_PLACING_ENVS +
-            V6_GRASPING_V0_DRAWER_OPENING_ENVS):
+            V6_GRASPING_V0_DRAWER_OPENING_ENVS +
+            V6_GRASPING_V0_DRAWER_OPENING_ONLY_ENVS +
+            V6_GRASPING_V0_DRAWER_GRASPING_ONLY_ENVS):
             # For non terminating envs: we reshape the rewards
             # array and count the number of trajectories with
             # a sucess in the last timestep.
@@ -979,8 +1109,11 @@ def main(args):
                 railrl_success_pool._rewards[:-1],
                 (args.num_trajectories, args.num_timesteps))
             # print("reshaped_rewards_pool[:,-1]", reshaped_rewards_pool[:,-1])
-            print('Num success: {}'.format(
-                np.sum(reshaped_rewards_pool[:,-1] > 0)))
+            print('Num success: {}. Proxy_Env: {}'.format(
+                np.sum(reshaped_rewards_pool[:,-1] > 0),
+                args.env in PROXY_ENVS_MAP))
+            # Num success has little meaning if it is a proxy env, since
+            # the reward function corresponds to that of another env.
         else:
             print('Num success: {}'.format(
                 np.sum(railrl_success_pool._rewards > 0)))
@@ -1017,7 +1150,9 @@ if __name__ == "__main__":
     if args.env in V2_GRASPING_ENVS:
         args.num_timesteps = 20
         assert args.observation_mode != 'pixels'
-    elif args.env in V4_GRASPING_ENVS + V6_GRASPING_ENVS + V7_GRASPING_ENVS:
+    elif args.env in (V4_GRASPING_ENVS + V6_GRASPING_ENVS + V7_GRASPING_ENVS +
+        V6_GRASPING_V0_DRAWER_OPENING_ONLY_ENVS +
+        V6_GRASPING_V0_DRAWER_GRASPING_ONLY_ENVS):
         args.num_timesteps = 25
         assert args.observation_mode != 'pixels'
     elif args.env in V6_GRASPING_V0_PLACING_ENVS:
