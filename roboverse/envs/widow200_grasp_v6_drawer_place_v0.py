@@ -14,6 +14,7 @@ class Widow200GraspV6DrawerPlaceV0Env(Widow200GraspV6BoxPlaceV0Env):
                  object_names=('gatorade',),
                  scaling_local_list=[0.5],
                  success_dist_threshold=0.04,
+                 noisily_open_drawer=False,
                  **kwargs):
         super().__init__(*args,
             object_names=object_names,
@@ -33,6 +34,8 @@ class Widow200GraspV6DrawerPlaceV0Env(Widow200GraspV6BoxPlaceV0Env):
         self.scripted_traj_len = 50
 
         self.close_drawer_on_reset = False
+        self.noisily_open_drawer = noisily_open_drawer
+        # When True, drawer does not open all the way
 
     def _load_meshes(self):
         super()._load_meshes()

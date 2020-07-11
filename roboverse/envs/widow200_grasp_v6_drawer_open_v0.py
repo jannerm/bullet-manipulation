@@ -14,6 +14,7 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
                  object_names=('gatorade',),
                  scaling_local_list=[0.5],
                  success_dist_threshold=0.04,
+                 noisily_open_drawer=False,
                  **kwargs):
         camera_target_pos = [1.05, -0.05, -0.1]
         camera_pitch = -50
@@ -34,6 +35,8 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
         self.scripted_traj_len = 50
 
         self.close_drawer_on_reset = True
+        self.noisily_open_drawer = noisily_open_drawer
+        # When True, drawer does not open all the way
 
     def _load_meshes(self):
         super()._load_meshes()
