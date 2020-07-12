@@ -221,12 +221,13 @@ def slide_drawer(drawer, direction, noisy_open=False):
     drawer_frame_joint_idx = joint_names.index('base_frame_joint')
 
     num_ts = 10 if direction == -1 else 20
-    if noisy_open and direction == -1:
-        num_ts = int(np.random.uniform(0.8, 1) * num_ts)
 
     command = np.clip(10 * direction,
             -10 * np.abs(direction), np.abs(direction))
     # enable fast opening; slow closing
+
+    if noisy_open and direction == -1:
+        command *= np.random.uniform(0.75, 1)
 
     # Wait a little before closing
     wait_ts = 0 if direction == -1 else 20

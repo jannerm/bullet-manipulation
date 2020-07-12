@@ -15,6 +15,7 @@ class Widow200GraspV6DrawerPlaceV0Env(Widow200GraspV6BoxPlaceV0Env):
                  scaling_local_list=[0.5],
                  success_dist_threshold=0.04,
                  noisily_open_drawer=False,
+                 close_drawer_on_reset=False,
                  **kwargs):
         camera_target_pos = [1.05, -0.05, -0.1]
         camera_pitch = -50
@@ -37,7 +38,7 @@ class Widow200GraspV6DrawerPlaceV0Env(Widow200GraspV6BoxPlaceV0Env):
         
         self.scripted_traj_len = 50
 
-        self.close_drawer_on_reset = False
+        self.close_drawer_on_reset = close_drawer_on_reset
         self.noisily_open_drawer = noisily_open_drawer
         # When True, drawer does not open all the way
 
