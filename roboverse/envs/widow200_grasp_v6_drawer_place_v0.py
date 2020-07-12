@@ -16,9 +16,13 @@ class Widow200GraspV6DrawerPlaceV0Env(Widow200GraspV6BoxPlaceV0Env):
                  success_dist_threshold=0.04,
                  noisily_open_drawer=False,
                  **kwargs):
+        camera_target_pos = [1.05, -0.05, -0.1]
+        camera_pitch = -50
         super().__init__(*args,
             object_names=object_names,
             scaling_local_list=scaling_local_list,
+            camera_target_pos=camera_target_pos,
+            camera_pitch=camera_pitch,
             **kwargs)
         self._env_name = "Widow200GraspV6DrawerPlaceV0Env"
         self._object_position_high = (.84, -.11, -.2)
@@ -67,7 +71,8 @@ if __name__ == "__main__":
     env = roboverse.make("Widow200GraspV6DrawerPlaceV0-v0",
                          gui=True,
                          reward_type='sparse',
-                         observation_mode='pixels_debug',)
+                         observation_mode='pixels_debug',
+                         noisily_open_drawer=True)
 
     object_ind = 0
     for i in range(50):
