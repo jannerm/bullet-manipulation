@@ -222,7 +222,7 @@ def slide_drawer(drawer, direction, noisy_open=False):
 
     num_ts = 10 if direction == -1 else 20
     if noisy_open and direction == -1:
-        num_ts = int(np.random.uniform(0.7, 1) * num_ts)
+        num_ts = int(np.random.uniform(0.8, 1) * num_ts)
 
     command = np.clip(10 * direction,
             -10 * np.abs(direction), np.abs(direction))

@@ -7,6 +7,7 @@ import os.path as osp
 from railrl.data_management.env_replay_buffer import EnvReplayBuffer
 from railrl.data_management.obs_dict_replay_buffer import \
     ObsDictReplayBuffer
+from roboverse.envs.env_list import PROXY_ENVS_MAP
 
 EXTRA_POOL_SPACE = int(1e5)
 REWARD_NEGATIVE = -10
@@ -49,7 +50,12 @@ if __name__ == "__main__":
         original_pool_size += pool._top
     pool_size = original_pool_size + EXTRA_POOL_SPACE
 
-    env = roboverse.make(args.env,
+    if args.env in PROXY_ENVS_MAP:
+        roboverse_env_name = PROXY_ENVS_MAP[args.env]
+    else:
+        roboverse_env_name = args.env
+
+    env = roboverse.make(roboverse_env_name,
                          observation_mode=args.observation_mode,
                          transpose_image=True)
     if args.observation_mode == 'state':
