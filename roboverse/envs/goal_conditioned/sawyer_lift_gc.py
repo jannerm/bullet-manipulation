@@ -32,23 +32,6 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         super().__init__(*args, env='SawyerLiftMulti-v0', **kwargs)
         self.record_args(locals())
 
-    def sample_goal_for_rollout(self):
-        goals_dict = self.sample_goals(
-            batch_size=1,
-        )
-        goal = goals_dict['state_desired_goal'][0]
-
-        if self.sample_valid_rollout_goals:
-            self.set_env_state(goal)
-
-            # Allow the objects to settle down after they are dropped in sim
-            for _ in range(5):
-                self._env.step(np.array([0, 0, 0, 1]))
-
-            goal = self.get_env_state()
-
-        return goal
-
     def reset(self):
         ## set the box position
         self._bowl_pos = [.75, 0.0, -.3]
@@ -57,9 +40,8 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
                 low=self.bowl_bounds[0],
                 high=self.bowl_bounds[1],
             )
-        # self._env.set_bowl_pos(self._bowl_pos)
 
-        self._goal_pos = self.sample_goal_for_rollout()
+        self._goal_pos = self.sample_goals(1)['state_desired_goal'][0]
 
         self._env._pos_init[:] = np.random.uniform(
             low=self._env._pos_low,
@@ -187,24 +169,6 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         desired_goal_info = self.get_info_from_achieved_goals(
             observations['state_desired_goal'])
 
-        # ee_dist = np.ones(len(ee_pos)) * 1e10
-        #
-        # total_goal_dist = 0
-        # for obj_id in range(self.num_obj):
-        #     obj_pos = achieved_goal_info[self.get_obj_name(obj_id)]
-        #     obj_desired_goal = desired_goal_info[self.get_obj_name(obj_id)]
-        #
-        #     goal_dist = bullet.l2_dist2d(
-        #         obj_pos,
-        #         obj_desired_goal
-        #     )
-        #     total_goal_dist += goal_dist
-        #     ee_dist = np.clip(bullet.l2_dist2d(obj_pos, ee_pos), -1e10, ee_dist)
-        # reward = -(ee_dist * self._goal_mult + total_goal_dist)
-        # reward = np.clip(reward, self.num_obj * self._min_reward, 1e10)
-        # reward[total_goal_dist < 0.25 * self.num_obj] += self._bonus
-        # return reward
-
         rewards = self.reward_type.split('+')
         dist = np.zeros(len(ee_pos))
 
@@ -233,23 +197,14 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         reward = -dist
         return reward
 
-    def get_info(self):
-        desired_goal_info = self.get_info_from_achieved_goal(self._goal_pos)
-        achieved_goal_info = self.get_info_from_achieved_goal(
-            self.get_achieved_goal())
+    def get_info(self, achieved_goal=None, desired_goal=None):
+        if achieved_goal is None:
+            achieved_goal = self.get_achieved_goal()
+        if desired_goal is None:
+            desired_goal = self._goal_pos
+        desired_goal_info = self.get_info_from_achieved_goal(desired_goal)
+        achieved_goal_info = self.get_info_from_achieved_goal(achieved_goal)
         ee_pos = achieved_goal_info['hand_pos']
-
-        # info = {}
-        # hand_dist = 1e10
-        # for obj_id in range(self.num_obj):
-        #     cube_pos = achieved_goal_info[self.get_obj_name(obj_id)]
-        #     cube_goal = desired_goal_info[self.get_obj_name(obj_id)]
-        #
-        #     obj_goal_dist = bullet.l2_dist(cube_pos, cube_goal)
-        #     hand_dist = min(hand_dist, bullet.l2_dist(cube_pos, ee_pos))
-        #     info['{}_dist'.format(self.get_obj_name(obj_id))] = obj_goal_dist
-        # info['hand_dist'] = hand_dist
-        # return info
 
         info = {}
         ee_goal = desired_goal_info['hand_pos']
@@ -398,6 +353,18 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
                 goals_2d,
                 bowl_goals,
             ]
+
+        if batch_size == 1 and self.sample_valid_rollout_goals:
+            curr_state = self.get_achieved_goal()
+            self.set_env_state(goals_2d[0])
+
+            # Allow the objects to settle down after they are dropped in sim
+            for _ in range(5):
+                self._env.step(np.array([0, 0, 0, 1]))
+
+            goals_2d = self.get_env_state()[None]
+            self.set_env_state(curr_state)
+
         return {
             'state_desired_goal': goals_2d,
             'desired_goal': goals_2d,
@@ -448,10 +415,51 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             ('state_achieved_goal', goal_space),
         ])
 
-    def get_contextual_diagnostics(self, paths, contexts):
-        diagnostics = {}
-        return diagnostics
+    def _convert_obs_to_achieved_goals(self, obs):
+        achieved_goals = obs[:,:2*(self.num_obj + 1)]
+        if self._sliding_bowl:
+            achieved_goals = np.c_[
+                achieved_goals,
+                obs[:,-2:-1],
+            ]
+
+        return achieved_goals
 
     def goal_conditioned_diagnostics(self, paths, contexts):
-        diagnostics = {}
-        return diagnostics
+        from collections import OrderedDict, defaultdict
+        from multiworld.envs.env_util import create_stats_ordered_dict
+
+        statistics = OrderedDict()
+        stat_to_lists = defaultdict(list)
+
+        for path, desired_goal in zip(paths, contexts):
+            achieved_goals = self._convert_obs_to_achieved_goals(path['observations'])
+
+            path_infos = []
+            for achieved_goal in achieved_goals:
+                info = self.get_info(achieved_goal, desired_goal)
+                path_infos.append(info)
+
+            for k in path_infos[0].keys():
+                stat_to_lists[k].append([info[k] for info in path_infos])
+
+        for stat_name, stat_list in stat_to_lists.items():
+            statistics.update(create_stats_ordered_dict(
+                'env_infos/{}'.format(stat_name),
+                stat_list,
+                always_show_all_stats=True,
+                exclude_max_min=True,
+            ))
+            statistics.update(create_stats_ordered_dict(
+                'env_infos/final/{}'.format(stat_name),
+                [s[-1:] for s in stat_list],
+                always_show_all_stats=True,
+                exclude_max_min=True,
+            ))
+            statistics.update(create_stats_ordered_dict(
+                'env_infos/initial/{}'.format(stat_name),
+                [s[:1] for s in stat_list],
+                always_show_all_stats=True,
+                exclude_max_min=True,
+            ))
+        return statistics
