@@ -847,10 +847,10 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
                 (action, np.asarray([theta_action, 0., 0.])))
         else:
             # Move above tray's xy-center.
-            tray_info = roboverse.bullet.get_body_info(
-                env._tray, quat_to_deg=False)
-            tray_center = np.asarray(tray_info['pos'])
-            action = (tray_center - ee_pos)[:2]
+            # tray_info = roboverse.bullet.get_body_info(
+            #     env._tray, quat_to_deg=False)
+            # tray_center = np.asarray(tray_info['pos'])
+            action = (object_pos - ee_pos)[:2] * 7.0
             action = np.concatenate(
                 (action, np.asarray([0., 0., 0., 0.])))
 
@@ -1151,11 +1151,11 @@ if __name__ == "__main__":
         args.num_timesteps = 20
         assert args.observation_mode != 'pixels'
     elif args.env in (V4_GRASPING_ENVS + V6_GRASPING_ENVS + V7_GRASPING_ENVS +
-        V6_GRASPING_V0_DRAWER_OPENING_ONLY_ENVS +
         V6_GRASPING_V0_DRAWER_GRASPING_ONLY_ENVS):
         args.num_timesteps = 25
         assert args.observation_mode != 'pixels'
-    elif args.env in V6_GRASPING_V0_PLACING_ENVS:
+    elif args.env in (V6_GRASPING_V0_PLACING_ENVS +
+        V6_GRASPING_V0_DRAWER_OPENING_ONLY_ENVS):
         args.num_timesteps = 30
     elif args.env in V6_GRASPING_V0_PLACING_ONLY_ENVS:
         args.num_timesteps = 10
