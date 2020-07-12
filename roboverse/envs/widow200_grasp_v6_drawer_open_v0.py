@@ -26,8 +26,8 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
             camera_pitch=camera_pitch,
             **kwargs)
         self._env_name = "Widow200GraspV6DrawerOpenV0Env"
-        self._object_position_high = (.84, -.11, -.29)
-        self._object_position_low = (.84, -.13, -.29)
+        self._object_position_high = (.8375, -.11, -.29)
+        self._object_position_low = (.8375, -.13, -.29)
         self._success_dist_threshold = success_dist_threshold
         # self._scaling_local_list = scaling_local_list
         # self.set_scaling_dicts()
@@ -98,10 +98,10 @@ if __name__ == "__main__":
     margin = 0.025
     save_video = True
 
-    env = roboverse.make("Widow200GraspV6DrawerOpenV0-v0",
+    env = roboverse.make("Widow200GraspV6DrawerGraspOnlyV0-v0",
                          gui=True,
                          reward_type='sparse',
-                         observation_mode='pixels_debug',)
+                         observation_mode='pixels_debug')
 
     object_ind = 0
     for i in range(50):
@@ -169,7 +169,7 @@ if __name__ == "__main__":
                 if xy_diff > dist_thresh:
                     action[2] = 0.1
                 action = np.concatenate(
-                    (action, np.asarray([theta_action, 0., 0.])))
+                    (action, np.asarray([0., 0., 0.])))
             elif env._gripper_open:
                 # print('gripper closing')
                 action = (object_pos - ee_pos) * 7.0

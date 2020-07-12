@@ -227,7 +227,8 @@ def slide_drawer(drawer, direction, noisy_open=False):
     # enable fast opening; slow closing
 
     if noisy_open and direction == -1:
-        command *= np.random.uniform(0.75, 1)
+        rand = np.random.uniform(0.1, 0.2)
+        command *= rand
 
     # Wait a little before closing
     wait_ts = 0 if direction == -1 else 20
