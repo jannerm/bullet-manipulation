@@ -846,11 +846,9 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
             action = np.concatenate(
                 (action, np.asarray([theta_action, 0., 0.])))
         else:
-            # Move above tray's xy-center.
-            # tray_info = roboverse.bullet.get_body_info(
-            #     env._tray, quat_to_deg=False)
-            # tray_center = np.asarray(tray_info['pos'])
-            action = (object_pos - ee_pos)[:2] * 7.0
+            # Move above object + offset center
+            xyz_offset = np.random.normal([-0.02, 0.04, 0], scale=0.1*noise, size=(3,))
+            action = ((object_pos + xyz_offset) - ee_pos)[:2] * 7.0
             action = np.concatenate(
                 (action, np.asarray([0., 0., 0., 0.])))
 
