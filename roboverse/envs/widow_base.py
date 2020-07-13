@@ -23,7 +23,8 @@ class WidowBaseEnv(gym.Env, Serializable):
                  downwards=False,
                  camera_target_pos=[.95, -0.05, -0.2],
                  camera_distance=0.10,
-                 camera_pitch=-40
+                 camera_pitch=-40,
+                 use_positive_rew=False
                  ):
 
         self._id = 'WidowBaseEnv'
@@ -57,6 +58,7 @@ class WidowBaseEnv(gym.Env, Serializable):
         self._max_force = max_force
         self._visualize = visualize
         self._img_dim = img_dim
+        self.use_positive_rew = use_positive_rew
 
         bullet.connect_headless(self._gui)
         self._load_meshes()
@@ -95,6 +97,12 @@ class WidowBaseEnv(gym.Env, Serializable):
                                         xyz_min=self._pos_low,
                                         xyz_max=self._pos_high,
                                         visualize=False, rgba=[0, 1, 0, .1])
+
+    def adjust_rew_if_use_positive(self, reward):
+        if self.use_positive_rew:
+            return 6.0 * reward + 4.0
+        else:
+            return reward
 
     def get_params(self):
         labels = ['_action_scale', '_action_repeat',

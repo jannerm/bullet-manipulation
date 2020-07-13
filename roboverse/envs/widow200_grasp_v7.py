@@ -27,4 +27,5 @@ class Widow200GraspV7Env(Widow200GraspV6Env):
                 end_effector_pos - self.gripper_goal_location)
             if object_gripper_distance < 0.07 and gripper_goal_distance < 0.03:
                 reward = REWARD_SUCCESS
+        reward = self.adjust_rew_if_use_positive(reward)
         return reward
