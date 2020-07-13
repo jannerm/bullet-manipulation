@@ -26,8 +26,8 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
             camera_pitch=camera_pitch,
             **kwargs)
         self._env_name = "Widow200GraspV6DrawerOpenV0Env"
-        self._object_position_high = (.8375, -.11, -.29)
-        self._object_position_low = (.8375, -.13, -.29)
+        self._object_position_high = (.84, -.11, -.29)
+        self._object_position_low = (.84, -.13, -.29)
         self._success_dist_threshold = success_dist_threshold
         # self._scaling_local_list = scaling_local_list
         # self.set_scaling_dicts()
@@ -39,9 +39,14 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
         self.noisily_open_drawer = noisily_open_drawer
         # When True, drawer does not open all the way
 
+        if not self.close_drawer_on_reset:
+            self._object_position_high = (.835, -.11, -.29)
+            self._object_position_low = (.825, -.13, -.29)
+            self.scripted_traj_len = 25 # Give less time if drawer starts opened.
+
     def _load_meshes(self):
         super()._load_meshes()
-        self._box = bullet.objects.lifted_long_box_open_top()
+        # self._box = bullet.objects.lifted_long_box_open_top()
 
     def get_drawer_bottom_pos(self):
         link_names = [bullet.get_joint_info(self._drawer, j, 'link_name')
@@ -135,7 +140,7 @@ if __name__ == "__main__":
                 action = (handle_pos - ee_pos) * 7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
                 if xy_diff > dist_thresh:
-                    action[2] = 0.4 # force upward action to avoid upper box
+                    action[2] = 0.5 # force upward action to avoid upper box
                 # Rotate Wrist toward theta = np/2:
                 theta_action = np.clip(
                     (np.pi / 2) - theta,
