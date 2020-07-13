@@ -68,6 +68,7 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
                     object_pos - end_effector_pos)
                 if object_gripper_distance < 0.1:
                     reward = REWARD_SUCCESS
+        reward = self.adjust_rew_if_use_positive(reward)
         return reward
 
     def get_wrist_joint_angle(self):
