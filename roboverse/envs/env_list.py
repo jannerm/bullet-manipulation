@@ -42,4 +42,5 @@ V6_GRASPING_V0_DRAWER_OPENING_ENVS = ['Widow200GraspV6DrawerOpenV0-v0',
 V7_GRASPING_ENVS = ['Widow200GraspV7-v0',
                     'Widow200GraspV7BoxV0-v0',
                     'Widow200GraspV7BoxV0TenSameTrainTestRandObj-v0',
-                    'Widow200GraspV7BoxV0TenRandObj-v0']
+                    'Widow200GraspV7BoxV0TenRandObj-v0',
+                    'Widow200GraspV7BoxV0FiftyIncludeTestRandObj-v0']
