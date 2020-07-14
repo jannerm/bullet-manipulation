@@ -70,8 +70,10 @@ class Widow200GraspV6BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
                 reward = 0.5
             else:
                 reward = 0.0
+            reward = self.adjust_rew_if_use_positive(reward)
         elif self._reward_type == 'sparse':
             reward = float(info['object_in_box_success'])
+            reward = self.adjust_rew_if_use_positive(reward)
         else:
             print(self._reward_type)
             raise NotImplementedError
@@ -117,6 +119,7 @@ class Widow200GraspV6BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
             object_grasped=object_grasped)
         return info
 
+
 class Widow200GraspV6BoxPlaceV0RandObjEnv(RandObjEnv, Widow200GraspV6BoxPlaceV0Env):
     """
     Generalization env. Randomly samples one of the following objects
@@ -138,6 +141,7 @@ if __name__ == "__main__":
                          place_only=True)
 
     object_ind = 0
+
     for i in range(50):
         obs = env.reset()
         # object_pos[2] = -0.30

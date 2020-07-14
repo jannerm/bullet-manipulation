@@ -32,3 +32,9 @@ class Widow200GraspV7BoxV0Env(Widow200GraspV7Env):
     def _load_meshes(self):
         super()._load_meshes()
         self._box = bullet.objects.long_box_open_top()
+
+class Widow200GraspV7BoxV0RandObjEnv(RandObjEnv, Widow200GraspV7BoxV0Env):
+    """
+    Generalization env. Randomly samples one of the following objects
+    every time the env resets for the V6Box task.
+    """
