@@ -23,6 +23,7 @@ class Widow200GraspV5AndPlaceV0Env(Widow200GraspV5Env):
             reward = -1.0*info['object_goal_dist']
         elif self._reward_type == 'sparse':
             reward = float(info['object_goal_success'])
+            reward = self.adjust_rew_if_use_positive(reward)
         else:
             print(self._reward_type)
             raise NotImplementedError
