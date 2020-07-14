@@ -97,17 +97,7 @@ class Widow200GraspV6DrawerOpenV0RandObjEnv(RandObjEnv, Widow200GraspV6DrawerOpe
     every time the env resets for the V6DrawerPlace task.
     """
 
-if __name__ == "__main__":
-    EPSILON = 0.05
-    noise = 0.2
-    margin = 0.025
-    save_video = True
-
-    env = roboverse.make("Widow200GraspV6DrawerGraspOnlyV0-v0",
-                         gui=True,
-                         reward_type='sparse',
-                         observation_mode='pixels_debug')
-
+def drawer_open_policy(EPSILON, noise, margin, save_video, env):
     object_ind = 0
     for i in range(50):
         obs = env.reset()
@@ -213,3 +203,15 @@ if __name__ == "__main__":
 
         if save_video:
             utils.save_video('data/grasp_place_{}.avi'.format(i), images)
+
+if __name__ == "__main__":
+    EPSILON = 0.05
+    noise = 0.2
+    margin = 0.025
+    save_video = True
+
+    env = roboverse.make("Widow200GraspV6DrawerGraspOnlyV0-v0",
+                         gui=True,
+                         reward_type='sparse',
+                         observation_mode='pixels_debug')
+    drawer_open_policy(EPSILON, noise, margin, save_video, env)

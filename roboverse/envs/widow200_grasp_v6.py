@@ -56,7 +56,7 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
 
         reward = self.get_reward({})
         info = self.get_info()
-        info['grasp_success'] = 1.0 if reward > 0 else 0.0
+        info['grasp_success'] = float(self.is_object_grasped())
 
         observation = self.get_observation()
         self._prev_pos = bullet.get_link_state(self._robot_id, self._end_effector,
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     import time
     env = roboverse.make("Widow200GraspV6RandObj-v0",
                          gui=True,
-                         observation_mode='state',)
+                         observation_mode='pixels_debug',)
 
     object_ind = 0
     EPSILON = 0.05
@@ -134,7 +134,7 @@ if __name__ == "__main__":
             obs, rew, done, info = env.step(action)
             time.sleep(0.05)
 
-            # print('reward: {}'.format(rew))
+            print("info", info)
             rewards.append(rew)
 
         # print("="*10)

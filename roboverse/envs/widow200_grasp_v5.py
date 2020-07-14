@@ -54,9 +54,10 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
         else:
             raise NotImplementedError
 
-    def get_reward(self, info):
+    def is_object_grasped(self):
+        """Returns true if any object is above reward height thresh."""
         object_list = self._objects.keys()
-        reward = REWARD_FAIL
+        is_grasped = False
         for object_name in object_list:
             object_info = bullet.get_body_info(self._objects[object_name],
                                                quat_to_deg=False)
@@ -67,7 +68,11 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
                 object_gripper_distance = np.linalg.norm(
                     object_pos - end_effector_pos)
                 if object_gripper_distance < 0.1:
-                    reward = REWARD_SUCCESS
+                    is_grasped = True
+        return is_grasped
+
+    def get_reward(self, info):
+        reward = float(self.is_object_grasped())
         reward = self.adjust_rew_if_use_positive(reward)
         return reward
 
@@ -179,15 +184,12 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
 
         if action[5] > 0.5:
             done = True
-            reward = self.get_reward({})
-            if reward > 0:
-                info = {'grasp_success': 1.0}
-            else:
-                info = {'grasp_success': 0.0}
+            reward = float(self.is_object_grasped())
+            reward = self.adjust_rew_if_use_positive(reward)
         else:
             done = False
-            reward = REWARD_FAIL
-            info = {'grasp_success': 0.0}
+            reward = self.adjust_rew_if_use_positive(REWARD_FAIL)
+        info = {'grasp_success': float(self.is_object_grasped())}
 
         observation = self.get_observation()
         self._prev_pos = bullet.get_link_state(self._robot_id, self._end_effector,
@@ -235,7 +237,7 @@ if __name__ == "__main__":
     import time
     env = roboverse.make("Widow200GraspV5-v0",
                          gui=True,
-                         observation_mode='state',)
+                         observation_mode='pixels_debug',)
 
     object_ind = 0
     EPSILON = 0.05
