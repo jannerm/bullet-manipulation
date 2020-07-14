@@ -21,6 +21,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             random_init_bowl_pos=False,
             sample_valid_rollout_goals=True,
             bowl_bounds=[-0.40, 0.40],
+            bowl_pos_in_goal=False,
             **kwargs
     ):
         self.reset_obj_in_hand_rate = reset_obj_in_hand_rate
@@ -29,6 +30,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         self.random_init_bowl_pos = random_init_bowl_pos
         self.sample_valid_rollout_goals = sample_valid_rollout_goals
         self.bowl_bounds = bowl_bounds
+        self.bowl_pos_in_goal = bowl_pos_in_goal
         super().__init__(*args, env='SawyerLiftMulti-v0', **kwargs)
         self.record_args(locals())
 
@@ -101,7 +103,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             self.get_2d_hand_pos(),
             obj_achieved_goals,
         ]
-        if self._sliding_bowl:
+        if self.bowl_pos_in_goal:
             achieved_goal = np.r_[
                 achieved_goal,
                 self.get_bowl_position()[1],
@@ -121,7 +123,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         info = {
             'hand_pos': hand_pos,
         }
-        if self._sliding_bowl:
+        if self.bowl_pos_in_goal:
             assert achieved_goals.shape[1] == (1 + self.num_obj) * 2 + 1
         else:
             assert achieved_goals.shape[1] == (1 + self.num_obj) * 2
@@ -129,7 +131,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             idx_start = (1 + cube_id) * 2
             idx_end = idx_start + 2
             info[self.get_obj_name(cube_id)] = achieved_goals[:, idx_start:idx_end]
-        if self._sliding_bowl:
+        if self.bowl_pos_in_goal:
             info['bowl_pos'] = achieved_goals[:,-1]
         return info
 
@@ -191,7 +193,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             )
             if 'obj_dist' in rewards:
                 dist += obj_dist
-        if self._sliding_bowl and 'obj_dist' in rewards:
+        if self.bowl_pos_in_goal and 'obj_dist' in rewards:
             dist += np.abs(achieved_goal_info['bowl_pos'] - desired_goal_info['bowl_pos'])
 
         reward = -dist
@@ -218,12 +220,12 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             info['{}_success'.format(self.get_obj_name(obj_id))] = \
                 float(np.abs(cube_pos[0] - self._bowl_pos[1]) <= 0.09)
 
-            if self._sliding_bowl:
+            if self.bowl_pos_in_goal:
                 info['bowl_{}_dist'.format(self.get_obj_name(obj_id))] = np.abs(
                     achieved_goal_info['bowl_pos'] - cube_pos[0]
                 )
 
-        if self._sliding_bowl:
+        if self.bowl_pos_in_goal:
             info['bowl_dist'] = np.abs(achieved_goal_info['bowl_pos'] - desired_goal_info['bowl_pos'])
         return info
 
@@ -256,7 +258,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
                       goal_info[self.get_obj_name(obj_id)]],
                 deg=[90,0,-90],
             )
-        if self._sliding_bowl:
+        if self.bowl_pos_in_goal:
             self.set_bowl_position([0.75, goal_info['bowl_pos'], -0.3])
 
     def set_to_goal(self, goal):
@@ -303,13 +305,13 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         low = self._env._pos_low[1:]
         high = self._env._pos_high[1:]
 
-        if self._sliding_bowl:
-            bowl_goals = np.random.uniform(
+        if self.bowl_pos_in_goal:
+            bowl_xpos = np.random.uniform(
                 low=self.bowl_bounds[0],
                 high=self.bowl_bounds[1],
                 size=(batch_size, 1))
         else:
-            bowl_goals = np.random.uniform(
+            bowl_xpos = np.random.uniform(
                 low=self._bowl_pos[1],
                 high=self._bowl_pos[1],
                 size=(batch_size, 1))
@@ -331,7 +333,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         elif goal_sampling_mode == 'obj_in_bowl':
             obj_goals = np.tile(
                 np.c_[
-                    bowl_goals,
+                    bowl_xpos,
                     self._bowl_pos[2] * np.ones(batch_size),
                 ],
                 (1, self.num_obj)
@@ -348,10 +350,10 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             hand_goals,
             obj_goals,
         ]
-        if self._sliding_bowl:
+        if self.bowl_pos_in_goal:
             goals_2d = np.c_[
                 goals_2d,
-                bowl_goals,
+                bowl_xpos,
             ]
 
         if batch_size == 1 and self.sample_valid_rollout_goals:
@@ -417,7 +419,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
 
     def _convert_obs_to_achieved_goals(self, obs):
         achieved_goals = obs[:,:2*(self.num_obj + 1)]
-        if self._sliding_bowl:
+        if self.bowl_pos_in_goal:
             achieved_goals = np.c_[
                 achieved_goals,
                 obs[:,-2:-1],
