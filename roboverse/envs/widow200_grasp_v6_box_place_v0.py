@@ -94,10 +94,8 @@ class Widow200GraspV6BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
         object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
         object_gripper_success = int(
             object_gripper_dist < self._success_dist_threshold)
-        if object_gripper_success and object_pos[2] > -0.31:
-            object_grasped = True
-        else:
-            object_grasped = False
+        object_grasped = int(object_gripper_success and
+            object_pos[2] > self._reward_height_thresh)
 
         object_goal_dist = np.linalg.norm(object_pos - self._goal_position)
         object_dist_success = int(object_goal_dist < self._success_dist_threshold)

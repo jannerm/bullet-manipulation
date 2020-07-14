@@ -129,7 +129,7 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
         'entry_point': ('roboverse.envs.widow200_grasp_v5:Widow200GraspV5Env'),
         'kwargs': {'max_force': 100,
                    'action_scale': 0.05,
-                   'reward_height_threshold': -.20}
+                   'reward_height_threshold': -.275}
     },
     {
         'id': 'Widow200GraspFiveV5-v0',

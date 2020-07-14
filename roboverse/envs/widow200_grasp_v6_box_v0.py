@@ -49,7 +49,7 @@ if __name__ == "__main__":
     env = roboverse.make("Widow200GraspV6BoxV0RandObj-v0",
                          gui=True,
                          reward_type='sparse',
-                         observation_mode='state',)
+                         observation_mode='pixels_debug',)
 
     EPSILON = 0.05
     object_ind = 0
