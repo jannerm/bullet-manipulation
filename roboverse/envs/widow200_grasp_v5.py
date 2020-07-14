@@ -13,7 +13,7 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
         self.cnn_input_key = "image"
         self.fc_input_key = "robot_state"
         self.object_obs_key = "object_state"
-        self.gripper_goal_location = np.asarray([0.81, -0.05, -0.15])
+        self.gripper_goal_location = np.asarray([0.81, -0.05, -0.20])
         super().__init__(*args, **kwargs)
 
     def _set_action_space(self):
