@@ -1,8 +1,10 @@
 *egg-info*
 *__pycache__*
 *.pyc*
-roboverse/envs/assets/ShapeNetCore/*
 data/*
 *.zip*
 *.png*
 *.avi*
+*.gif*
+*.csv*
+*.jpg*

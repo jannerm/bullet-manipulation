@@ -56,8 +56,9 @@ class Widow200GraspV6BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
 
     def _load_meshes(self):
         super()._load_meshes()
-        self._box = bullet.objects.long_box_open_top()
-        # self._test_box = bullet.objects.test_box()
+        if not "Drawer" in self._env_name:
+            # Drawer Env loads its own box.
+            self._box = bullet.objects.long_box_open_top()
 
     def get_reward(self, info):
         if self._reward_type in ['dense', 'shaped']:

@@ -8,7 +8,10 @@ import os
 
 # buffer_path = "/home/albert/dev/bullet-manipulation-avi-master/data/data_Widow200GraspV6BoxPlaceV0-v0_pixels_debug_1_sparse_reward_scripted_actions_fixed_position_noise_std_0.1/2020-06-22T10-42-24/2020-06-22T10-42-24_pool_31.pkl"
 
-buffer_path = "/nfs/kun1/users/albert/batch_rl_datasets/july8_Widow200GraspV6BoxPlaceV0-v0_pixels_debug_40K_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/pool_pick.pkl"
+buffer_path = "/home/albert/batch_rl_datasets/test_jul11_v8_Widow200GraspV6DrawerOpenOnlyV0-v0_pixels_debug_20_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl"
+
+traj_len = 30
+num_rollouts_to_save = 20
 
 def get_img_np_from_buffer(buffer_path, img_side):
     with open(buffer_path, 'rb') as f:
@@ -34,7 +37,5 @@ def save_video_from_img_obs(img_obs, img_side, traj_len, num_rollouts_to_save):
 
 if __name__ == "__main__":
     img_side = 48
-    traj_len = 15
-    num_rollouts_to_save = 10
     img_obs = get_img_np_from_buffer(buffer_path, img_side)
     save_video_from_img_obs(img_obs, img_side, traj_len, num_rollouts_to_save)
