@@ -46,37 +46,38 @@ def run_and_test_object_success():
                              train_scaling_list=[scaling],
                              reward_type='sparse',
                              observation_mode='pixels_debug',)
-    
+
         object_ind = 0
         num_successes = 0
         for i in range(num_trials):
             obs = env.reset()
             # object_pos[2] = -0.30
 
-            dist_thresh = 0.04 + np.random.normal(scale=0.01)
-            grasp_target_theta = np.random.uniform(-np.pi / 2, np.pi / 2)
-            # Note that wrist angle is between [-pi, pi]
-            # print("grasp_target_theta", grasp_target_theta)
+            dist_thresh = 0.045 + np.random.normal(scale=0.01)
+            dist_thresh = np.clip(dist_thresh, 0.035, 0.060)
+
+            box_dist_thresh = 0.035 + np.random.normal(scale=0.01)
+            box_dist_thresh = np.clip(box_dist_thresh, 0.025, 0.05)
 
             for _ in range(env.scripted_traj_len):
                 if isinstance(obs, dict):
                     state_obs = obs[env.fc_input_key]
                     obj_obs = obs[env.object_obs_key]
-    
+
                 ee_pos = state_obs[:3]
                 object_pos = obj_obs[object_ind * 7 : object_ind * 7 + 3]
                 # object_pos += np.random.normal(scale=0.02, size=(3,))
-    
+
                 object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
-                theta = env.get_wrist_joint_angle() # -pi, pi
-                theta_action_pre_clip = grasp_target_theta - theta
-                theta_action = np.clip(
-                    theta_action_pre_clip,
-                    -max_theta_action_magnitude,
-                    max_theta_action_magnitude
-                )
+                object_box_dist = np.linalg.norm(
+                    env._goal_position[:2] - object_pos[:2])
+
+                theta_action = 0.
+                object_goal_dist = np.linalg.norm(object_pos - env._goal_position)
 
                 info = env.get_info()
+                # theta_action = np.random.uniform()
+                # print(object_gripper_dist)
                 if (object_gripper_dist > dist_thresh and
                     env._gripper_open and not info['object_above_box_success']):
                     # print('approaching')
@@ -84,21 +85,20 @@ def run_and_test_object_success():
                     xy_diff = np.linalg.norm(action[:2]/7.0)
                     if xy_diff > 0.02:
                         action[2] = 0.0
-
-                    # print("theta", theta)
-                    # print("theta_action_pre_clip", theta_action_pre_clip)
-                    # print("theta action post clip", theta_action)
                     action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
-                elif env._gripper_open and not info['object_above_box_success']:
+                elif env._gripper_open and object_box_dist > box_dist_thresh:
                     # print('gripper closing')
                     action = (object_pos - ee_pos) * 7.0
                     action = np.concatenate(
                         (action, np.asarray([0., -0.7, 0.])))
-                elif not info['object_above_box_success']:
+                elif object_box_dist > box_dist_thresh:
+                    # print(object_goal_dist)
                     action = (env._goal_position - object_pos)*7.0
                     # action = np.asarray([0., 0., 0.7])
+                    action[2] = 0.
                     action = np.concatenate(
                         (action, np.asarray([0., 0., 0.])))
+
                 elif not info['object_in_box_success']:
                     # object is now above the box.
                     action = (env._goal_position - object_pos)*7.0
@@ -106,14 +106,17 @@ def run_and_test_object_success():
                         (action, np.asarray([0., 0.7, 0.])))
                 else:
                     action = np.zeros((6,))
+                    action[2] = 0.5
 
-                noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
-                action += np.random.normal(scale=noise_scalings)
+                # print("object_pos", object_pos)
+    
+                action[:3] += np.random.normal(scale=noise, size=(3,))
+                action[4] += np.random.normal(scale=noise)
                 action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
                 obs, rew, done, info = env.step(action)
-
+    
                 time.sleep(0.05)
-
+    
             num_successes += rew
             print('reward: {}'.format(rew))
             print('num_successes / i + 1: {}/{}'.format(num_successes, i + 1))
@@ -148,4 +151,3 @@ if __name__ == "__main__":
     df.to_csv('object_success_sorted.csv')
 
     process_csv('object_success_sorted.csv')
-
