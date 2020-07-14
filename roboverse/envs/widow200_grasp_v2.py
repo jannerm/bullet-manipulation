@@ -95,7 +95,11 @@ class Widow200GraspV2Env(Widow200GraspEnv):
 
     def _load_meshes(self):
         super()._load_meshes()
-        self._tray = bullet.objects.widow200_tray()
+        if "Drawer" in self._env_name:
+            # pass
+            self._tray = bullet.objects.widow200_tray_large()
+        else:
+            self._tray = bullet.objects.widow200_tray()
 
         self._objects = {}
         self._sensors = {}
@@ -130,6 +134,10 @@ class Widow200GraspV2Env(Widow200GraspEnv):
         indexes = list(range(self._num_objects))
         random.shuffle(indexes)
 
+        if "Drawer" in self._env_name:
+            self._drawer = bullet.objects.drawer()
+            bullet.open_drawer(self._drawer, noisy_open=self.noisily_open_drawer)
+
         for idx in indexes:
             object_name = self.object_names[idx]
             self._objects[object_name] = load_shapenet_object(
@@ -137,6 +145,9 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                 object_positions[idx], scale_local=self._scaling_local[object_name])
             for _ in range(10):
                 bullet.step()
+
+        if "Drawer" in self._env_name and self.close_drawer_on_reset:
+            bullet.close_drawer(self._drawer)
 
     def step(self, action):
         action = np.asarray(action)

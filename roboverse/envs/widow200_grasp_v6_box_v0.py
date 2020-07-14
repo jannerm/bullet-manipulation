@@ -31,7 +31,9 @@ class Widow200GraspV6BoxV0Env(Widow200GraspV6Env):
 
     def _load_meshes(self):
         super()._load_meshes()
-        self._box = bullet.objects.long_box_open_top()
+        if not "Drawer" in self._env_name:
+            # Drawer Env loads its own box.
+            self._box = bullet.objects.long_box_open_top()
 
 class Widow200GraspV6BoxV0RandObjEnv(RandObjEnv, Widow200GraspV6BoxV0Env):
     """

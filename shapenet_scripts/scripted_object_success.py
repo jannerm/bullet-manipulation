@@ -9,7 +9,8 @@ def run_and_test_object_success():
     print("Remember to rename the csv if it is already in the dir.")
     EPSILON = 0.05
     noise = 0.2
-    num_trials = 50
+    num_trials = 1
+    max_theta_action_magnitude = 0.2
     objects_to_test = [
         'conic_bin',
         'jar',
@@ -28,6 +29,7 @@ def run_and_test_object_success():
 
     # obj_scaling_to_try = (list(itertools.product(objects_to_test, scalings_to_try)))
     obj_scaling_to_try = list(zip(objects_to_test, scalings))
+    obj_scaling_to_try = [('gatorade', 0.5)]
 
     print("obj_scaling_to_try", obj_scaling_to_try)
 
@@ -44,7 +46,7 @@ def run_and_test_object_success():
                              train_scaling_list=[scaling],
                              reward_type='sparse',
                              observation_mode='pixels_debug',)
-    
+
         object_ind = 0
         num_successes = 0
         for i in range(num_trials):
@@ -61,18 +63,18 @@ def run_and_test_object_success():
                 if isinstance(obs, dict):
                     state_obs = obs[env.fc_input_key]
                     obj_obs = obs[env.object_obs_key]
-    
+
                 ee_pos = state_obs[:3]
                 object_pos = obj_obs[object_ind * 7 : object_ind * 7 + 3]
                 # object_pos += np.random.normal(scale=0.02, size=(3,))
-    
+
                 object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
                 object_box_dist = np.linalg.norm(
                     env._goal_position[:2] - object_pos[:2])
 
                 theta_action = 0.
                 object_goal_dist = np.linalg.norm(object_pos - env._goal_position)
-    
+
                 info = env.get_info()
                 # theta_action = np.random.uniform()
                 # print(object_gripper_dist)
