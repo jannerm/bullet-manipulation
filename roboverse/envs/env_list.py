@@ -48,7 +48,4 @@ V7_GRASPING_ENVS = ['Widow200GraspV7-v0',
                     'Widow200GraspV7BoxV0TwentyIncludeTestRandObj-v0',
                     'Widow200GraspV7BoxV0FiftyIncludeTestRandObj-v0']
 
-# Proxy envs do not have reward functions since they are used for prior datasets.
-PROXY_ENVS_MAP = {
-    V6_GRASPING_V0_DRAWER_OPENING_ONLY_ENVS[0]: V6_GRASPING_V0_DRAWER_OPENING_ENVS[0],
-}
+PROXY_ENVS_MAP = {}
