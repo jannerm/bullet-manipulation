@@ -16,6 +16,7 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
                  success_dist_threshold=0.04,
                  noisily_open_drawer=False,
                  close_drawer_on_reset=True,
+                 open_only=False,
                  **kwargs):
         camera_target_pos = [1.05, -0.05, -0.1]
         camera_pitch = -50
@@ -38,11 +39,16 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
         self.close_drawer_on_reset = close_drawer_on_reset
         self.noisily_open_drawer = noisily_open_drawer
         # When True, drawer does not open all the way
+        self.open_only = open_only
 
         if not self.close_drawer_on_reset:
             self._object_position_high = (.835, -.11, -.29)
             self._object_position_low = (.825, -.13, -.29)
             self.scripted_traj_len = 25 # Give less time if drawer starts opened.
+        if self.open_only:
+            assert self.close_drawer_on_reset
+            # If task is only to open drawer, the drawer better start out closed
+            self.scripted_traj_len = 30
 
     def _load_meshes(self):
         super()._load_meshes()
