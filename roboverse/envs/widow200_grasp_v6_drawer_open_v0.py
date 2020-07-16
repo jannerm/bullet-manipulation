@@ -12,8 +12,8 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
     """Task is to open drawer, then grasp object inside it."""
     def __init__(self,
                  *args,
-                 object_names=('shed',),
-                 scaling_local_list=[0.3],
+                 object_names=('ball',),
+                 scaling_local_list=[0.5],
                  success_dist_threshold=0.04,
                  noisily_open_drawer=False,
                  close_drawer_on_reset=True,
@@ -31,8 +31,8 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
             camera_pitch=camera_pitch,
             **kwargs)
         self._env_name = "Widow200GraspV6DrawerOpenV0Env"
-        self._object_position_high = (.82, -.06, -.29)
-        self._object_position_low = (.82, -.07, -.29)
+        self._object_position_high = (.82, -.08, -.29)
+        self._object_position_low = (.82, -.09, -.29)
         self._success_dist_threshold = success_dist_threshold
         # self._scaling_local_list = scaling_local_list
         # self.set_scaling_dicts()
@@ -369,7 +369,7 @@ if __name__ == "__main__":
     margin = 0.025
     save_video = True
 
-    mode = "GraspOnly"
+    mode = "Open"
 
     gui = True
     reward_type = "sparse"

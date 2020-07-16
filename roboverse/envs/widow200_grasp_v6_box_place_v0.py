@@ -16,8 +16,8 @@ class Widow200GraspV6BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
 
     def __init__(self,
                  *args,
-                 object_names=('gatorade',),
-                 scaling_local_list=[0.5],
+                 object_names=('camera',),
+                 scaling_local_list=[0.3],
                  success_dist_threshold=0.04,
                  place_only=False,
                  **kwargs):
@@ -136,7 +136,7 @@ if __name__ == "__main__":
                          gui=True,
                          reward_type='semisparse',
                          observation_mode='pixels_debug',
-                         place_only=True)
+                         )
     object_ind = 0
 
     for i in range(50):
