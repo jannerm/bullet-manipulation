@@ -11,8 +11,8 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
     """Task is to open drawer, then grasp object inside it."""
     def __init__(self,
                  *args,
-                 object_names=('gatorade',),
-                 scaling_local_list=[0.5],
+                 object_names=('shed',),
+                 scaling_local_list=[0.3],
                  success_dist_threshold=0.04,
                  noisily_open_drawer=False,
                  close_drawer_on_reset=True,
@@ -27,8 +27,8 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
             camera_pitch=camera_pitch,
             **kwargs)
         self._env_name = "Widow200GraspV6DrawerOpenV0Env"
-        self._object_position_high = (.84, -.11, -.29)
-        self._object_position_low = (.84, -.13, -.29)
+        self._object_position_high = (.84, -.1, -.29)
+        self._object_position_low = (.84, -.1, -.29)
         self._success_dist_threshold = success_dist_threshold
         # self._scaling_local_list = scaling_local_list
         # self.set_scaling_dicts()
@@ -71,7 +71,7 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
         return np.array(handle_pos)
 
     def is_drawer_opened(self, widely=False):
-        opened_thresh = -0.05 if not widely else -0.1
+        opened_thresh = -0.01 if not widely else -0.06
         return self.get_drawer_bottom_pos()[1] < opened_thresh
 
     def get_info(self):
@@ -128,21 +128,15 @@ def drawer_open_policy(EPSILON, noise, margin, save_video, env):
 
             object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
             gripper_handle_dist = np.linalg.norm(handle_pos - ee_pos)
-            theta = env.get_wrist_joint_angle() # -pi, pi
+            theta_action = 0.
 
             if (gripper_handle_dist > dist_thresh
                 and not env.is_drawer_opened(widely=drawer_never_opened)):
                 print('approaching handle')
                 action = (handle_pos - ee_pos) * 7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
-                if xy_diff > dist_thresh:
+                if xy_diff > 0.75 * dist_thresh:
                     action[2] = 0.5 # force upward action to avoid upper box
-                # Rotate Wrist toward theta = np/2:
-                theta_action = np.clip(
-                    (np.pi / 2) - theta,
-                    -max_theta_action_magnitude,
-                    max_theta_action_magnitude
-                )
                 action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
             elif not env.is_drawer_opened(widely=drawer_never_opened):
                 print("opening drawer")
@@ -155,12 +149,6 @@ def drawer_open_policy(EPSILON, noise, margin, save_video, env):
                 print("Lift upward")
                 drawer_never_opened = False
                 action = np.array([0, 0, 0.7]) # force upward action to avoid upper box
-                theta_action_pre_clip = grasp_target_theta - theta
-                theta_action = np.clip(
-                    theta_action_pre_clip,
-                    -max_theta_action_magnitude,
-                    max_theta_action_magnitude
-                )
                 action = np.concatenate(
                     (action, np.asarray([theta_action, 0., 0.])))
             elif object_gripper_dist > dist_thresh and env._gripper_open:
@@ -216,7 +204,7 @@ if __name__ == "__main__":
     margin = 0.025
     save_video = True
 
-    env = roboverse.make("Widow200GraspV6DrawerGraspOnlyV0-v0",
+    env = roboverse.make("Widow200GraspV6DrawerOpenV0-v0",
                          gui=True,
                          reward_type='sparse',
                          observation_mode='pixels_debug')
