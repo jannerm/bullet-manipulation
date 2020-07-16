@@ -505,7 +505,8 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
         'entry_point': ('roboverse.envs.widow200_grasp_v6_drawer_open_v0:Widow200GraspV6DrawerOpenV0Env'),
         'kwargs': {'max_force': 10,
                    'action_scale': 0.05,
-                   'reward_height_threshold': -.275,}
+                   'reward_height_threshold': -.275,
+                   'object_names': ('shed',)}
     },
     {
         'id': 'Widow200GraspV6DrawerOpenV0RandObj-v0',
@@ -576,7 +577,9 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'action_scale': 0.05,
                    'reward_height_threshold': -.275,
                    'noisily_open_drawer': True,
-                   'close_drawer_on_reset': False}
+                   'close_drawer_on_reset': False,
+                    'object_names': ('shed',),
+                   'scaling_local_list': [0.4],}
     },
     {
         'id': 'Widow200GraspV6DrawerOpenOnlyV0-v0',
@@ -584,7 +587,9 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
         'kwargs': {'max_force': 10,
                    'action_scale': 0.05,
                    'reward_height_threshold': -.275,
-                   'open_only': True}
+                   'open_only': True,
+                   'object_names': ('shed',),
+                   'scaling_local_list': [0.4],}
     },
     # BOX PACKING ENVS
     {
