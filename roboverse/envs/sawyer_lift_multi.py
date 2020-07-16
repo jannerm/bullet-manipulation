@@ -21,7 +21,6 @@ class SawyerLiftMultiEnv(SawyerBaseEnv):
         self._max_joint_velocity = max_joint_velocity
         assert bowl_type in ['fixed', 'light', 'heavy']
         self._bowl_type = bowl_type
-        # self._bowl_pos = None
         if self._obj_urdf in ['spam', 'spam_long']:
             self._clip_obj_pos = True
         elif self._obj_urdf == 'spam_2d':
@@ -36,10 +35,6 @@ class SawyerLiftMultiEnv(SawyerBaseEnv):
 
     def _load_meshes(self):
         super()._load_meshes()
-
-        # bowl_pos = self._bowl_pos
-        # if bowl_pos is None:
-        #     bowl_pos = [.75, 0, -.3]
 
         # lid_obj = bullet.objects.lid_2d()
         # self._objects['lid'] = lid_obj
