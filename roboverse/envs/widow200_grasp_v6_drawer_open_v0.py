@@ -52,7 +52,7 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
 
     def _load_meshes(self):
         super()._load_meshes()
-        # self._box = bullet.objects.lifted_long_box_open_top()
+        self._box = bullet.objects.lifted_long_box_open_top()
 
     def get_drawer_bottom_pos(self):
         link_names = [bullet.get_joint_info(self._drawer, j, 'link_name')

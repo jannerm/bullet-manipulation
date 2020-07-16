@@ -33,8 +33,8 @@ class Widow200GraspV6DrawerPlaceV0Env(Widow200GraspV6BoxPlaceV0Env):
         # self.set_scaling_dicts()
         self.set_box_pos_as_goal_pos()
         # self.obs_img_dim = 228
-        self.box_high = np.array([0.895, .05, -.25])
-        self.box_low = np.array([0.79, -0.03, -.295])
+        self.box_high = np.array([0.895, .05, -.26])
+        self.box_low = np.array([0.79, -0.03, -.305])
 
         self.scripted_traj_len = 50
 
