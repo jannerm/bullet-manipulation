@@ -31,8 +31,8 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
             camera_pitch=camera_pitch,
             **kwargs)
         self._env_name = "Widow200GraspV6DrawerOpenV0Env"
-        self._object_position_high = (.84, -.1, -.29)
-        self._object_position_low = (.84, -.1, -.29)
+        self._object_position_high = (.82, -.08, -.29)
+        self._object_position_low = self._object_position_high
         self._success_dist_threshold = success_dist_threshold
         # self._scaling_local_list = scaling_local_list
         # self.set_scaling_dicts()
@@ -65,6 +65,7 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
         bullet.open_drawer(self._drawer, noisy_open=self.noisily_open_drawer)
 
         object_positions = self._generate_object_positions()
+        object_positions = np.asarray([[.82, -.10, -.29],])
         self._load_objects(object_positions)
 
         if self.close_drawer_on_reset:
