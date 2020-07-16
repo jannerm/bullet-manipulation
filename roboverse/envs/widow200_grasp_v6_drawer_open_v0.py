@@ -89,7 +89,7 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
         return np.array(handle_pos)
 
     def is_drawer_opened(self, widely=False):
-        opened_thresh = -0.01 if not widely else -0.08
+        opened_thresh = -0.01 if not widely else -0.06
         return self.get_drawer_bottom_pos()[1] < opened_thresh
 
     def get_info(self):
@@ -218,7 +218,7 @@ def drawer_open_policy(EPSILON, noise, margin, save_video, env):
 
 if __name__ == "__main__":
     EPSILON = 0.05
-    noise = 0.0
+    noise = 0.2
     margin = 0.025
     save_video = True
 
