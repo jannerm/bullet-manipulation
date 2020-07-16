@@ -15,10 +15,10 @@ bullet.setup()
 
 ## load meshes
 table = bullet.objects.table()
-spam = bullet.objects.spam()
+# spam = bullet.objects.spam()
 # box = bullet.objects.box()
 # box_open_top = bullet.objects.long_box_open_top()
-tray = bullet.objects.widow200_tray()
+# tray = bullet.objects.widow200_tray()
 drawer = bullet.objects.drawer()
 lifted_long_box_open_top = bullet.objects.lifted_long_box_open_top()
 

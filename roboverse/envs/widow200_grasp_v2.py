@@ -96,7 +96,9 @@ class Widow200GraspV2Env(Widow200GraspEnv):
     def _load_meshes(self):
         super()._load_meshes()
         if "Drawer" in self._env_name:
-            pass
+            # pass
+            self._tray = bullet.objects.widow200_hidden_tray()
+            # tray is underneath table so we can get its center.
         else:
             self._tray = bullet.objects.widow200_tray()
 
