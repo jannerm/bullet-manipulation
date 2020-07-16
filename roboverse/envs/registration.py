@@ -577,9 +577,7 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'action_scale': 0.05,
                    'reward_height_threshold': -.275,
                    'noisily_open_drawer': True,
-                   'close_drawer_on_reset': False,
-                    'object_names': ('shed',),
-                   'scaling_local_list': [0.3],}
+                   'close_drawer_on_reset': False,}
     },
     {
         'id': 'Widow200GraspV6DrawerOpenOnlyV0-v0',
@@ -587,9 +585,7 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
         'kwargs': {'max_force': 10,
                    'action_scale': 0.05,
                    'reward_height_threshold': -.275,
-                   'open_only': True,
-                   'object_names': ('shed',),
-                   'scaling_local_list': [0.3],}
+                   'open_only': True,}
     },
     # BOX PACKING ENVS
     {
