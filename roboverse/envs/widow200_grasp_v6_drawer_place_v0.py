@@ -11,8 +11,8 @@ class Widow200GraspV6DrawerPlaceV0Env(Widow200GraspV6BoxPlaceV0Env):
     """Task is to grasp object from open drawer and place on top of the drawer."""
     def __init__(self,
                  *args,
-                 object_names=('gatorade',),
-                 scaling_local_list=[0.5],
+                 object_names=('shed',),
+                 scaling_local_list=[0.3],
                  success_dist_threshold=0.04,
                  noisily_open_drawer=False,
                  close_drawer_on_reset=False,
@@ -33,8 +33,8 @@ class Widow200GraspV6DrawerPlaceV0Env(Widow200GraspV6BoxPlaceV0Env):
         # self.set_scaling_dicts()
         self.set_box_pos_as_goal_pos()
         # self.obs_img_dim = 228
-        self.box_high = np.array([0.895, .05, -.25])
-        self.box_low = np.array([0.79, -0.03, -.295])
+        self.box_high = np.array([0.895, .08, -.26])
+        self.box_low = np.array([0.79, 0.0, -.305])
 
         self.scripted_traj_len = 50
 
@@ -53,10 +53,6 @@ class Widow200GraspV6DrawerPlaceV0Env(Widow200GraspV6BoxPlaceV0Env):
         drawer_bottom_pos = bullet.get_link_state(
             self._drawer, drawer_bottom_link_idx, "pos")
         return drawer_bottom_pos
-
-    def is_drawer_opened(self):
-        opened_thresh = -0.05
-        return self.get_drawer_bottom_pos()[1] < opened_thresh
 
 class Widow200GraspV6DrawerPlaceV0RandObjEnv(RandObjEnv, Widow200GraspV6DrawerPlaceV0Env):
     """
@@ -87,7 +83,6 @@ if __name__ == "__main__":
         images = [] # new video at the start of each trajectory.
 
         for _ in range(env.scripted_traj_len):
-            print("drawer pos", env.get_drawer_bottom_pos(), env.is_drawer_opened())
             state_obs = obs[env.fc_input_key]
             obj_obs = obs[env.object_obs_key]
             ee_pos = state_obs[:3]
