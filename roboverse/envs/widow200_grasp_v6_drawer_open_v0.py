@@ -225,7 +225,6 @@ def drawer_open_only_policy(EPSILON, noise, margin, save_video, env):
 
         dist_thresh = 0.04 + np.random.normal(scale=0.01)
         max_theta_action_magnitude = 0.2
-        grasp_target_theta = np.random.uniform(-np.pi / 2, np.pi / 2)
         drawer_never_opened = True
 
         images = [] # new video at the start of each trajectory.
@@ -243,7 +242,6 @@ def drawer_open_only_policy(EPSILON, noise, margin, save_video, env):
                 env._reward_height_thresh + margin)
             # object_pos += np.random.normal(scale=0.02, size=(3,))
 
-            gripper_neutral_dist = np.linalg.norm(env._pos_init - ee_pos)
             gripper_handle_dist = np.linalg.norm(handle_pos - ee_pos)
             theta_action = 0.
 

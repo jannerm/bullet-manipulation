@@ -789,9 +789,7 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
         [], [], [], [], [], []
 
     dist_thresh = 0.04 + np.random.normal(scale=0.01)
-    dist_thresh = np.clip(dist_thresh, 0.035, 0.060)
     max_theta_action_magnitude = 0.2
-    grasp_target_theta = np.random.uniform(-np.pi / 2, np.pi / 2)
     drawer_never_opened = True
 
     for _ in range(args.num_timesteps):
@@ -805,23 +803,24 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
                          object_ind * 7 + 8: object_ind * 7 + 8 + 3]
             ee_pos = observation[:3]
 
-        handle_pos = env.get_handle_pos()
+        handle_offset = np.array([0, -0.01, 0])
+        handle_pos = env.get_handle_pos() + handle_offset
+        # Make robot aim a little to the left of the handle
+        ending_target_pos = np.array([0.73822169, -0.03909928, -0.25635483])
+        # Effective neutral pos.
         object_lifted_with_margin = object_pos[2] > (
             env._reward_height_thresh + margin)
 
-        object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
         gripper_handle_dist = np.linalg.norm(handle_pos - ee_pos)
-        theta = env.get_wrist_joint_angle() # -pi, pi
+        theta_action = 0.
 
         if (gripper_handle_dist > dist_thresh
             and not env.is_drawer_opened(widely=drawer_never_opened)):
             # print('approaching handle')
             action = (handle_pos - ee_pos) * 7.0
             xy_diff = np.linalg.norm(action[:2]/7.0)
-            if xy_diff > dist_thresh:
-                action[2] = 0.4 # force upward action to avoid upper box
-            # Rotate Wrist toward theta = np/2:
-            theta_action = 0.
+            if xy_diff > 0.75 * dist_thresh:
+                action[2] = 0.5 # force upward action to avoid upper box
             action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
         elif not env.is_drawer_opened(widely=drawer_never_opened):
             # print("opening drawer")
@@ -829,20 +828,17 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
             # action = np.asarray([0., 0., 0.7])
             action = np.concatenate(
                 (action, np.asarray([0., 0., 0.])))
-        elif (object_gripper_dist > dist_thresh
-            and env._gripper_open and gripper_handle_dist < 1.5 * dist_thresh):
+        elif np.abs(ee_pos[2] - ending_target_pos[2]) > dist_thresh:
             # print("Lift upward")
             drawer_never_opened = False
             action = np.array([0, 0, 0.7]) # force upward action to avoid upper box
-            theta_action = 0.
             action = np.concatenate(
                 (action, np.asarray([theta_action, 0., 0.])))
         else:
-            # Move above object + offset center
-            xyz_offset = np.random.normal([-0.02, 0.04, 0], scale=0.1*noise, size=(3,))
-            action = ((object_pos + xyz_offset) - ee_pos)[:2] * 7.0
+            # print("Move toward neutral")
+            action = (ending_target_pos - ee_pos) * 7.0
             action = np.concatenate(
-                (action, np.asarray([0., 0., 0., 0.])))
+                (action, np.asarray([0., 0., 0.])))
 
         noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
         action += np.random.normal(scale=noise_scalings)
