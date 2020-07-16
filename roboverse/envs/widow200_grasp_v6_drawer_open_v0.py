@@ -27,8 +27,8 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
             camera_pitch=camera_pitch,
             **kwargs)
         self._env_name = "Widow200GraspV6DrawerOpenV0Env"
-        self._object_position_high = (.84, -.1, -.29)
-        self._object_position_low = (.84, -.1, -.29)
+        self._object_position_high = (.83, -.1, -.29)
+        self._object_position_low = (.83, -.1, -.29)
         self._success_dist_threshold = success_dist_threshold
         # self._scaling_local_list = scaling_local_list
         # self.set_scaling_dicts()
@@ -42,8 +42,8 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
         self.open_only = open_only
 
         if not self.close_drawer_on_reset:
-            self._object_position_high = (.835, -.11, -.29)
-            self._object_position_low = (.825, -.13, -.29)
+            self._object_position_high = (.83, -.1, -.29)
+            self._object_position_low = (.83, -.1, -.29)
             self.scripted_traj_len = 25 # Give less time if drawer starts opened.
         if self.open_only:
             assert self.close_drawer_on_reset
@@ -156,7 +156,7 @@ def drawer_open_policy(EPSILON, noise, margin, save_video, env):
                 action = (object_pos - ee_pos) * 7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
                 if xy_diff > dist_thresh:
-                    action[2] = 0.1
+                    action[2] = 0.3
                 action = np.concatenate(
                     (action, np.asarray([0., 0., 0.])))
             elif env._gripper_open:
@@ -200,12 +200,13 @@ def drawer_open_policy(EPSILON, noise, margin, save_video, env):
 
 if __name__ == "__main__":
     EPSILON = 0.05
-    noise = 0.2
+    noise = 0.0
     margin = 0.025
     save_video = True
 
-    env = roboverse.make("Widow200GraspV6DrawerOpenV0-v0",
+    env = roboverse.make("Widow200GraspV6DrawerGraspOnlyV0-v0",
                          gui=True,
                          reward_type='sparse',
-                         observation_mode='pixels_debug')
+                         observation_mode='pixels_debug',
+                         noisily_open_drawer=True)
     drawer_open_policy(EPSILON, noise, margin, save_video, env)
