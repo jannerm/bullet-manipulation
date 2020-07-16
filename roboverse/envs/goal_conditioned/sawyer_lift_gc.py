@@ -17,20 +17,22 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             *args,
             reset_obj_in_hand_rate=0.5,
             goal_sampling_mode='obj_in_air',
-            reward_type='hand_dist+obj_dist',
             random_init_bowl_pos=False,
             sample_valid_rollout_goals=True,
             bowl_bounds=[-0.40, 0.40],
-            bowl_pos_in_goal=False,
+            hand_reward=True,
+            gripper_reward=True,
+            bowl_reward=True,
             **kwargs
     ):
         self.reset_obj_in_hand_rate = reset_obj_in_hand_rate
         self.goal_sampling_mode = goal_sampling_mode
-        self.reward_type = reward_type
         self.random_init_bowl_pos = random_init_bowl_pos
         self.sample_valid_rollout_goals = sample_valid_rollout_goals
         self.bowl_bounds = bowl_bounds
-        self.bowl_pos_in_goal = bowl_pos_in_goal
+        self.hand_reward = hand_reward
+        self.gripper_reward = gripper_reward
+        self.bowl_reward = bowl_reward
         super().__init__(*args, env='SawyerLiftMulti-v0', **kwargs)
         self.record_args(locals())
 
@@ -95,20 +97,15 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         reward = self.compute_reward(action, obs)
         return obs, reward, done, info
 
+    def get_full_observation(self):
+        obs = self.get_observation()
+        bowl = self.get_bowl_position()[1]
+        gripper = self.get_gripper_dist()
+        obs = np.r_[obs, bowl, gripper]
+        return obs
+
     def get_achieved_goal(self):
-        obj_achieved_goals = np.r_[[
-            self.get_2d_obj_pos(obj_id) for obj_id in range(self.num_obj)]
-        ].flatten()
-        achieved_goal = np.r_[
-            self.get_2d_hand_pos(),
-            obj_achieved_goals,
-        ]
-        if self.bowl_pos_in_goal:
-            achieved_goal = np.r_[
-                achieved_goal,
-                self.get_bowl_position()[1],
-            ]
-        return achieved_goal
+        return self.get_full_observation()
 
     def get_info_from_achieved_goal(self, achieved_goal):
         goal_info = self.get_info_from_achieved_goals(achieved_goal[None])
@@ -119,27 +116,20 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         return goal_info_single
 
     def get_info_from_achieved_goals(self, achieved_goals):
-        hand_pos = achieved_goals[:, :2]
+        assert achieved_goals.shape[1] == (1 + self.num_obj) * 2 + 1 + 1
         info = {
-            'hand_pos': hand_pos,
+            'hand_pos': achieved_goals[:, :2],
+            'bowl_pos': achieved_goals[:, -2],
+            'gripper_size': achieved_goals[:, -1],
         }
-        if self.bowl_pos_in_goal:
-            assert achieved_goals.shape[1] == (1 + self.num_obj) * 2 + 1
-        else:
-            assert achieved_goals.shape[1] == (1 + self.num_obj) * 2
         for cube_id in range(self.num_obj):
             idx_start = (1 + cube_id) * 2
             idx_end = idx_start + 2
             info[self.get_obj_name(cube_id)] = achieved_goals[:, idx_start:idx_end]
-        if self.bowl_pos_in_goal:
-            info['bowl_pos'] = achieved_goals[:,-1]
         return info
 
     def get_dict_observation(self):
-        obs = self.get_observation()
-        bowl = self.get_bowl_position()[1]
-        gripper = self.get_gripper_dist()
-        obs = np.r_[obs, bowl, gripper]
+        obs = self.get_full_observation()
         achieved_goal = self.get_achieved_goal()
 
         # clip the observations, in case objects fall off table
@@ -164,37 +154,22 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
 
     def compute_rewards(self, actions, observations):
         # Current computes reward based off only cube goal. Hand goal is ignored
-        achieved_goal_info = self.get_info_from_achieved_goals(
-            observations['state_achieved_goal'])
-        ee_pos = achieved_goal_info['hand_pos']
+        achieved_goal = observations['state_achieved_goal']
+        desired_goal = observations['state_desired_goal']
 
-        desired_goal_info = self.get_info_from_achieved_goals(
-            observations['state_desired_goal'])
+        batch_size, goal_dim = achieved_goal.shape
 
-        rewards = self.reward_type.split('+')
-        dist = np.zeros(len(ee_pos))
+        dims_to_use = np.arange(2, (1+self.num_obj)*2)
+        if self.hand_reward:
+            dims_to_use = np.hstack((dims_to_use, np.arange(0, 2)))
+        if self.bowl_reward:
+            dims_to_use = np.hstack((dims_to_use, [goal_dim - 2]))
+        if self.gripper_reward:
+            dims_to_use = np.hstack((dims_to_use, [goal_dim - 1]))
 
-        ee_desired_goal = desired_goal_info['hand_pos']
-        ee_dist = bullet.l2_dist2d(
-            ee_pos,
-            ee_desired_goal
-        )
-
-        if 'hand_dist' in rewards:
-            dist += ee_dist
-
-        for obj_id in range(self.num_obj):
-            obj_pos = achieved_goal_info[self.get_obj_name(obj_id)]
-            obj_desired_goal = desired_goal_info[self.get_obj_name(obj_id)]
-
-            obj_dist = bullet.l2_dist2d(
-                obj_pos,
-                obj_desired_goal
-            )
-            if 'obj_dist' in rewards:
-                dist += obj_dist
-        if self.bowl_pos_in_goal and 'obj_dist' in rewards:
-            dist += np.abs(achieved_goal_info['bowl_pos'] - desired_goal_info['bowl_pos'])
+        mask = np.zeros(goal_dim)
+        mask[dims_to_use] = 1.0
+        dist = np.linalg.norm((desired_goal - achieved_goal) * mask, axis=-1)
 
         reward = -dist
         return reward
@@ -206,11 +181,10 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             desired_goal = self._goal_pos
         desired_goal_info = self.get_info_from_achieved_goal(desired_goal)
         achieved_goal_info = self.get_info_from_achieved_goal(achieved_goal)
-        ee_pos = achieved_goal_info['hand_pos']
 
         info = {}
-        ee_goal = desired_goal_info['hand_pos']
-        info['hand_dist'] = bullet.l2_dist(ee_pos, ee_goal)
+
+        info['hand_dist'] = bullet.l2_dist(achieved_goal_info['hand_pos'], desired_goal_info['hand_pos'])
         for obj_id in range(self.num_obj):
             cube_pos = achieved_goal_info[self.get_obj_name(obj_id)]
             cube_goal = desired_goal_info[self.get_obj_name(obj_id)]
@@ -220,13 +194,12 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             info['{}_success'.format(self.get_obj_name(obj_id))] = \
                 float(np.abs(cube_pos[0] - self._bowl_pos[1]) <= 0.09)
 
-            if self.bowl_pos_in_goal:
-                info['bowl_{}_dist'.format(self.get_obj_name(obj_id))] = np.abs(
-                    achieved_goal_info['bowl_pos'] - cube_pos[0]
-                )
+            info['bowl_{}_dist'.format(self.get_obj_name(obj_id))] = np.abs(
+                achieved_goal_info['bowl_pos'] - cube_pos[0]
+            )
+        info['bowl_dist'] = np.abs(achieved_goal_info['bowl_pos'] - desired_goal_info['bowl_pos'])
+        info['gripper_dist'] = np.abs(achieved_goal_info['gripper_size'] - desired_goal_info['gripper_size'])
 
-        if self.bowl_pos_in_goal:
-            info['bowl_dist'] = np.abs(achieved_goal_info['bowl_pos'] - desired_goal_info['bowl_pos'])
         return info
 
     def get_image(self, width, height):
@@ -258,8 +231,8 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
                       goal_info[self.get_obj_name(obj_id)]],
                 deg=[90,0,-90],
             )
-        if self.bowl_pos_in_goal:
-            self.set_bowl_position([0.75, goal_info['bowl_pos'], -0.3])
+        self.set_bowl_position([0.75, goal_info['bowl_pos'], -0.3])
+        ### disregard the gripper openning position ###
 
     def set_to_goal(self, goal):
         self.set_env_state(goal['state_desired_goal'])
@@ -305,16 +278,19 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         low = self._env._pos_low[1:]
         high = self._env._pos_high[1:]
 
-        if self.bowl_pos_in_goal:
-            bowl_xpos = np.random.uniform(
+        # hand goals
+        hand_goals = np.random.uniform(
+            low=low,
+            high=high,
+            size=(batch_size, len(low)))
+
+        if self.random_init_bowl_pos or self._bowl_type != 'fixed':
+            bowl_goals = np.random.uniform(
                 low=self.bowl_bounds[0],
                 high=self.bowl_bounds[1],
                 size=(batch_size, 1))
         else:
-            bowl_xpos = np.random.uniform(
-                low=self._bowl_pos[1],
-                high=self._bowl_pos[1],
-                size=(batch_size, 1))
+            bowl_goals = np.zeros((batch_size, 1))
 
         if goal_sampling_mode == 'uniform':
             obj_goals = np.random.uniform(
@@ -333,7 +309,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         elif goal_sampling_mode == 'obj_in_bowl':
             obj_goals = np.tile(
                 np.c_[
-                    bowl_xpos,
+                    bowl_goals,
                     self._bowl_pos[2] * np.ones(batch_size),
                 ],
                 (1, self.num_obj)
@@ -341,20 +317,17 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         else:
             raise RuntimeError("Invalid goal mode: {}".format(self.goal_sampling_mode))
 
-        hand_goals = np.random.uniform(
-            low=low,
-            high=high,
-            size=(batch_size, len(low)))
+        gripper_goals = np.random.uniform(
+            low=-0.5,
+            high=0.5,
+            size=(batch_size, 1))
 
         goals_2d = np.c_[
             hand_goals,
             obj_goals,
+            bowl_goals,
+            gripper_goals,
         ]
-        if self.bowl_pos_in_goal:
-            goals_2d = np.c_[
-                goals_2d,
-                bowl_xpos,
-            ]
 
         if batch_size == 1 and self.sample_valid_rollout_goals:
             curr_state = self.get_achieved_goal()
@@ -417,16 +390,6 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             ('state_achieved_goal', goal_space),
         ])
 
-    def _convert_obs_to_achieved_goals(self, obs):
-        achieved_goals = obs[:,:2*(self.num_obj + 1)]
-        if self.bowl_pos_in_goal:
-            achieved_goals = np.c_[
-                achieved_goals,
-                obs[:,-2:-1],
-            ]
-
-        return achieved_goals
-
     def goal_conditioned_diagnostics(self, paths, contexts):
         from collections import OrderedDict, defaultdict
         from multiworld.envs.env_util import create_stats_ordered_dict
@@ -435,7 +398,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         stat_to_lists = defaultdict(list)
 
         for path, desired_goal in zip(paths, contexts):
-            achieved_goals = self._convert_obs_to_achieved_goals(path['observations'])
+            achieved_goals = path['observations']
 
             path_infos = []
             for achieved_goal in achieved_goals:

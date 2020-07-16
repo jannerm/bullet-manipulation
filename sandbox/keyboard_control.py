@@ -75,49 +75,28 @@ env_id = 'SawyerLid2d-v0'
 
 from roboverse.envs.goal_conditioned.sawyer_lift_gc import SawyerLiftEnvGC
 env_kwargs={
-    'action_scale': .06, #.06
-    'action_repeat': 10, #5
-    'timestep': 1./120, #1./240 1/120
-    'max_force': 1000, #1000
-    'solver_iterations': 500, #150
+    'action_scale': .06,
+    'action_repeat': 10,
+    'timestep': 1. / 120,
+    'solver_iterations': 500,
+    'max_force': 1000,
 
-    'gui': True,  # False,
-    'goal_mult': 0,
-    # 'pos_init': [.75, -.3, 0],
-    # 'pos_high': [.75, .4, .3], #[.75, .4, .3],
-    # 'pos_low': [.75, -.4, -.36], #[.75, -.4, -.36],
-
-    'pos_init': [.75, -.3, -.10],
-    'pos_high': [.75, .4, .3],  # [.75, .4, .3],
-    'pos_low': [.75, -.4, -.36],  # [.75, -.4, -.36],
-
-    'reset_obj_in_hand_rate': 0.0, #0.0
-    'img_dim': 48,
-
-    'num_obj': 5,  # 2
-
-    'goal_sampling_mode': 'obj_in_bowl',
-    # 'goal_sampling_mode': 'ground',
-    'random_init_bowl_pos': True,
-    'sliding_bowl': True,
-    'heavy_bowl': True,
-
+    'gui': True,
+    'pos_init': [.75, -.3, 0],
+    'pos_high': [.75, .4, .3],
+    'pos_low': [.75, -.4, -.36],
+    'reset_obj_in_hand_rate': 0.0,
+    'goal_sampling_mode': 'obj_in_bowl', #'ground'
     'bowl_bounds': [-0.40, 0.40],
+    'random_init_bowl_pos': True,
+    'bowl_type': 'light',
 
-    # 'use_rotated_gripper': True, #False
-    # 'use_wide_gripper': False, #False
-    # 'soft_clip': True,
-    # 'obj_urdf': 'spam_long',
-    # 'max_joint_velocity': 2.0,
+    'hand_reward': True,
+    'gripper_reward': True,
+    'bowl_reward': True,
 
-    # 'use_rotated_gripper': False,  # False
-    # 'use_wide_gripper': False,  # False
-    # 'soft_clip': False,
-    # 'obj_urdf': 'spam',
-    # 'max_joint_velocity': None,
-
-    'use_rotated_gripper': True,  # False
-    'use_wide_gripper': True,  # False
+    'use_rotated_gripper': True,
+    'use_wide_gripper': True,
     'soft_clip': True,
     'obj_urdf': 'spam',
     'max_joint_velocity': None,
