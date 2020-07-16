@@ -103,11 +103,11 @@ long_box_open_top = loader(ASSET_PATH, os.path.join(obj_dir, "box_open_top", "lo
               scale=0.1)
 
 lifted_long_box_open_top = loader(ASSET_PATH, os.path.join(obj_dir, "box_open_top", "long_box_open_top.urdf"),
-              pos=[0.8425, 0.01, -.285],
+              pos=[0.8425, 0.04, -.295],
               scale=0.1)
 
 drawer = loader(ASSET_PATH, os.path.join(obj_dir, "drawer", "drawer.urdf"),
-              pos=[0.8425, 0.01, -.33],
+              pos=[0.8425, 0.04, -.34],
               scale=0.1)
 
 # test_box = loader(ASSET_PATH, os.path.join(obj_dir, "box_open_top", "box_open_top.urdf"),
