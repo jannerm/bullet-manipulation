@@ -579,7 +579,7 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'noisily_open_drawer': True,
                    'close_drawer_on_reset': False,
                     'object_names': ('shed',),
-                   'scaling_local_list': [0.4],}
+                   'scaling_local_list': [0.3],}
     },
     {
         'id': 'Widow200GraspV6DrawerOpenOnlyV0-v0',
@@ -589,7 +589,7 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'reward_height_threshold': -.275,
                    'open_only': True,
                    'object_names': ('shed',),
-                   'scaling_local_list': [0.4],}
+                   'scaling_local_list': [0.3],}
     },
     # BOX PACKING ENVS
     {
