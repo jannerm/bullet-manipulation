@@ -9,7 +9,7 @@ def run_and_test_object_success():
     print("Remember to rename the csv if it is already in the dir.")
     EPSILON = 0.05
     noise = 0.2
-    num_trials = 1
+    num_trials = 50
     max_theta_action_magnitude = 0.2
     objects_to_test = [
         'conic_bin',
@@ -29,7 +29,7 @@ def run_and_test_object_success():
 
     # obj_scaling_to_try = (list(itertools.product(objects_to_test, scalings_to_try)))
     obj_scaling_to_try = list(zip(objects_to_test, scalings))
-    obj_scaling_to_try = [('gatorade', 0.5)]
+    obj_scaling_to_try = [('camera', 0.5), ('camera', 0.3), ('shed', 0.3)]
 
     print("obj_scaling_to_try", obj_scaling_to_try)
 
