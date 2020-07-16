@@ -108,6 +108,17 @@ class Widow200GraspV2Env(Widow200GraspEnv):
             xyz_min=self._pos_low, xyz_max=self._pos_high,
             visualize=False, rgba=[0,1,0,.1])
 
+        object_positions = self._generate_object_positions()
+        self._load_objects(object_positions)
+
+        if "Drawer" in self._env_name:
+            self._drawer = bullet.objects.drawer()
+            bullet.open_drawer(self._drawer, noisy_open=self.noisily_open_drawer)
+
+            if self.close_drawer_on_reset:
+                bullet.close_drawer(self._drawer)
+
+    def _generate_object_positions(self):
         import scipy.spatial
         min_distance_threshold = 0.07
         object_positions = np.random.uniform(
@@ -130,14 +141,13 @@ class Widow200GraspV2Env(Widow200GraspEnv):
             if i > max_attempts:
                 ValueError('Min distance could not be assured')
 
+        return object_positions
+
+    def _load_objects(self, object_positions):
         assert len(self.object_names) >= self._num_objects
         import random
         indexes = list(range(self._num_objects))
         random.shuffle(indexes)
-
-        if "Drawer" in self._env_name:
-            self._drawer = bullet.objects.drawer()
-            bullet.open_drawer(self._drawer, noisy_open=self.noisily_open_drawer)
 
         for idx in indexes:
             object_name = self.object_names[idx]
@@ -146,9 +156,6 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                 object_positions[idx], scale_local=self._scaling_local[object_name])
             for _ in range(10):
                 bullet.step()
-
-        if "Drawer" in self._env_name and self.close_drawer_on_reset:
-            bullet.close_drawer(self._drawer)
 
     def step(self, action):
         action = np.asarray(action)

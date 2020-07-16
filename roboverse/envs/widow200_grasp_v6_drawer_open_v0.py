@@ -20,6 +20,9 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
                  **kwargs):
         camera_target_pos = [1.05, -0.05, -0.1]
         camera_pitch = -50
+        self.noisily_open_drawer = noisily_open_drawer
+        self.close_drawer_on_reset = close_drawer_on_reset
+
         super().__init__(*args,
             object_names=object_names,
             scaling_local_list=scaling_local_list,
@@ -36,8 +39,6 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
 
         self.scripted_traj_len = 50
 
-        self.close_drawer_on_reset = close_drawer_on_reset
-        self.noisily_open_drawer = noisily_open_drawer
         # When True, drawer does not open all the way
         self.open_only = open_only
 
@@ -51,7 +52,24 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
             self.scripted_traj_len = 30
 
     def _load_meshes(self):
-        super()._load_meshes()
+        self._robot_id = bullet.objects.widowx_200()
+        self._table = bullet.objects.table()
+        self._workspace = bullet.Sensor(self._robot_id,
+                                        xyz_min=self._pos_low,
+                                        xyz_max=self._pos_high,
+                                        visualize=False, rgba=[0, 1, 0, .1])
+        self._tray = bullet.objects.widow200_hidden_tray()
+        self._objects = {}
+        self._drawer = bullet.objects.drawer()
+        bullet.open_drawer(self._drawer, noisy_open=self.noisily_open_drawer)
+
+        # object_positions = self._generate_object_positions()
+        object_positions = np.asarray([[0.83, -0.12, -0.29],])
+        self._load_objects(object_positions)
+
+        if self.close_drawer_on_reset:
+            bullet.close_drawer(self._drawer)
+        # super()._load_meshes()
         # self._box = bullet.objects.lifted_long_box_open_top()
 
     def get_drawer_bottom_pos(self):

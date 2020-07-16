@@ -821,11 +821,7 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
             if xy_diff > dist_thresh:
                 action[2] = 0.4 # force upward action to avoid upper box
             # Rotate Wrist toward theta = np/2:
-            theta_action = np.clip(
-                (np.pi / 2) - theta,
-                -max_theta_action_magnitude,
-                max_theta_action_magnitude
-            )
+            theta_action = 0.
             action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
         elif not env.is_drawer_opened(widely=drawer_never_opened):
             # print("opening drawer")
@@ -838,12 +834,7 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
             # print("Lift upward")
             drawer_never_opened = False
             action = np.array([0, 0, 0.7]) # force upward action to avoid upper box
-            theta_action_pre_clip = grasp_target_theta - theta
-            theta_action = np.clip(
-                theta_action_pre_clip,
-                -max_theta_action_magnitude,
-                max_theta_action_magnitude
-            )
+            theta_action = 0.
             action = np.concatenate(
                 (action, np.asarray([theta_action, 0., 0.])))
         else:
@@ -852,7 +843,6 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
             action = ((object_pos + xyz_offset) - ee_pos)[:2] * 7.0
             action = np.concatenate(
                 (action, np.asarray([0., 0., 0., 0.])))
-
 
         noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
         action += np.random.normal(scale=noise_scalings)
