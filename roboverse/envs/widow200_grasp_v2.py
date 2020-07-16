@@ -96,8 +96,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
     def _load_meshes(self):
         super()._load_meshes()
         if "Drawer" in self._env_name:
-            # pass
-            self._tray = bullet.objects.widow200_tray_large()
+            pass
         else:
             self._tray = bullet.objects.widow200_tray()
 
