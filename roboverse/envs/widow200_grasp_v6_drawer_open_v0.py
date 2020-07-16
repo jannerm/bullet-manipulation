@@ -64,8 +64,7 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
         self._drawer = bullet.objects.drawer()
         bullet.open_drawer(self._drawer, noisy_open=self.noisily_open_drawer)
 
-        # object_positions = self._generate_object_positions()
-        object_positions = np.asarray([[0.83, -0.12, -0.29],])
+        object_positions = self._generate_object_positions()
         self._load_objects(object_positions)
 
         if self.close_drawer_on_reset:
@@ -90,7 +89,7 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
         return np.array(handle_pos)
 
     def is_drawer_opened(self, widely=False):
-        opened_thresh = -0.01 if not widely else -0.06
+        opened_thresh = -0.01 if not widely else -0.08
         return self.get_drawer_bottom_pos()[1] < opened_thresh
 
     def get_info(self):
