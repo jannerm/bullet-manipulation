@@ -660,9 +660,6 @@ def scripted_grasping_V6_opening_V0(env, pool, success_pool, noise=0.2):
         [], [], [], [], [], []
 
     dist_thresh = 0.04 + np.random.normal(scale=0.01)
-    dist_thresh = np.clip(dist_thresh, 0.035, 0.060)
-    max_theta_action_magnitude = 0.2
-    grasp_target_theta = np.random.uniform(-np.pi / 2, np.pi / 2)
     drawer_never_opened = True
 
     for _ in range(args.num_timesteps):
@@ -682,21 +679,15 @@ def scripted_grasping_V6_opening_V0(env, pool, success_pool, noise=0.2):
 
         object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
         gripper_handle_dist = np.linalg.norm(handle_pos - ee_pos)
-        theta = env.get_wrist_joint_angle() # -pi, pi
+        theta_action = 0.
 
         if (gripper_handle_dist > dist_thresh
             and not env.is_drawer_opened(widely=drawer_never_opened)):
             # print('approaching handle')
             action = (handle_pos - ee_pos) * 7.0
             xy_diff = np.linalg.norm(action[:2]/7.0)
-            if xy_diff > dist_thresh:
-                action[2] = 0.4 # force upward action to avoid upper box
-            # Rotate Wrist toward theta = np/2:
-            theta_action = np.clip(
-                (np.pi / 2) - theta,
-                -max_theta_action_magnitude,
-                max_theta_action_magnitude
-            )
+            if xy_diff > 0.75 * dist_thresh:
+                action[2] = 0.5 # force upward action to avoid upper box
             action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
         elif not env.is_drawer_opened(widely=drawer_never_opened):
             # print("opening drawer")
@@ -709,12 +700,6 @@ def scripted_grasping_V6_opening_V0(env, pool, success_pool, noise=0.2):
             # print("Lift upward")
             drawer_never_opened = False
             action = np.array([0, 0, 0.7]) # force upward action to avoid upper box
-            theta_action_pre_clip = grasp_target_theta - theta
-            theta_action = np.clip(
-                theta_action_pre_clip,
-                -max_theta_action_magnitude,
-                max_theta_action_magnitude
-            )
             action = np.concatenate(
                 (action, np.asarray([theta_action, 0., 0.])))
         elif object_gripper_dist > dist_thresh and env._gripper_open:
@@ -722,9 +707,9 @@ def scripted_grasping_V6_opening_V0(env, pool, success_pool, noise=0.2):
             action = (object_pos - ee_pos) * 7.0
             xy_diff = np.linalg.norm(action[:2]/7.0)
             if xy_diff > dist_thresh:
-                action[2] = 0.1
+                action[2] = 0.3
             action = np.concatenate(
-                (action, np.asarray([theta_action, 0., 0.])))
+                (action, np.asarray([0., 0., 0.])))
         elif env._gripper_open:
             # print('gripper closing')
             action = (object_pos - ee_pos) * 7.0
