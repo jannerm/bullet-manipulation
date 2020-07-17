@@ -16,6 +16,7 @@ from roboverse.envs.env_list import *
 
 OBJECT_NAME = 'lego'
 EPSILON = 0.05
+ending_target_pos = np.array([0.73822169, -0.03909928, -0.25635483])
 
 NFS_PATH = '/nfs/kun1/users/avi/batch_rl_datasets/'
 
@@ -652,6 +653,122 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
     if rewards[-1] > 0:
         success_pool.add_path(path)
 
+def scripted_grasping_V6_closed_drawer_placing_V0(env, pool, success_pool, noise=0.2):
+    observation = env.reset()
+    blocking_object_ind = 1
+    actions, observations, next_observations, rewards, terminals, infos = \
+        [], [], [], [], [], []
+
+    dist_thresh = 0.04 + np.random.normal(scale=0.01)
+
+    box_dist_thresh = 0.035 + np.random.normal(scale=0.01)
+    box_dist_thresh = np.clip(box_dist_thresh, 0.025, 0.05)
+
+    assert args.num_timesteps == env.scripted_traj_len, (
+        "args.num_timesteps: {} != env.scripted_traj_len: {}".format(
+        args.num_timesteps, env.scripted_traj_len))
+
+    for t_ind in range(args.num_timesteps):
+
+        if isinstance(observation, dict):
+            blocking_object_pos = observation[env.object_obs_key][
+                         blocking_object_ind * 7 : blocking_object_ind * 7 + 3]
+            ee_pos = observation[env.fc_input_key][:3]
+        else:
+            blocking_object_pos = observation[
+                         blocking_object_ind * 7 + 8: blocking_object_ind * 7 + 8 + 3]
+            ee_pos = observation[:3]
+
+        box_pos = env.get_box_pos()
+
+        blocking_object_gripper_dist = np.linalg.norm(
+            blocking_object_pos - ee_pos)
+        blocking_object_box_dist = np.linalg.norm(
+            blocking_object_pos - box_pos)
+        theta_action = 0.
+
+        blocking_object_pos_offset = np.array([0, -0.01, 0])
+
+        info = env.get_info()
+
+        if (blocking_object_gripper_dist > dist_thresh and
+            env._gripper_open and not info['blocking_object_above_box_success']):
+            # print('approaching')
+            action = ((blocking_object_pos +
+                blocking_object_pos_offset) - ee_pos) * 7.0
+            xy_diff = np.linalg.norm(action[:2]/7.0)
+            if "Drawer" in env._env_name:
+                if xy_diff > dist_thresh:
+                    action[2] = 0.4 # force upward action to avoid upper box
+            else:
+                if xy_diff > 0.02:
+                    action[2] = 0.0
+            action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
+        elif (env._gripper_open and blocking_object_box_dist > box_dist_thresh and
+            not info['blocking_object_in_box_success']):
+            # print('gripper closing')
+            action = (blocking_object_pos - ee_pos) * 7.0
+            action = np.concatenate(
+                (action, np.asarray([0., -0.7, 0.])))
+        elif blocking_object_box_dist > box_dist_thresh and
+            not info['blocking_object_above_box_success']:
+            action = (box_pos - blocking_object_pos)*7.0
+            xy_diff = np.linalg.norm(action[:2]/7.0)
+            if "DrawerPlaceThenOpen" in env._env_name:
+                # print("don't droop down until xy-close to box")
+                action[2] = 0.2
+            action = np.concatenate(
+                (action, np.asarray([0., 0., 0.])))
+            # print("blocking_object_pos", blocking_object_pos)
+        elif not info['blocking_object_in_box_success']:
+            # object is now above the box.
+            action = (box_pos - blocking_object_pos)*7.0
+            action[2] = 0.2
+            action = np.concatenate(
+                (action, np.asarray([0., 0.7, 0.])))
+        else:
+            action = (ending_target_pos - ee_pos) * 7.0
+            xy_diff = np.linalg.norm(action[:2]/7.0)
+            if xy_diff > dist_thresh:
+                action[2] = 0.2 # force upward action to avoid upper box
+            action = np.concatenate((action, np.asarray([theta_action,0.7,0.])))
+
+        noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
+        action += np.random.normal(scale=noise_scalings)
+        action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
+
+        next_observation, reward, done, info = env.step(action)
+
+        actions.append(action)
+        observations.append(observation)
+        rewards.append(reward)
+        terminals.append(done)
+        infos.append(info)
+        next_observations.append(next_observation)
+
+        observation = next_observation
+
+        if done:
+            break
+
+    path = dict(
+        actions=actions,
+        rewards=np.asarray(rewards).reshape((-1, 1)),
+        terminals=np.asarray(terminals).reshape((-1, 1)),
+        infos=infos,
+        observations=observations,
+        next_observations=next_observations,
+    )
+
+    if not isinstance(observation, dict):
+        path_length = len(rewards)
+        path['agent_infos'] = np.asarray([{} for i in range(path_length)])
+        path['env_infos'] = np.asarray([{} for i in range(path_length)])
+
+    pool.add_path(path)
+    if rewards[-1] > 0:
+        success_pool.add_path(path)
+
 def scripted_grasping_V6_opening_V0(env, pool, success_pool, noise=0.2):
     observation = env.reset()
     object_ind = np.random.randint(0, env._num_objects)
@@ -791,7 +908,6 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
         handle_offset = np.array([0, -0.01, 0])
         handle_pos = env.get_handle_pos() + handle_offset
         # Make robot aim a little to the left of the handle
-        ending_target_pos = np.array([0.73822169, -0.03909928, -0.25635483])
         # Effective neutral pos.
         object_lifted_with_margin = object_pos[2] > (
             env._reward_height_thresh + margin)
@@ -1013,7 +1129,8 @@ def main(args):
         elif args.env in V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV:
             assert not render_images
             success = False
-            pass
+            scripted_grasping_V6_drawer_closed_placing_V0(
+                env, railrl_pool, railrl_success_pool, noise=args.noise_std)
         elif args.env in V6_GRASPING_V0_DRAWER_OPENING_ENVS:
             assert not render_images
             success = False
