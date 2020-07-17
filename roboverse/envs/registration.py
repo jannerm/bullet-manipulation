@@ -568,13 +568,29 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'possible_train_objects': POSSIBLE_TRAIN_OBJECTS[:40],
                    'train_scaling_list': POSSIBLE_TRAIN_SCALINGS[:40],}
     },
-    # Drawer Hard tasks.
+    # Drawer PlaceThenOpen Hard tasks.
     {
         'id': 'Widow200GraspV6DrawerPlaceThenOpenV0-v0',
         'entry_point': ('roboverse.envs.widow200_grasp_v6_drawer_place_then_open_v0:Widow200GraspV6DrawerPlaceThenOpenV0Env'),
         'kwargs': {'max_force': 10,
                    'action_scale': 0.05,
                    'reward_height_threshold': -.275,}
+    },
+    {
+        'id': 'Widow200GraspV6DrawerPlaceThenOpenPlaceOnlyV0-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v6_drawer_place_then_open_v0:Widow200GraspV6DrawerPlaceThenOpenV0Env'),
+        'kwargs': {'max_force': 10,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.275,
+                   'place_only': True}
+    },
+    {
+        'id': 'Widow200GraspV6DrawerPlaceThenOpenOpenGraspOnlyV0-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v6_drawer_place_then_open_v0:Widow200GraspV6DrawerPlaceThenOpenV0Env'),
+        'kwargs': {'max_force': 10,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.275,
+                   'open_grasp_only': True}
     },
     # Used for stitching exps.
     {
