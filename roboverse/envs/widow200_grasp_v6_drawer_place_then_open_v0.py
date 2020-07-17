@@ -8,6 +8,9 @@ import roboverse.utils as utils
 import numpy as np
 import time
 import roboverse
+from PIL import Image
+import skimage.io as skii
+import skimage.transform as skit
 
 obj_path_map, path_scaling_map = import_shapenet_metadata()
 
@@ -22,7 +25,7 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
     def __init__(self,
                  *args,
                  object_name_scaling=("ball", 0.5),
-                 blocking_object_name_scaling=("shed", 0.3),
+                 blocking_object_name_scaling=("shed", 0.4),
                  success_dist_threshold=0.04,
                  noisily_open_drawer=False,
                  close_drawer_on_reset=True,
@@ -44,7 +47,7 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
         self._object_position_low = (.82, -.09, -.29)
 
         # Blocking = Obstruction object
-        blocking_object_offset = np.array([0, -0.025, -0.05])
+        blocking_object_offset = np.array([0, -0.05, -0.05])
         self._blocking_object_position_high = self._object_position_high + blocking_object_offset
         self._blocking_object_position_low = self._object_position_low + blocking_object_offset
         self._success_dist_threshold = success_dist_threshold
@@ -56,7 +59,7 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
             object_names=object_names,
             scaling_local_list=scaling_local_list,
             num_objects=num_objects, **kwargs)
-        self._env_name = "Widow200GraspV6DrawerOpenV0Env"
+        self._env_name = "Widow200GraspV6DrawerPlaceThenOpenV0Env"
 
         self.box_high = np.array([0.895, .09, -.26]) # Double check this!!!
         self.box_low = np.array([0.79, 0.01, -.305])
@@ -74,7 +77,6 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
         self._objects = {}
         self._drawer = bullet.objects.drawer()
         bullet.open_drawer(self._drawer, noisy_open=self.noisily_open_drawer)
-        print("pre generate object pos")
         object_position = np.random.uniform(
             self._object_position_low, self._object_position_high)
         blocking_object_position = np.random.uniform(
@@ -100,6 +102,18 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
     def get_box_pos(self):
         box_open_top_info = bullet.get_body_info(self._box, quat_to_deg=False)
         return np.asarray(box_open_top_info['pos'])
+
+    def is_object_grasped(self):
+        object_info = bullet.get_body_info(
+            self._objects[self.object_name], quat_to_deg=False)
+        object_pos = np.asarray(object_info['pos'])
+        object_gripper_distance = np.linalg.norm(object_pos - self.get_end_effector_pos())
+        return (object_pos[2] > self._reward_height_thresh) and (object_gripper_distance < 0.1)
+
+    def get_reward(self, info):
+        reward = float(self.is_object_grasped())
+        reward = self.adjust_rew_if_use_positive(reward)
+        return reward
 
     def get_info(self):
         info = {}
@@ -154,7 +168,7 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
 def drawer_place_then_open_policy(EPSILON, noise, margin, save_video, env):
     object_ind = 0
     blocking_object_ind = 1
-    for i in range(50):
+    for i in range(200):
         obs = env.reset()
         # object_pos[2] = -0.30
 
@@ -165,7 +179,7 @@ def drawer_place_then_open_policy(EPSILON, noise, margin, save_video, env):
 
         drawer_never_opened = True
 
-        images = [] # new video at the start of each trajectory.
+        images, images_for_gif = [], [] # new video at the start of each trajectory
 
         for _ in range(env.scripted_traj_len):
             state_obs = obs[env.fc_input_key]
@@ -204,33 +218,41 @@ def drawer_place_then_open_policy(EPSILON, noise, margin, save_video, env):
                     if xy_diff > 0.02:
                         action[2] = 0.0
                 action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
-            elif env._gripper_open and blocking_object_box_dist > box_dist_thresh:
-                # print('gripper closing')
+            elif (env._gripper_open and blocking_object_box_dist > box_dist_thresh and
+                not info['blocking_object_in_box_success']):
                 action = (blocking_object_pos - ee_pos) * 7.0
                 action = np.concatenate(
                     (action, np.asarray([0., -0.7, 0.])))
-            elif blocking_object_box_dist > box_dist_thresh:
+            elif (blocking_object_gripper_dist > 2 * dist_thresh and
+                not info['blocking_object_above_box_success']):
+                # Open gripper
+                # Remove this case for scripted_collect.
+                break
+            elif (blocking_object_box_dist > box_dist_thresh and
+                not info['blocking_object_above_box_success']):
                 action = (box_pos - blocking_object_pos)*7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
                 if "DrawerPlaceThenOpen" in env._env_name:
-                    print("don't droop down until xy-close to box")
-                    if xy_diff > dist_thresh:
-                        action[2] = 0.0
+                    # print("don't droop down until xy-close to box")
+                    action[2] = 0.2
                 action = np.concatenate(
                     (action, np.asarray([0., 0., 0.])))
+                # print("blocking_object_pos", blocking_object_pos)
             elif not info['blocking_object_in_box_success']:
                 # object is now above the box.
                 action = (box_pos - blocking_object_pos)*7.0
+                action[2] = 0.2
                 action = np.concatenate(
                     (action, np.asarray([0., 0.7, 0.])))
             elif (gripper_handle_dist > dist_thresh
                 and not env.is_drawer_opened(widely=drawer_never_opened)):
                 # print('approaching handle')
-                action = (handle_pos - ee_pos) * 7.0
+                handle_pos_offset = np.array([0.0, -0.01, -0.01])
+                action = ((handle_pos + handle_pos_offset) - ee_pos) * 7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
                 if xy_diff > 0.75 * dist_thresh:
-                    action[2] = 0.5 # force upward action to avoid upper box
-                action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
+                    action[2] = 0.2 # force upward action to avoid upper box
+                action = np.concatenate((action, np.asarray([theta_action,0.7,0.])))
             elif not env.is_drawer_opened(widely=drawer_never_opened):
                 # print("opening drawer")
                 action = np.array([0, -1.0, 0])
@@ -262,6 +284,10 @@ def drawer_place_then_open_policy(EPSILON, noise, margin, save_video, env):
                 action = np.asarray([0., 0., 0.7])
                 action = np.concatenate(
                     (action, np.asarray([0., 0., 0.])))
+            elif object_gripper_dist > 2 * dist_thresh:
+                # Open gripper
+                # Remove this case for scripted_collect.
+                action = np.array([0, 0, 0, 0, 0.7, 0])
             else:
                 # Move above tray's xy-center.
                 tray_info = roboverse.bullet.get_body_info(
@@ -281,15 +307,23 @@ def drawer_place_then_open_policy(EPSILON, noise, margin, save_video, env):
             img = env.render_obs()
             if save_video:
                 images.append(img)
+                # img = np.transpose(img, (1, 2, 0))
+                img_side = 48
+                img = skit.resize(img, (img_side * 3, img_side * 3, 3)) # middle dimensions should be 48
+                images_for_gif.append(Image.fromarray(np.uint8(img * 255)))
 
             time.sleep(0.05)
 
-        print('object pos: {}'.format(object_pos))
-        print('reward: {}'.format(rew))
-        print('--------------------')
+        if rew > 0:
+            print("i", i)
+            print('reward: {}'.format(rew))
+            print('--------------------')
 
         if save_video:
             utils.save_video('data/grasp_place_{}.avi'.format(i), images)
+            images_for_gif[0].save('data/grasp_place_{}.gif'.format(i),
+                save_all=True, append_images=images_for_gif[1:],
+                duration=env.scripted_traj_len * 2, loop=0)
 
 if __name__ == "__main__":
     EPSILON = 0.05
