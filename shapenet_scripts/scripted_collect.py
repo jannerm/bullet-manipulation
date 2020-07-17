@@ -937,6 +937,8 @@ def main(args):
         V6_GRASPING_V0_DRAWER_OPENING_ENVS +
         V6_GRASPING_V0_DRAWER_OPENING_ONLY_ENVS +
         V6_GRASPING_V0_DRAWER_GRASPING_ONLY_ENVS +
+        V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV +
+        V6_GRASPING_V0_DRAWER_PLACING_OPENING_ENVS +
         V7_GRASPING_ENVS)
 
     if args.env in PROXY_ENVS_MAP:
@@ -1008,6 +1010,10 @@ def main(args):
             success = False
             scripted_grasping_V6_placing_V0(
                 env, railrl_pool, railrl_success_pool, noise=args.noise_std)
+        elif args.env in V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV:
+            assert not render_images
+            success = False
+            pass
         elif args.env in V6_GRASPING_V0_DRAWER_OPENING_ENVS:
             assert not render_images
             success = False
@@ -1073,7 +1079,9 @@ def main(args):
             V6_GRASPING_V0_DRAWER_PLACING_ENVS +
             V6_GRASPING_V0_DRAWER_OPENING_ENVS +
             V6_GRASPING_V0_DRAWER_OPENING_ONLY_ENVS +
-            V6_GRASPING_V0_DRAWER_GRASPING_ONLY_ENVS):
+            V6_GRASPING_V0_DRAWER_GRASPING_ONLY_ENVS +
+            V6_GRASPING_V0_DRAWER_PLACING_OPENING_ENVS +
+            V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV):
             # For non terminating envs: we reshape the rewards
             # array and count the number of trajectories with
             # a sucess in the last timestep.
@@ -1127,11 +1135,14 @@ if __name__ == "__main__":
         args.num_timesteps = 25
         assert args.observation_mode != 'pixels'
     elif args.env in (V6_GRASPING_V0_PLACING_ENVS +
-        V6_GRASPING_V0_DRAWER_OPENING_ONLY_ENVS):
+        V6_GRASPING_V0_DRAWER_OPENING_ONLY_ENVS +
+        V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV):
         args.num_timesteps = 30
     elif args.env in V6_GRASPING_V0_PLACING_ONLY_ENVS:
         args.num_timesteps = 10
     elif args.env in (V6_GRASPING_V0_DRAWER_PLACING_ENVS +
         V6_GRASPING_V0_DRAWER_OPENING_ENVS):
         args.num_timesteps = 50
+    elif args.env in V6_GRASPING_V0_DRAWER_PLACING_OPENING_ENVS:
+        args.num_timesteps = 80
     main(args)
