@@ -43,7 +43,6 @@ widowx_200 = loader(
 ) #pos=[0.4, 0, -0.4], quat=[0, 0, -0.707, -0.707]
 #pos=[0.7, 0, 0.1]
 
-
 ## pybullet_data objects
 
 table = loader(PDATA_PATH, 'table/table.urdf',
@@ -102,8 +101,10 @@ long_box_open_top = loader(ASSET_PATH, os.path.join(obj_dir, "box_open_top", "lo
               pos=[0.8225, 0.01, -.345],
               scale=0.1)
 
+lifted_long_box_open_top_center_pos = [0.6925, -0.25, -.345]
+
 lifted_long_box_open_top = loader(ASSET_PATH, os.path.join(obj_dir, "box_open_top", "long_box_open_top.urdf"),
-              pos=[0.8425, 0.05, -.295],
+              pos=lifted_long_box_open_top_center_pos, # old: [0.8425, 0.05, -.295]
               scale=0.1)
 
 drawer = loader(ASSET_PATH, os.path.join(obj_dir, "drawer", "drawer.urdf"),

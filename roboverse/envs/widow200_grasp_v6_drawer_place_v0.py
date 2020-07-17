@@ -2,6 +2,7 @@ from roboverse.envs.widow200_grasp_v6_box_place_v0 import (
     Widow200GraspV6BoxPlaceV0Env)
 from roboverse.envs.rand_obj import RandObjEnv
 import roboverse.bullet as bullet
+from roboverse.bullet.objects import lifted_long_box_open_top_center_pos
 import roboverse.utils as utils
 import numpy as np
 import time
@@ -33,8 +34,8 @@ class Widow200GraspV6DrawerPlaceV0Env(Widow200GraspV6BoxPlaceV0Env):
         # self.set_scaling_dicts()
         self.set_box_pos_as_goal_pos()
         # self.obs_img_dim = 228
-        self.box_high = np.array([0.895, .09, -.26])
-        self.box_low = np.array([0.79, 0.01, -.305])
+        self.box_high = lifted_long_box_open_top_center_pos + np.array([0.0525, 0.04, 0.035])
+        self.box_low = lifted_long_box_open_top_center_pos + np.array([-0.0525, -0.04, -0.01])
 
         self.scripted_traj_len = 50
 
