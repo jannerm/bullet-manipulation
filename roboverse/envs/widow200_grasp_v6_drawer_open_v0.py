@@ -6,6 +6,9 @@ import roboverse.utils as utils
 import numpy as np
 import time
 import roboverse
+from PIL import Image
+import skimage.io as skii
+import skimage.transform as skit
 
 
 class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
@@ -123,14 +126,15 @@ class Widow200GraspV6DrawerOpenV0RandObjEnv(RandObjEnv, Widow200GraspV6DrawerOpe
 
 def drawer_open_policy(EPSILON, noise, margin, save_video, env):
     object_ind = 0
-    for i in range(50):
+    for i in range(300):
         obs = env.reset()
         # object_pos[2] = -0.30
 
         dist_thresh = 0.04 + np.random.normal(scale=0.01)
         drawer_never_opened = True
+        save_video = False
 
-        images = [] # new video at the start of each trajectory.
+        images, images_for_gif = [], [] # new video at the start of each trajectory.
 
         for _ in range(env.scripted_traj_len):
             state_obs = obs[env.fc_input_key]
@@ -202,14 +206,33 @@ def drawer_open_policy(EPSILON, noise, margin, save_video, env):
             # print("rew", rew)
 
             img = env.render_obs()
-            if save_video:
-                images.append(img)
+            if info['nans']:
+                save_video = True
+
+            # save_video:
+            images.append(img)
+            # img = np.transpose(img, (1, 2, 0))
+            img_side = 48
+            img = skit.resize(img, (img_side * 3, img_side * 3, 3)) # middle dimensions should be 48
+            images_for_gif.append(Image.fromarray(np.uint8(img * 255)))
 
             time.sleep(0.05)
 
-        print('object pos: {}'.format(object_pos))
-        print('reward: {}'.format(rew))
-        print('--------------------')
+        # if rew > 0:
+        #     print("i", i)
+        #     print('reward: {}'.format(rew))
+        #     print('--------------------')
+
+        if save_video:
+            print("i", i)
+            utils.save_video('data/grasp_place_{}.avi'.format(i), images)
+            images_for_gif[0].save('data/grasp_place_{}.gif'.format(i),
+                save_all=True, append_images=images_for_gif[1:],
+                duration=env.scripted_traj_len * 2, loop=0)
+
+        # print('object pos: {}'.format(object_pos))
+        # print('reward: {}'.format(rew))
+        # print('--------------------')
 
         if save_video:
             utils.save_video('data/grasp_place_{}.avi'.format(i), images)
