@@ -32,18 +32,14 @@ if __name__ == "__main__":
     timestamp = roboverse.utils.timestamp()
 
     pools = []
-    success_pools = []
 
     for root, dirs, files in os.walk(data_directory):
         for f in files:
-            if "pool" in f:
+            if "pool" in f and "success_only" not in f: # ignore success pools.
                 with open(os.path.join(root, f), 'rb') as fp:
                     print("f", f)
                     pool = pickle.load(fp)
-                if 'success_only' in f:
-                    success_pools.append(pool)
-                else:
-                    pools.append(pool)
+                pools.append(pool)
 
     original_pool_size = 0
     for pool in pools:
