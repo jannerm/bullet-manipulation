@@ -177,11 +177,18 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
         box_pos = self.get_box_pos()
 
         blocking_object_box_dist = np.linalg.norm(blocking_object_pos - box_pos)
+
         blocking_object_box_dist_success = int(blocking_object_box_dist < self._success_dist_threshold)
 
         blocking_object_within_box_bounds = ((self.box_low <= blocking_object_pos)
             & (blocking_object_pos <= self.box_high))
         blocking_object_in_box_success = int(np.all(blocking_object_within_box_bounds))
+        info['nans'] = False
+        if np.any(np.isnan(blocking_object_pos)):
+            print("self._objects", self._objects)
+            print("self.get_obj_obs_array()", self.get_obj_obs_array())
+            print("blocking_object_pos", blocking_object_pos)
+            info['nans'] = True
 
         blocking_object_xy_in_box_xy = int(np.all(blocking_object_within_box_bounds[:2]))
         blocking_object_z_above_box_z = int(blocking_object_pos[2] >= self.box_low[2])
@@ -471,9 +478,9 @@ if __name__ == "__main__":
     margin = 0.025
     save_video = True
 
-    mode = "PlaceThenOpen"
+    mode = "OpenGraspOnly"
 
-    gui = True
+    gui = False
     reward_type = "sparse"
     obs_mode = "pixels_debug"
     if mode == "PlaceThenOpen":
