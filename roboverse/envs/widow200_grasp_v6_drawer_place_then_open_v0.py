@@ -491,13 +491,13 @@ if __name__ == "__main__":
                              observation_mode=obs_mode)
         drawer_place_then_open_policy(EPSILON, noise, margin, save_video, env)
     elif mode == "PlaceOnly":
-        env = roboverse.make("Widow200GraspV6DrawerPlaceThenOpenPlaceOnlyV0-v0",
+        env = roboverse.make("Widow200GraspV6DrawerPlaceThenOpenV0PlaceOnly-v0",
                              gui=gui,
                              reward_type=reward_type,
                              observation_mode=obs_mode)
         drawer_place_only_policy(EPSILON, noise, margin, save_video, env)
     elif mode == "OpenGraspOnly":
-        env = roboverse.make("Widow200GraspV6DrawerPlaceThenOpenOpenGraspOnlyV0-v0",
+        env = roboverse.make("Widow200GraspV6DrawerPlaceThenOpenV0OpenGraspOnly-v0",
                              gui=gui,
                              reward_type=reward_type,
                              observation_mode=obs_mode)
