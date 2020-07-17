@@ -77,6 +77,9 @@ def load_obj(filepathcollision, filepathvisual, pos=[0, 0, 0], quat=[0, 0, 0, 1]
     p.resetBasePositionAndOrientation(body, pos, quat)
     return body
 
+def freeze_obj(body):
+    p.changeDynamics(body, -1, mass=0)
+
 def save_state(*savepath):
     if len(savepath) > 0:
         savepath = os.path.join(*savepath)
