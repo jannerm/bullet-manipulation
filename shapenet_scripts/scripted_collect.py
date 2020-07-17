@@ -771,7 +771,7 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
 
 def scripted_grasping_V6_opening_V0(env, pool, success_pool, noise=0.2):
     observation = env.reset()
-    object_ind = np.random.randint(0, env._num_objects)
+    object_ind = 0
     margin = 0.025
     actions, observations, next_observations, rewards, terminals, infos = \
         [], [], [], [], [], []

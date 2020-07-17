@@ -3,8 +3,8 @@ from roboverse.envs.widow200_grasp_v6_drawer_open_v0 import (
 from roboverse.envs.rand_obj import RandObjEnv
 from roboverse.utils.shapenet_utils import load_shapenet_object, \
     import_shapenet_metadata
-from roboverse.bullet.misc import freeze_obj
 import roboverse.bullet as bullet
+from roboverse.bullet.objects import lifted_long_box_open_top_center_pos
 import roboverse.utils as utils
 import numpy as np
 import time
@@ -49,20 +49,20 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
         self.place_only = place_only
         self.open_grasp_only = open_grasp_only
         assert not (self.place_only and self.open_grasp_only)
-        self.box_high = np.array([0.895, .09, -.26]) # Double check this!!!
-        self.box_low = np.array([0.79, 0.01, -.305])
+        self.box_high = lifted_long_box_open_top_center_pos + np.array([0.0525, 0.04, 0.035])
+        self.box_low = lifted_long_box_open_top_center_pos + np.array([-0.0525, -0.04, -0.01])
 
-        if self.place_only:
+        if not self.open_grasp_only:
             # Blocking = Obstruction object
             # Drop object blocking drawer
-            blocking_object_offset = np.array([0, -0.05, -0.05])
+            blocking_object_offset = np.array([0, -0.03, -0.05])
             self._blocking_object_position_high = self._object_position_high + blocking_object_offset
             self._blocking_object_position_low = self._object_position_low + blocking_object_offset
             self._success_dist_threshold = success_dist_threshold
         else:
             # Drop the object in the box.
             margin = np.array([0.02, 0.02, 0])
-            drop_height = self.box_high[2] - 0.02
+            drop_height = self.box_high[2] + 0.05
             self._blocking_object_position_high = list(self.box_high[:2]) + [drop_height]
             self._blocking_object_position_high -= margin
             self._blocking_object_position_low = list(self.box_low[:2]) + [drop_height]
@@ -121,14 +121,7 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
         self.load_object(
             self.blocking_object_name, blocking_object_position, quat=quat)
 
-        if self.open_grasp_only:
-            self.freeze_blocking_object()
-
         self._box = bullet.objects.lifted_long_box_open_top()
-
-    def freeze_blocking_object(self):
-        assert self.blocking_object_name in self._objects
-        freeze_obj(self._objects[self.blocking_object_name])
 
     def load_object(self, name, pos, quat=[1, -1, 0, 0]):
         self._objects[name] = load_shapenet_object(
@@ -200,9 +193,6 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
         info['blocking_object_in_box_success'] = blocking_object_in_box_success
         info['blocking_object_above_box_success'] = blocking_object_above_box_sucess
 
-        # Freeze blocking object if it is in box:
-        if info['blocking_object_in_box_success']:
-            self.freeze_blocking_object()
         return info
 
 def drawer_place_then_open_policy(EPSILON, noise, margin, save_video, env):
@@ -343,6 +333,7 @@ def drawer_place_then_open_policy(EPSILON, noise, margin, save_video, env):
             action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
             # print(action)
             obs, rew, done, info = env.step(action)
+            # print("block object in box." , info['blocking_object_in_box_success'])
             # print("rew", rew)
 
             img = env.render_obs()
@@ -450,6 +441,7 @@ def drawer_place_only_policy(EPSILON, noise, margin, save_video, env):
             action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
             # print(action)
             obs, rew, done, info = env.step(action)
+            # print("block object in box." , info['blocking_object_in_box_success'])
             # print("rew", rew)
 
             img = env.render_obs()
@@ -479,7 +471,7 @@ if __name__ == "__main__":
     margin = 0.025
     save_video = True
 
-    mode = "PlaceOnly"
+    mode = "PlaceThenOpen"
 
     gui = True
     reward_type = "sparse"

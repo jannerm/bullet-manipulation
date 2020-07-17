@@ -128,7 +128,6 @@ def drawer_open_policy(EPSILON, noise, margin, save_video, env):
         # object_pos[2] = -0.30
 
         dist_thresh = 0.04 + np.random.normal(scale=0.01)
-        max_theta_action_magnitude = 0.2
         drawer_never_opened = True
 
         images = [] # new video at the start of each trajectory.
