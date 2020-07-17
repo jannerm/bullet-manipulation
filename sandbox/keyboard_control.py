@@ -89,7 +89,7 @@ env_kwargs={
     'goal_sampling_mode': 'obj_in_bowl', #'ground'
     'bowl_bounds': [-0.40, 0.40],
     'random_init_bowl_pos': False,
-    'bowl_type': 'fixed',
+    'bowl_type': 'light',
 
     'hand_reward': True,
     'gripper_reward': True,

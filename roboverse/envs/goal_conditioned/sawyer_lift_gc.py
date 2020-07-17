@@ -368,18 +368,32 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
                                      self._env._end_effector, 'pos')[1:]
 
     def _set_spaces(self):
-        obs = self.reset()
         act_dim = 4
         act_bound = 1
         act_high = np.ones(act_dim) * act_bound
         self.action_space = gym.spaces.Box(-act_high, act_high)
 
-        obs_bound = 1
-        obs_high = np.ones(len(obs['observation'])) * obs_bound
-        obs_space = gym.spaces.Box(-obs_high, obs_high)
+        pos_low = self._env._pos_low[1:]
+        pos_high = self._env._pos_high[1:]
 
-        goal_high = np.ones(len(obs['state_achieved_goal'])) * obs_bound
-        goal_space = gym.spaces.Box(-goal_high, goal_high)
+        if (self._bowl_type == 'fixed') and (not self.random_init_bowl_pos):
+            bowl_low, bowl_high = 0, 0
+        else:
+            bowl_low, bowl_high = self.bowl_bounds
+
+        obs_low = np.hstack((
+            np.tile(pos_low, self.num_obj+1), # hand and blocks
+            bowl_low, # bowl
+            -0.53 # gripper
+        ))
+        obs_high = np.hstack((
+            np.tile(pos_high, self.num_obj+1), # hand and blocks
+            bowl_high, # bowl
+            0.22 # gripper
+        ))
+
+        obs_space = gym.spaces.Box(obs_low, obs_high)
+        goal_space = gym.spaces.Box(obs_low, obs_high)
 
         self.observation_space = Dict([
             ('observation', obs_space),
