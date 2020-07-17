@@ -778,6 +778,7 @@ def scripted_grasping_V6_opening_V0(env, pool, success_pool, noise=0.2):
 
     dist_thresh = 0.04 + np.random.normal(scale=0.01)
     drawer_never_opened = True
+    save_to_rb = False # remove this; it's for debugging.
 
     for _ in range(args.num_timesteps):
 
@@ -853,6 +854,9 @@ def scripted_grasping_V6_opening_V0(env, pool, success_pool, noise=0.2):
 
         next_observation, reward, done, info = env.step(action)
 
+        if info['nans']:
+            save_to_rb = True
+
         actions.append(action)
         observations.append(observation)
         rewards.append(reward)
@@ -879,7 +883,8 @@ def scripted_grasping_V6_opening_V0(env, pool, success_pool, noise=0.2):
         path['agent_infos'] = np.asarray([{} for i in range(path_length)])
         path['env_infos'] = np.asarray([{} for i in range(path_length)])
 
-    pool.add_path(path)
+    if save_to_rb:
+        pool.add_path(path)
     if rewards[-1] > 0:
         success_pool.add_path(path)
 
