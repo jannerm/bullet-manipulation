@@ -390,13 +390,13 @@ def drawer_place_only_policy(EPSILON, noise, margin, save_video, env):
             box_pos = env.get_box_pos()
             blocking_object_pos = obj_obs[
                 blocking_object_ind * 7 : blocking_object_ind * 7 + 3]
-            handle_pos = env.get_handle_pos()
             ending_target_pos = np.array([0.73822169, -0.03909928, -0.25635483]) # Effective neutral pos.
             # object_pos += np.random.normal(scale=0.02, size=(3,))
 
             blocking_object_gripper_dist = np.linalg.norm(
                 blocking_object_pos - ee_pos)
-            blocking_object_box_dist = np.linalg.norm(blocking_object_pos - box_pos)
+            blocking_object_box_dist = np.linalg.norm(
+                blocking_object_pos - box_pos)
             theta_action = 0.
 
             blocking_object_pos_offset = np.array([0, -0.01, 0])
