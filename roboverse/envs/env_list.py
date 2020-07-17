@@ -31,7 +31,7 @@ V6_GRASPING_V0_DRAWER_PLACING_ENVS = ['Widow200GraspV6DrawerPlaceV0-v0',
                                       'Widow200GraspV6DrawerPlaceV0TenRandObj-v0',
                                       'Widow200GraspV6DrawerPlaceV0TwentyRandObj-v0',
                                       'Widow200GraspV6DrawerPlaceV0FortyRandObj-v0']
-V6_GRASPING_V0_DRAWER_OPENING_ENVS = ['Widow200GraspV6DrawerPlaceThenOpenOpenGraspOnlyV0-v0',
+V6_GRASPING_V0_DRAWER_OPENING_ENVS = ['Widow200GraspV6DrawerPlaceThenOpenV0OpenGraspOnly-v0',
                                       'Widow200GraspV6DrawerOpenV0-v0',
                                       'Widow200GraspV6DrawerOpenV0RandObj-v0',
                                       'Widow200GraspV6DrawerOpenV0OneRandObj-v0',
@@ -42,7 +42,7 @@ V6_GRASPING_V0_DRAWER_OPENING_ENVS = ['Widow200GraspV6DrawerPlaceThenOpenOpenGra
                                       'Widow200GraspV6DrawerOpenV0FortyRandObj-v0']
 V6_GRASPING_V0_DRAWER_OPENING_ONLY_ENVS = ['Widow200GraspV6DrawerOpenOnlyV0-v0',]
 V6_GRASPING_V0_DRAWER_GRASPING_ONLY_ENVS = ['Widow200GraspV6DrawerGraspOnlyV0-v0',]
-V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV = ['Widow200GraspV6DrawerPlaceThenOpenPlaceOnlyV0-v0']
+V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV = ['Widow200GraspV6DrawerPlaceThenOpenV0PlaceOnly-v0']
 V6_GRASPING_V0_DRAWER_PLACING_OPENING_ENVS = ['Widow200GraspV6DrawerPlaceThenOpenV0-v0']
 V7_GRASPING_ENVS = ['Widow200GraspV7-v0',
                     'Widow200GraspV7BoxV0-v0',
