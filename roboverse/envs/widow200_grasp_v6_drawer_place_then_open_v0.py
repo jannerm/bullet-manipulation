@@ -3,6 +3,7 @@ from roboverse.envs.widow200_grasp_v6_drawer_open_v0 import (
 from roboverse.envs.rand_obj import RandObjEnv
 from roboverse.utils.shapenet_utils import load_shapenet_object, \
     import_shapenet_metadata
+from roboverse.bullet.misc import freeze_obj
 import roboverse.bullet as bullet
 import roboverse.utils as utils
 import numpy as np
@@ -40,7 +41,6 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
         object_names = (self.object_name, self.blocking_object_name)
         scaling_local_list = [
             object_name_scaling[1], blocking_object_name_scaling[1]]
-        print("scaling_local_list", scaling_local_list)
         num_objects = 2
 
         self._object_position_high = (.82, -.08, -.29)
@@ -62,7 +62,7 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
         else:
             # Drop the object in the box.
             margin = np.array([0.02, 0.02, 0])
-            drop_height = self.box_high[2] + 0.05
+            drop_height = self.box_high[2] - 0.02
             self._blocking_object_position_high = list(self.box_high[:2]) + [drop_height]
             self._blocking_object_position_high -= margin
             self._blocking_object_position_low = list(self.box_low[:2]) + [drop_height]
@@ -121,7 +121,14 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
         self.load_object(
             self.blocking_object_name, blocking_object_position, quat=quat)
 
+        if self.open_grasp_only:
+            self.freeze_blocking_object()
+
         self._box = bullet.objects.lifted_long_box_open_top()
+
+    def freeze_blocking_object(self):
+        assert self.blocking_object_name in self._objects
+        freeze_obj(self._objects[self.blocking_object_name])
 
     def load_object(self, name, pos, quat=[1, -1, 0, 0]):
         self._objects[name] = load_shapenet_object(
@@ -192,6 +199,10 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
         info['blocking_object_box_dist_success'] = blocking_object_box_dist_success
         info['blocking_object_in_box_success'] = blocking_object_in_box_success
         info['blocking_object_above_box_success'] = blocking_object_above_box_sucess
+
+        # Freeze blocking object if it is in box:
+        if info['blocking_object_in_box_success']:
+            self.freeze_blocking_object()
         return info
 
 def drawer_place_then_open_policy(EPSILON, noise, margin, save_video, env):
@@ -468,7 +479,7 @@ if __name__ == "__main__":
     margin = 0.025
     save_video = True
 
-    mode = "OpenGraspOnly"
+    mode = "PlaceOnly"
 
     gui = True
     reward_type = "sparse"
