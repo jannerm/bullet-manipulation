@@ -653,7 +653,7 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
     if rewards[-1] > 0:
         success_pool.add_path(path)
 
-def scripted_grasping_V6_closed_drawer_placing_V0(env, pool, success_pool, noise=0.2):
+def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise=0.2):
     observation = env.reset()
     blocking_object_ind = 1
     actions, observations, next_observations, rewards, terminals, infos = \
@@ -710,8 +710,8 @@ def scripted_grasping_V6_closed_drawer_placing_V0(env, pool, success_pool, noise
             action = (blocking_object_pos - ee_pos) * 7.0
             action = np.concatenate(
                 (action, np.asarray([0., -0.7, 0.])))
-        elif blocking_object_box_dist > box_dist_thresh and
-            not info['blocking_object_above_box_success']:
+        elif (blocking_object_box_dist > box_dist_thresh and
+            not info['blocking_object_above_box_success']):
             action = (box_pos - blocking_object_pos)*7.0
             xy_diff = np.linalg.norm(action[:2]/7.0)
             if "DrawerPlaceThenOpen" in env._env_name:
