@@ -268,7 +268,7 @@ def drawer_place_then_open_policy(EPSILON, noise, margin, save_video, env):
             gripper_handle_dist = np.linalg.norm(handle_pos - ee_pos)
             theta_action = 0.
 
-            blocking_object_pos_offset = np.array([0, -0.01, 0])
+            blocking_object_pos_offset = np.array([0, -0.02, 0])
 
             info = env.get_info()
 
@@ -421,7 +421,7 @@ def drawer_place_only_policy(EPSILON, noise, margin, save_video, env):
                 blocking_object_pos - box_pos)
             theta_action = 0.
 
-            blocking_object_pos_offset = np.array([0, -0.01, 0.0])
+            blocking_object_pos_offset = np.array([0, -0.02, 0.0])
 
             info = env.get_info()
 
