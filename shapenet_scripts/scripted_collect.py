@@ -690,19 +690,16 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
         blocking_object_pos_offset = np.array([0, -0.01, 0])
 
         info = env.get_info()
+        z_diff = abs(blocking_object_pos[2] + blocking_object_pos_offset[2] - ee_pos[2])
 
-        if (blocking_object_gripper_dist > dist_thresh and
+        if ((blocking_object_gripper_dist > dist_thresh or z_diff > 0.015 ) and
             env._gripper_open and not info['blocking_object_above_box_success']):
             # print('approaching')
             action = ((blocking_object_pos +
                 blocking_object_pos_offset) - ee_pos) * 7.0
             xy_diff = np.linalg.norm(action[:2]/7.0)
-            if "Drawer" in env._env_name:
-                if xy_diff > dist_thresh:
-                    action[2] = 0.4 # force upward action to avoid upper box
-            else:
-                if xy_diff > 0.02:
-                    action[2] = 0.0
+            if xy_diff > 0.03:
+                action[2] *= 0.3
             action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
         elif (env._gripper_open and blocking_object_box_dist > box_dist_thresh and
             not info['blocking_object_in_box_success']):
