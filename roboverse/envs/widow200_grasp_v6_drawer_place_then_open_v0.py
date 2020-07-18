@@ -199,6 +199,33 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
 
         return info
 
+class Widow200GraspV6DrawerPlaceThenOpenV0PickPlaceOnlyEnv(Widow200GraspV6DrawerPlaceThenOpenV0Env):
+    """
+    Setup: blocking_obj blocking the drawer from being opened.
+    obj in closed drawer.
+    Task: grasp blocking_obj, put in box.
+    """
+
+    def __init__(self,
+                 *args,
+                 object_name_scaling=("ball", 0.5),
+                 blocking_object_name_scaling=("shed", 0.4),
+                 success_dist_threshold=0.04,
+                 noisily_open_drawer=False,
+                 randomize_blocking_obj_quat=False,
+                 open_grasp_only=False,
+                 place_only=True,
+                 **kwargs):
+        super().__init__(*args,
+            object_names=object_names,
+            scaling_local_list=scaling_local_list,
+            num_objects=num_objects, **kwargs)
+
+    def get_reward(self, info):
+        reward = float(info['blocking_object_in_box_success'])
+        reward = self.adjust_rew_if_use_positive(reward)
+        return reward
+
 def drawer_place_then_open_policy(EPSILON, noise, margin, save_video, env):
     object_ind = 0
     blocking_object_ind = 1
@@ -240,18 +267,16 @@ def drawer_place_then_open_policy(EPSILON, noise, margin, save_video, env):
 
             info = env.get_info()
 
-            if (blocking_object_gripper_dist > dist_thresh and
+            z_diff = abs(blocking_object_pos[2] + blocking_object_pos_offset[2] - ee_pos[2])
+
+            if ((blocking_object_gripper_dist > dist_thresh or z_diff > 0.015) and
                 env._gripper_open and not info['blocking_object_above_box_success']):
                 # print('approaching')
                 action = ((blocking_object_pos +
                     blocking_object_pos_offset) - ee_pos) * 7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
-                if "Drawer" in env._env_name:
-                    if xy_diff > dist_thresh:
-                        action[2] = 0.4 # force upward action to avoid upper box
-                else:
-                    if xy_diff > 0.02:
-                        action[2] = 0.0
+                if xy_diff > 0.03:
+                    action[2] *= 0.3
                 action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
             elif (env._gripper_open and blocking_object_box_dist > box_dist_thresh and
                 not info['blocking_object_in_box_success']):
