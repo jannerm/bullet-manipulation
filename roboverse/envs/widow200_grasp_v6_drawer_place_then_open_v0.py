@@ -492,7 +492,7 @@ if __name__ == "__main__":
     margin = 0.025
     save_video = True
 
-    mode = "PlaceOnly"
+    mode = "PickPlaceOnly"
 
     gui = False
     reward_type = "sparse"
@@ -503,8 +503,8 @@ if __name__ == "__main__":
                              reward_type=reward_type,
                              observation_mode=obs_mode)
         drawer_place_then_open_policy(EPSILON, noise, margin, save_video, env)
-    elif mode == "PlaceOnly":
-        env = roboverse.make("Widow200GraspV6DrawerPlaceThenOpenV0PlaceOnly-v0",
+    elif mode == "PickPlaceOnly":
+        env = roboverse.make("Widow200GraspV6DrawerPlaceThenOpenV0PickPlaceOnly-v0",
                              gui=gui,
                              reward_type=reward_type,
                              observation_mode=obs_mode)
