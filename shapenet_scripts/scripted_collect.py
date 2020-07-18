@@ -687,7 +687,7 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
             blocking_object_pos - box_pos)
         theta_action = 0.
 
-        blocking_object_pos_offset = np.array([0, -0.01, 0])
+        blocking_object_pos_offset = np.array([0, -0.02, 0])
 
         info = env.get_info()
         z_diff = abs(blocking_object_pos[2] + blocking_object_pos_offset[2] - ee_pos[2])
