@@ -30,10 +30,12 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
                  blocking_object_name_scaling=("shed", 0.4),
                  success_dist_threshold=0.04,
                  noisily_open_drawer=False,
+                 randomize_blocking_obj_quat=False,
                  open_grasp_only=False,
                  place_only=False,
                  **kwargs):
         self.noisily_open_drawer = noisily_open_drawer
+        self.randomize_blocking_obj_quat = randomize_blocking_obj_quat
         self.object_name = object_name_scaling[0]
         self.blocking_object_name = blocking_object_name_scaling[0]
 
@@ -114,7 +116,7 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
 
         bullet.close_drawer(self._drawer)
 
-        if self.open_grasp_only:
+        if self.open_grasp_only or self.randomize_blocking_obj_quat:
             self.blocking_obj_quat = self.get_random_quat()
         else:
             self.blocking_obj_quat = [1, -1, 0, 0]
