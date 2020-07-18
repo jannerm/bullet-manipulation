@@ -61,8 +61,8 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
             self._success_dist_threshold = success_dist_threshold
         else:
             # Drop the object in the box.
-            margin = np.array([0.02, 0.02, 0])
-            drop_height = self.box_high[2] + 0.05
+            margin = np.array([0.03, 0.03, 0])
+            drop_height = self.box_high[2]
             self._blocking_object_position_high = list(self.box_high[:2]) + [drop_height]
             self._blocking_object_position_high -= margin
             self._blocking_object_position_low = list(self.box_low[:2]) + [drop_height]
