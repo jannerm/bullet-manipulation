@@ -366,9 +366,6 @@ def drawer_place_only_policy(EPSILON, noise, margin, save_video, env):
     blocking_object_ind = 1
     for i in range(50):
         obs = env.reset()
-        print("env.scripted_traj_len", env.scripted_traj_len)
-        print("env.box_high", env.box_high)
-        print("env.box_low", env.box_low)
         # object_pos[2] = -0.30
 
         dist_thresh = 0.04 + np.random.normal(scale=0.01)
@@ -394,22 +391,20 @@ def drawer_place_only_policy(EPSILON, noise, margin, save_video, env):
                 blocking_object_pos - box_pos)
             theta_action = 0.
 
-            blocking_object_pos_offset = np.array([0, -0.01, 0])
+            blocking_object_pos_offset = np.array([0, -0.01, 0.0])
 
             info = env.get_info()
 
-            if (blocking_object_gripper_dist > dist_thresh and
+            z_diff = abs(blocking_object_pos[2] + blocking_object_pos_offset[2] - ee_pos[2])
+
+            if ((blocking_object_gripper_dist > dist_thresh or z_diff > 0.015) and
                 env._gripper_open and not info['blocking_object_above_box_success']):
                 # print('approaching')
                 action = ((blocking_object_pos +
                     blocking_object_pos_offset) - ee_pos) * 7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
-                if "Drawer" in env._env_name:
-                    if xy_diff > dist_thresh:
-                        action[2] = 0.4 # force upward action to avoid upper box
-                else:
-                    if xy_diff > 0.02:
-                        action[2] = 0.0
+                if xy_diff > 0.03:
+                    action[2] *= 0.3
                 action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
             elif (env._gripper_open and blocking_object_box_dist > box_dist_thresh and
                 not info['blocking_object_in_box_success']):
@@ -420,9 +415,6 @@ def drawer_place_only_policy(EPSILON, noise, margin, save_video, env):
                 not info['blocking_object_above_box_success']):
                 action = (box_pos - blocking_object_pos)*7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
-                if "DrawerPlaceThenOpen" in env._env_name:
-                    # print("don't droop down until xy-close to box")
-                    action[2] = 0.2
                 action = np.concatenate(
                     (action, np.asarray([0., 0., 0.])))
                 # print("blocking_object_pos", blocking_object_pos)
@@ -458,9 +450,9 @@ def drawer_place_only_policy(EPSILON, noise, margin, save_video, env):
 
             time.sleep(0.05)
 
-        if rew > 0:
-            print("i", i)
-            print('reward: {}'.format(rew))
+        print("i", i)
+        if info['blocking_object_in_box_success']:
+            print('blocking object in box')
             print('--------------------')
 
         if save_video:
@@ -475,7 +467,7 @@ if __name__ == "__main__":
     margin = 0.025
     save_video = True
 
-    mode = "OpenGraspOnly"
+    mode = "PlaceOnly"
 
     gui = False
     reward_type = "sparse"
