@@ -103,7 +103,7 @@ long_box_open_top = loader(ASSET_PATH, os.path.join(obj_dir, "box_open_top", "lo
 
 lifted_long_box_open_top_center_pos = [0.6925, -0.25, -.345]
 
-lifted_long_box_open_top = loader(ASSET_PATH, os.path.join(obj_dir, "box_open_top", "long_box_open_top_v2.urdf"),
+lifted_long_box_open_top = loader(ASSET_PATH, os.path.join(obj_dir, "box_open_top", "long_box_open_top.urdf"),
               pos=lifted_long_box_open_top_center_pos, # old: [0.8425, 0.05, -.295]
               scale=0.1)
 

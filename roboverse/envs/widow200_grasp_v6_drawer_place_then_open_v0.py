@@ -86,6 +86,7 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
         quat_possible_vals = [-1, 0, 1]
         vals = [quat_possible_vals] * 4
         possible_quats = list(itertools.product(*vals))
+        possible_quats.remove((0, 0, 0, 0))
         random_idx = np.random.random_integers(0, len(possible_quats) - 1)
         random_quat = possible_quats[random_idx]
         return random_quat
@@ -114,12 +115,12 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
         bullet.close_drawer(self._drawer)
 
         if self.open_grasp_only:
-            quat = self.get_random_quat()
+            self.blocking_obj_quat = self.get_random_quat()
         else:
-            quat = [1, -1, 0, 0]
+            self.blocking_obj_quat = [1, -1, 0, 0]
 
         self.load_object(
-            self.blocking_object_name, blocking_object_position, quat=quat)
+            self.blocking_object_name, blocking_object_position, quat=self.blocking_obj_quat)
 
         self._box = bullet.objects.lifted_long_box_open_top()
 
@@ -183,12 +184,6 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
         blocking_object_within_box_bounds = ((self.box_low <= blocking_object_pos)
             & (blocking_object_pos <= self.box_high))
         blocking_object_in_box_success = int(np.all(blocking_object_within_box_bounds))
-        info['nans'] = False
-        if np.any(np.isnan(blocking_object_pos)):
-            print("self._objects", self._objects)
-            print("self.get_obj_obs_array()", self.get_obj_obs_array())
-            print("blocking_object_pos", blocking_object_pos)
-            info['nans'] = True
 
         blocking_object_xy_in_box_xy = int(np.all(blocking_object_within_box_bounds[:2]))
         blocking_object_z_above_box_z = int(blocking_object_pos[2] >= self.box_low[2])

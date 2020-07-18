@@ -132,7 +132,6 @@ def drawer_open_policy(EPSILON, noise, margin, save_video, env):
 
         dist_thresh = 0.04 + np.random.normal(scale=0.01)
         drawer_never_opened = True
-        save_video = False
 
         images, images_for_gif = [], [] # new video at the start of each trajectory.
 
@@ -206,9 +205,6 @@ def drawer_open_policy(EPSILON, noise, margin, save_video, env):
             # print("rew", rew)
 
             img = env.render_obs()
-            if info['nans']:
-                save_video = True
-
             # save_video:
             images.append(img)
             # img = np.transpose(img, (1, 2, 0))
