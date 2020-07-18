@@ -217,11 +217,16 @@ class Widow200GraspV6DrawerPlaceThenOpenV0PickPlaceOnlyEnv(Widow200GraspV6Drawer
                  place_only=True,
                  **kwargs):
         super().__init__(*args,
-            object_names=object_names,
-            scaling_local_list=scaling_local_list,
-            num_objects=num_objects, **kwargs)
+            object_name_scaling=object_name_scaling,
+            blocking_object_name_scaling=blocking_object_name_scaling,
+            success_dist_threshold=success_dist_threshold,
+            randomize_blocking_obj_quat=randomize_blocking_obj_quat,
+            place_only=place_only,
+            **kwargs)
 
     def get_reward(self, info):
+        if not info:
+            info = self.get_info()
         reward = float(info['blocking_object_in_box_success'])
         reward = self.adjust_rew_if_use_positive(reward)
         return reward
@@ -476,7 +481,7 @@ def drawer_place_only_policy(EPSILON, noise, margin, save_video, env):
             time.sleep(0.05)
 
         print("i", i)
-        if info['blocking_object_in_box_success']:
+        if rew > 0:
             print('blocking object in box')
             print('--------------------')
 
@@ -494,7 +499,7 @@ if __name__ == "__main__":
 
     mode = "PickPlaceOnly"
 
-    gui = False
+    gui = True
     reward_type = "sparse"
     obs_mode = "pixels_debug"
     if mode == "PlaceThenOpen":
