@@ -976,6 +976,7 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
 
 def scripted_grasping_V6_place_then_open_V0(env, pool, success_pool, noise=0.2):
     observation = env.reset()
+    margin = 0.025
     object_ind = 0
     blocking_object_ind = 1
     actions, observations, next_observations, rewards, terminals, infos = \
@@ -1064,7 +1065,7 @@ def scripted_grasping_V6_place_then_open_V0(env, pool, success_pool, noise=0.2):
         elif (gripper_handle_dist > dist_thresh
             and not env.is_drawer_opened(widely=drawer_never_opened)):
             # print('approaching handle')
-            handle_pos_offset = np.array([0.0, -0.01, -0.01])
+            handle_pos_offset = np.array([0.0, 0.0, -0.01])
             action = ((handle_pos + handle_pos_offset) - ee_pos) * 7.0
             xy_diff = np.linalg.norm(action[:2]/7.0)
             if xy_diff > 0.75 * dist_thresh:
@@ -1096,15 +1097,14 @@ def scripted_grasping_V6_place_then_open_V0(env, pool, success_pool, noise=0.2):
             action = (object_pos - ee_pos) * 7.0
             action = np.concatenate(
                 (action, np.asarray([0., -0.7, 0.])))
+        elif object_gripper_dist > 2 * dist_thresh:
+            # Open gripper to retry
+            action = np.array([0, 0, 0, 0, 0.7, 0])
         elif not object_lifted_with_margin:
             # print('raise object upward')
             action = np.asarray([0., 0., 0.7])
             action = np.concatenate(
                 (action, np.asarray([0., 0., 0.])))
-        elif object_gripper_dist > 2 * dist_thresh:
-            # Open gripper
-            # Remove this case for scripted_collect.
-            action = np.array([0, 0, 0, 0, 0.7, 0])
         else:
             # Move above tray's xy-center.
             tray_info = roboverse.bullet.get_body_info(
