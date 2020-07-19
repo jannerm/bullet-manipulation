@@ -31,8 +31,7 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
                  success_dist_threshold=0.04,
                  noisily_open_drawer=False,
                  randomize_blocking_obj_quat=False,
-                 open_grasp_only=False,
-                 place_only=False,
+                 task_type="PickPlaceOpenGrasp",
                  **kwargs):
         self.noisily_open_drawer = noisily_open_drawer
         self.randomize_blocking_obj_quat = randomize_blocking_obj_quat
@@ -48,20 +47,14 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
         self._object_position_high = (.82, -.08, -.29)
         self._object_position_low = (.82, -.09, -.29)
 
-        self.place_only = place_only
-        self.open_grasp_only = open_grasp_only
-        assert not (self.place_only and self.open_grasp_only)
+        self.task_type = task_type
+        assert self.task_type in [
+            "OpenGrasp", "Grasp", "PickPlaceOpenGrasp", "PickPlace", "PickPlaceOpen"]
         self.box_high = lifted_long_box_open_top_center_pos + np.array([0.0525, 0.04, 0.035])
         self.box_low = lifted_long_box_open_top_center_pos + np.array([-0.0525, -0.04, -0.01])
 
-        if not self.open_grasp_only:
-            # Blocking = Obstruction object
-            # Drop object blocking drawer
-            blocking_object_offset = np.array([0, -0.03, -0.05])
-            self._blocking_object_position_high = self._object_position_high + blocking_object_offset
-            self._blocking_object_position_low = self._object_position_low + blocking_object_offset
-            self._success_dist_threshold = success_dist_threshold
-        else:
+        if self.task_type in ["OpenGrasp", "Grasp"]:
+            # Only open and/or grasping required. So blocking object is dropped in box.
             # Drop the object in the box.
             margin = np.array([0.03, 0.03, 0])
             drop_height = self.box_high[2]
@@ -69,6 +62,14 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
             self._blocking_object_position_high -= margin
             self._blocking_object_position_low = list(self.box_low[:2]) + [drop_height]
             self._blocking_object_position_low += margin
+        else:
+            # The task starts with needing to place blocking object in the box.
+            # Blocking = Obstruction object
+            # Drop object blocking drawer
+            blocking_object_offset = np.array([0, -0.03, -0.05])
+            self._blocking_object_position_high = self._object_position_high + blocking_object_offset
+            self._blocking_object_position_low = self._object_position_low + blocking_object_offset
+            self._success_dist_threshold = success_dist_threshold
 
         super().__init__(*args,
             object_names=object_names,
@@ -77,12 +78,14 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
 
         self._env_name = "Widow200GraspV6DrawerPlaceThenOpenV0Env"
 
-        if self.place_only:
-            self.scripted_traj_len = 30
-        elif self.open_grasp_only:
-            self.scripted_traj_len = 50
-        else:
-            self.scripted_traj_len = 80
+        task_scripted_traj_len_map = {
+            "Grasp": 25,
+            "PickPlace": 30,
+            "OpenGrasp": 50,
+            "PickPlaceOpen":60,
+            "PickPlaceOpenGrasp": 80,
+        }
+        self.scripted_traj_len = task_scripted_traj_len_map[self.task_type]
 
     def get_random_quat(self):
         quat_possible_vals = [-1, 0, 1]
@@ -116,7 +119,7 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
 
         bullet.close_drawer(self._drawer)
 
-        if self.open_grasp_only or self.randomize_blocking_obj_quat:
+        if self.task_type in ["OpenGrasp", "Grasp"] or self.randomize_blocking_obj_quat:
             self.blocking_obj_quat = self.get_random_quat()
         else:
             self.blocking_obj_quat = [1, -1, 0, 0]
@@ -213,15 +216,14 @@ class Widow200GraspV6DrawerPlaceThenOpenV0PickPlaceOnlyEnv(Widow200GraspV6Drawer
                  success_dist_threshold=0.04,
                  noisily_open_drawer=False,
                  randomize_blocking_obj_quat=False,
-                 open_grasp_only=False,
-                 place_only=True,
+                 task_type="PickPlace",
                  **kwargs):
         super().__init__(*args,
             object_name_scaling=object_name_scaling,
             blocking_object_name_scaling=blocking_object_name_scaling,
             success_dist_threshold=success_dist_threshold,
             randomize_blocking_obj_quat=randomize_blocking_obj_quat,
-            place_only=place_only,
+            task_type=task_type,
             **kwargs)
 
     def get_reward(self, info):
