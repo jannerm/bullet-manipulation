@@ -684,7 +684,7 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
         blocking_object_gripper_dist = np.linalg.norm(
             blocking_object_pos - ee_pos)
         blocking_object_box_dist = np.linalg.norm(
-            blocking_object_pos - box_pos)
+            blocking_object_pos[:2] - box_pos[:2])
         theta_action = 0.
 
         blocking_object_pos_offset = np.array([0, -0.01, 0])
@@ -692,13 +692,13 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
         info = env.get_info()
         z_diff = abs(blocking_object_pos[2] + blocking_object_pos_offset[2] - ee_pos[2])
 
-        if ((blocking_object_gripper_dist > dist_thresh or z_diff > 0.015 ) and
-            env._gripper_open and not info['blocking_object_above_box_success']):
+        if (blocking_object_gripper_dist > dist_thresh ) and \
+                env._gripper_open and not info['blocking_object_in_box_success']:
             # print('approaching')
             action = ((blocking_object_pos +
                 blocking_object_pos_offset) - ee_pos) * 7.0
             xy_diff = np.linalg.norm(action[:2]/7.0)
-            if xy_diff > 0.03:
+            if xy_diff > 0.02:
                 action[2] *= 0.3
             action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
         elif (env._gripper_open and blocking_object_box_dist > box_dist_thresh and
@@ -707,13 +707,13 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
             action = (blocking_object_pos - ee_pos) * 7.0
             action = np.concatenate(
                 (action, np.asarray([0., -0.7, 0.])))
-        elif (blocking_object_box_dist > box_dist_thresh and
-            not info['blocking_object_above_box_success']):
+        elif blocking_object_box_dist > box_dist_thresh and \
+                not info['blocking_object_in_box_success']:
             action = (box_pos - blocking_object_pos)*7.0
             xy_diff = np.linalg.norm(action[:2]/7.0)
             if "DrawerPlaceThenOpen" in env._env_name:
                 # print("don't droop down until xy-close to box")
-                action[2] = 0.2
+                action[2] = 0.0
             action = np.concatenate(
                 (action, np.asarray([0., 0., 0.])))
             # print("blocking_object_pos", blocking_object_pos)
@@ -725,17 +725,13 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
                 (action, np.asarray([0., 0.7, 0.])))
         else:
             action = (ending_target_pos - ee_pos) * 7.0
-            xy_diff = np.linalg.norm(action[:2]/7.0)
-            if xy_diff > dist_thresh:
-                action[2] = 0.2 # force upward action to avoid upper box
-            action = np.concatenate((action, np.asarray([theta_action,0.7,0.])))
+            action = np.concatenate((action, np.asarray([theta_action, 0.0, 0.])))
 
         noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
         action += np.random.normal(scale=noise_scalings)
         action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
 
         next_observation, reward, done, info = env.step(action)
-
         actions.append(action)
         observations.append(observation)
         rewards.append(reward)

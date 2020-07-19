@@ -27,7 +27,7 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
     def __init__(self,
                  *args,
                  object_name_scaling=("ball", 0.5),
-                 blocking_object_name_scaling=("shed", 0.4),
+                 blocking_object_name_scaling=("smushed_dumbbell", 0.3),
                  success_dist_threshold=0.04,
                  noisily_open_drawer=False,
                  randomize_blocking_obj_quat=False,
@@ -211,20 +211,9 @@ class Widow200GraspV6DrawerPlaceThenOpenV0PickPlaceOnlyEnv(Widow200GraspV6Drawer
 
     def __init__(self,
                  *args,
-                 object_name_scaling=("ball", 0.5),
-                 blocking_object_name_scaling=("shed", 0.4),
-                 success_dist_threshold=0.04,
-                 noisily_open_drawer=False,
-                 randomize_blocking_obj_quat=False,
                  task_type="PickPlace",
                  **kwargs):
-        super().__init__(*args,
-            object_name_scaling=object_name_scaling,
-            blocking_object_name_scaling=blocking_object_name_scaling,
-            success_dist_threshold=success_dist_threshold,
-            randomize_blocking_obj_quat=randomize_blocking_obj_quat,
-            task_type=task_type,
-            **kwargs)
+        super().__init__(*args, task_type=task_type, **kwargs)
 
     def get_reward(self, info):
         if not info:
