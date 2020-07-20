@@ -1553,7 +1553,7 @@ if __name__ == "__main__":
                         action="store_true", default=False)
     parser.add_argument("-o", "--observation-mode", type=str, default='pixels',
                         choices=('state', 'pixels', 'pixels_debug'))
-    parser.add_argument("--allow_grasp_retries", dest="allow_grasp_retries",
+    parser.add_argument("--allow-grasp-retries", dest="allow_grasp_retries",
                         action="store_true", default=False)
 
     args = parser.parse_args()
