@@ -979,7 +979,8 @@ def scripted_grasping_V6_place_then_open_V0(env, pool, success_pool, noise=0.2):
     actions, observations, next_observations, rewards, terminals, infos = \
         [], [], [], [], [], []
 
-    dist_thresh = 0.04 + np.random.normal(scale=0.01)
+    dist_thresh = 0.045 + np.random.normal(scale=0.01)
+    dist_thresh = np.clip(dist_thresh, 0.035, 0.050)
 
     box_dist_thresh = 0.035 + np.random.normal(scale=0.01)
     box_dist_thresh = np.clip(box_dist_thresh, 0.025, 0.05)
@@ -1014,42 +1015,37 @@ def scripted_grasping_V6_place_then_open_V0(env, pool, success_pool, noise=0.2):
         blocking_object_gripper_dist = np.linalg.norm(
             blocking_object_pos - ee_pos)
         blocking_object_box_dist = np.linalg.norm(
-            blocking_object_pos - box_pos)
+            blocking_object_pos[:2] - box_pos[:2])
         gripper_handle_dist = np.linalg.norm(handle_pos - ee_pos)
         theta_action = 0.
 
-        blocking_object_pos_offset = np.array([0, -0.01, 0])
+        blocking_object_pos_offset = np.array([0.01, -0.01, 0])
 
         info = env.get_info()
         z_diff = abs(blocking_object_pos[2] + blocking_object_pos_offset[2] - ee_pos[2])
 
-        if ((blocking_object_gripper_dist > dist_thresh or z_diff > 0.015) and
-            env._gripper_open and not info['blocking_object_above_box_success']):
+        if ((blocking_object_gripper_dist > dist_thresh) and
+                env._gripper_open and not info['blocking_object_in_box_success']):
             # print('approaching')
             action = ((blocking_object_pos +
                 blocking_object_pos_offset) - ee_pos) * 7.0
             xy_diff = np.linalg.norm(action[:2]/7.0)
-            if xy_diff > 0.03:
+            if xy_diff > 0.02:
                 action[2] *= 0.3
             action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
         elif (env._gripper_open and blocking_object_box_dist > box_dist_thresh and
             not info['blocking_object_in_box_success']):
             # print('gripper closing')
-            action = (blocking_object_pos - ee_pos) * 7.0
+            action = (blocking_object_pos - ee_pos)
             action = np.concatenate(
                 (action, np.asarray([0., -0.7, 0.])))
-        elif (blocking_object_gripper_dist > 2 * dist_thresh and
-            not info['blocking_object_above_box_success']):
-            # Open gripper
-            # Remove this case for scripted_collect.
-            action = np.array([0, 0, 0, 0, 0.7, 0])
         elif (blocking_object_box_dist > box_dist_thresh and
-            not info['blocking_object_above_box_success']):
+            not info['blocking_object_in_box_success']):
             action = (box_pos - blocking_object_pos)*7.0
             xy_diff = np.linalg.norm(action[:2]/7.0)
             if "DrawerPlaceThenOpen" in env._env_name:
                 # print("don't droop down until xy-close to box")
-                action[2] = 0.2
+                action[2] = 0.0
             action = np.concatenate(
                 (action, np.asarray([0., 0., 0.])))
             # print("blocking_object_pos", blocking_object_pos)
