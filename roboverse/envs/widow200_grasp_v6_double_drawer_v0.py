@@ -75,6 +75,10 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
         opened_thresh = 0.0 if not widely else -0.05
         return self.get_drawer_bottom_pos(drawer_name)[1] < opened_thresh
 
+    def is_drawer_closed(self, drawer_name):
+        closed_thresh = 0.03
+        return self.get_drawer_bottom_pos(drawer_name)[1] > closed_thresh
+
     def get_info(self):
         info = {}
 
@@ -111,6 +115,7 @@ def close_open_grasp_policy(EPSILON, noise, margin, save_video, env):
 
         dist_thresh = 0.04 + np.random.normal(scale=0.01)
         drawer_never_opened = True
+        reached_pushing_region = False
 
         images, images_for_gif = [], [] # new video at the start of each trajectory.
 
@@ -122,43 +127,43 @@ def close_open_grasp_policy(EPSILON, noise, margin, save_video, env):
             bottom_drawer_handle_pos = env.get_bottom_drawer_handle_pos()
             object_lifted_with_margin = object_pos[2] > (
                 env._reward_height_thresh + margin)
-            top_drawer_push_target_pos = (env.get_drawer_bottom_pos("top") +
-                np.array([0, -0.06, 0]))
+            top_drawer_pos = env.get_drawer_bottom_pos("top")
+            top_drawer_push_target_pos = (top_drawer_pos +
+                np.array([0, -0.15, 0.02]))
 
             object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
             gripper_handle_dist = np.linalg.norm(bottom_drawer_handle_pos - ee_pos)
+            is_gripper_ready_to_push = (ee_pos[1] < top_drawer_push_target_pos[1] and
+                ee_pos[2] < top_drawer_push_target_pos[2])
             theta_action = 0.
 
-            ee_pos_push_target_pos_x_diff, ee_pos_push_target_pos_y_diff = (
-                np.abs(ee_pos - top_drawer_push_target_pos)[:2])
-
-            if (env.is_drawer_opened("top") and
-                ee_pos_push_target_pos_y_diff < dist_thresh):
-                # print("move gripper in -y direction")
-                action = np.array([0, -1.0, 0, theta_action, 0, 0])
-            elif (env.is_drawer_opened("top") and
-                ee_pos_push_target_pos_x_diff < dist_thresh):
-                # print("move toward target push pos")
-                action = (top_drawer_push_target_pos - ee_pos) * 7.0
+            if (not env.is_drawer_closed("top") and not reached_pushing_region and
+                not is_gripper_ready_to_push):
+                # print("move up and left")
                 action = np.concatenate(
-                    (action, np.array([theta_action, 0, 0])))
-            elif env.is_drawer_opened("top"):
-                # print("push top drawer inwards")
-                action = np.array([0, 1.0, 0, theta_action, 0, 0])
+                    ([-0.2, -0.4, -0.2], np.array([theta_action, 0, 0])))
+            elif not env.is_drawer_closed("top"):
+                # print("close top drawer")
+                reached_pushing_region = True
+                action = (top_drawer_pos - ee_pos) * 7.0
+                action[0] *= 3
+                action[1] *= 0.6
+                action = np.concatenate((action, np.array([theta_action, 0, 0])))
             elif (gripper_handle_dist > dist_thresh
                 and not env.is_drawer_opened("bottom", widely=drawer_never_opened)):
                 # print('approaching handle')
-                action = (bottom_drawer_handle_pos - ee_pos) * 7.0
+                handle_pos_offset = np.array([0, 0, 0])
+                action = (bottom_drawer_handle_pos + handle_pos_offset- ee_pos) * 7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
-                if xy_diff > 0.75 * dist_thresh:
-                    action[2] = 0.5 # force upward action to avoid upper box
-                action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
+                if xy_diff > dist_thresh:
+                    action[2] = 0.4 # force upward action
+                action = np.concatenate((action, np.asarray([theta_action,0.7,0.])))
             elif not env.is_drawer_opened("bottom", widely=drawer_never_opened):
                 # print("opening drawer")
                 action = np.array([0, -1.0, 0])
                 # action = np.asarray([0., 0., 0.7])
                 action = np.concatenate(
-                    (action, np.asarray([0., 0., 0.])))
+                    (action, np.asarray([0.01, 0., -0.01])))
             elif (object_gripper_dist > dist_thresh
                 and env._gripper_open and gripper_handle_dist < 1.5 * dist_thresh):
                 # print("Lift upward")
@@ -170,8 +175,8 @@ def close_open_grasp_policy(EPSILON, noise, margin, save_video, env):
                 # print("Move toward object")
                 action = (object_pos - ee_pos) * 7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
-                if xy_diff > dist_thresh:
-                    action[2] = 0.3
+                if xy_diff > 0.75 * dist_thresh:
+                    action[2] = 0.5
                 action = np.concatenate(
                     (action, np.asarray([0., 0., 0.])))
             elif env._gripper_open:
@@ -179,6 +184,9 @@ def close_open_grasp_policy(EPSILON, noise, margin, save_video, env):
                 action = (object_pos - ee_pos) * 7.0
                 action = np.concatenate(
                     (action, np.asarray([0., -0.7, 0.])))
+            elif object_gripper_dist > 2 * dist_thresh:
+                # Open gripper to retry
+                action = np.array([0, 0, 0, 0, 0.7, 0])
             elif not object_lifted_with_margin:
                 # print('raise object upward')
                 action = np.asarray([0., 0., 0.7])
@@ -210,13 +218,13 @@ def close_open_grasp_policy(EPSILON, noise, margin, save_video, env):
 
             time.sleep(0.05)
 
-        # if rew > 0:
-        #     print("i", i)
-        #     print('reward: {}'.format(rew))
-        #     print('--------------------')
+        if rew > 0:
+            print("i", i)
+            print('reward: {}'.format(rew))
+            print('--------------------')
 
         if save_video:
-            print("i", i)
+            # print("i", i)
             utils.save_video('data/grasp_place_{}.avi'.format(i), images)
             images_for_gif[0].save('data/grasp_place_{}.gif'.format(i),
                 save_all=True, append_images=images_for_gif[1:],
@@ -237,7 +245,7 @@ if __name__ == "__main__":
 
     mode = "Open"
 
-    gui = True
+    gui = False
     reward_type = "sparse"
     obs_mode = "pixels_debug"
     env = roboverse.make("Widow200GraspV6DoubleDrawerV0CloseOpenGrasp-v0",
