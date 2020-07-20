@@ -8,11 +8,20 @@ import os
 import os.path as osp
 import itertools as it
 
+########### PARAMS TO MODIFY:
 # Three variables: Base (lick pick), Target (like place), and Full (like pick and place)
-FILE_BASE = '/nfs/kun1/users/albert/batch_rl_datasets/jul8_ik_theta_Widow200GraspV7BoxV0-v0_pixels_debug_40K_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
-FILE_TARGET = '/nfs/kun1/users/albert/batch_rl_datasets/jul8_ik_theta_Widow200GraspV6BoxPlaceOnlyV0-v0_pixels_debug_40K_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
-FILE_FULL = '/nfs/kun1/users/albert/batch_rl_datasets/jun26_Widow200GraspV6BoxPlaceV0-v0_pixels_debug_10K_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
+FILE_BASE = 'shapenet_scripts/../data/test_jul20_v3_Widow200GraspV6DrawerPlaceThenOpenV0PickPlaceOnly-v0_pixels_debug_100_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
+FILE_TARGET = 'shapenet_scripts/../data/test_jul20_v3_Widow200GraspV6DrawerPlaceThenOpenV0OpenGraspOnly-v0_pixels_debug_100_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
+FILE_FULL = 'shapenet_scripts/../data/test_jul20_v3_Widow200GraspV6DrawerPlaceThenOpenV0-v0_pixels_debug_100_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
 OUTPUT_DIR = 'stitch_data'
+
+num_to_plot = 100
+base_traj_len = 30
+target_traj_len = 50
+full_traj_len = 80
+empty_traj_size = 100000
+########## END PARAMS TO MODIFY
+
 BASE_STATE_ARRAY = osp.join(OUTPUT_DIR, "base_robot_state.npy")
 TARGET_STATE_ARRAY = osp.join(OUTPUT_DIR, "target_robot_state.npy")
 BASE_REWARDS_ARRAY = osp.join(OUTPUT_DIR, "base_rewards.npy")
@@ -143,76 +152,84 @@ def plot_avg_theta(base_avg_theta_traj, target_avg_theta_traj, full_avg_theta_tr
     plt.ylabel("Theta")
     plt.savefig("{}/{}.png".format(OUTPUT_DIR, "avg_theta"))
 
-num_to_plot = 500
 target_starting_img = []
 base_final_img = []
 num_succ = 0
-base_traj_len = 25
-target_traj_len = 10
-full_traj_len = 30
-empty_traj_size = 100000
 plot_num_counter = it.count(0)
 
-# Process BASE data
-# base_obs_array = base._obs['robot_state'][:-empty_traj_size]
-base_obs_array = np.load(BASE_STATE_ARRAY)[:-empty_traj_size]
-base_obs_array = reshape_obs_by_traj(base_obs_array, base_traj_len)
-# base_rewards_array = base._rewards[:-empty_traj_size]
-base_rewards_array = np.load(BASE_REWARDS_ARRAY)[:-empty_traj_size]
-base_final_rewards_array = get_final_traj_rewards(base_rewards_array, base_traj_len)
-base_successful_obs_array = get_successful_obs_traj(base_obs_array, base_final_rewards_array)
+# # Process BASE data
+# # base_obs_array = base._obs['robot_state'][:-empty_traj_size]
+# base_obs_array = np.load(BASE_STATE_ARRAY)[:-empty_traj_size]
+# base_obs_array = reshape_obs_by_traj(base_obs_array, base_traj_len)
+# # base_rewards_array = base._rewards[:-empty_traj_size]
+# base_rewards_array = np.load(BASE_REWARDS_ARRAY)[:-empty_traj_size]
+# base_final_rewards_array = get_final_traj_rewards(base_rewards_array, base_traj_len)
+# base_successful_obs_array = get_successful_obs_traj(base_obs_array, base_final_rewards_array)
 
-# Process TARGET data
-# target_obs_array = target._obs['robot_state'][:-empty_traj_size]
-target_obs_array = np.load(TARGET_STATE_ARRAY)[:-empty_traj_size]
-target_obs_array = reshape_obs_by_traj(target_obs_array, target_traj_len)
-# target_rewards_array = target._rewards[:-empty_traj_size]
-target_rewards_array = np.load(TARGET_REWARDS_ARRAY)[:-empty_traj_size]
-target_final_rewards_array = get_final_traj_rewards(target_rewards_array, target_traj_len)
-target_successful_obs_array = get_successful_obs_traj(target_obs_array, target_final_rewards_array)
+# # Process TARGET data
+# # target_obs_array = target._obs['robot_state'][:-empty_traj_size]
+# target_obs_array = np.load(TARGET_STATE_ARRAY)[:-empty_traj_size]
+# target_obs_array = reshape_obs_by_traj(target_obs_array, target_traj_len)
+# # target_rewards_array = target._rewards[:-empty_traj_size]
+# target_rewards_array = np.load(TARGET_REWARDS_ARRAY)[:-empty_traj_size]
+# target_final_rewards_array = get_final_traj_rewards(target_rewards_array, target_traj_len)
+# target_successful_obs_array = get_successful_obs_traj(target_obs_array, target_final_rewards_array)
 
-# Process FULL data
-# target_obs_array = target._obs['robot_state'][:-empty_traj_size]
-full_obs_array = np.load(FULL_STATE_ARRAY)[:-empty_traj_size]
-full_obs_array = reshape_obs_by_traj(full_obs_array, full_traj_len)
-# target_rewards_array = target._rewards[:-empty_traj_size]
-full_rewards_array = np.load(FULL_REWARDS_ARRAY)[:-empty_traj_size]
-full_final_rewards_array = get_final_traj_rewards(full_rewards_array, full_traj_len)
-full_successful_obs_array = get_successful_obs_traj(full_obs_array, full_final_rewards_array)
+# # Process FULL data
+# # target_obs_array = target._obs['robot_state'][:-empty_traj_size]
+# full_obs_array = np.load(FULL_STATE_ARRAY)[:-empty_traj_size]
+# full_obs_array = reshape_obs_by_traj(full_obs_array, full_traj_len)
+# # target_rewards_array = target._rewards[:-empty_traj_size]
+# full_rewards_array = np.load(FULL_REWARDS_ARRAY)[:-empty_traj_size]
+# full_final_rewards_array = get_final_traj_rewards(full_rewards_array, full_traj_len)
+# full_successful_obs_array = get_successful_obs_traj(full_obs_array, full_final_rewards_array)
 
-print("full_obs_array.shape", full_obs_array.shape)
-full_first_lifted_pos = get_obs_first_reward(full_successful_obs_array)
-print("full_first_lifted_pos.shape", full_first_lifted_pos.shape)
+# print("full_obs_array.shape", full_obs_array.shape)
+# full_first_lifted_pos = get_obs_first_reward(full_successful_obs_array)
+# print("full_first_lifted_pos.shape", full_first_lifted_pos.shape)
 
-plot_all_trajs_and_dots(base_successful_obs_array, target_successful_obs_array, full_successful_obs_array, full_first_lifted_pos, num_to_plot=num_to_plot)
+# plot_all_trajs_and_dots(base_successful_obs_array, target_successful_obs_array, full_successful_obs_array, full_first_lifted_pos, num_to_plot=num_to_plot)
 
-base_avg_theta = get_avg_theta_traj(base_successful_obs_array)
-print("base_avg_theta", base_avg_theta)
-target_avg_theta = get_avg_theta_traj(target_successful_obs_array)
-print("target_avg_theta", target_avg_theta)
-full_avg_theta = get_avg_theta_traj(full_successful_obs_array)
-print("full_avg_theta", full_avg_theta)
-plot_avg_theta(base_avg_theta, target_avg_theta, full_avg_theta)
+# base_avg_theta = get_avg_theta_traj(base_successful_obs_array)
+# print("base_avg_theta", base_avg_theta)
+# target_avg_theta = get_avg_theta_traj(target_successful_obs_array)
+# print("target_avg_theta", target_avg_theta)
+# full_avg_theta = get_avg_theta_traj(full_successful_obs_array)
+# print("full_avg_theta", full_avg_theta)
+# plot_avg_theta(base_avg_theta, target_avg_theta, full_avg_theta)
 
-# for i in range(0, base._rewards.shape[0], 5):
-#     if base._rewards[i] > 0.0:
-#         # base_final_states.append(base._obs['robot_state'][i][:3])
-#         img = base._obs['image'][i]
-#         img = process_image(img)
-#         plt.figure(num_succ)
-#         # plt.axis('off')
-#         save_file = osp.join(OUTPUT_DIR, 'base_{}.png'.format(num_succ))
-#         plt.imsave(save_file, img)
-#         target_starting_img.append(img)
-#         num_succ += 1
-#     if num_succ > points_to_plot:
-#         break
-# for i in range(points_to_plot):
-#     img = target._obs['image'][i*10]
-#     img = process_image(img)
-#     # plt.axis('off')
-#     # plt.imshow(img)
-#     plt.figure(num_succ)
-#     save_file = osp.join(OUTPUT_DIR, 'target_{}.png'.format(i))
-#     plt.imsave(save_file, img)
-#     target_starting_img.append(img)
+# Lazily reload buffers since this takes forever
+try:
+    base
+except NameError:
+    with open(FILE_BASE, 'rb') as f:
+        base = pickle.load(f)
+
+try:
+    target
+except NameError:
+    with open(FILE_TARGET, 'rb') as f:
+        target = pickle.load(f)
+
+for i in range(base_traj_len - 1, np.load(BASE_REWARDS_ARRAY).shape[0], base_traj_len):
+    if np.load(BASE_REWARDS_ARRAY)[i] > 0.0:
+        # base_final_states.append(base._obs['robot_state'][i][:3])
+        img = base._obs['image'][i]
+        img = process_image(img)
+        plt.figure(num_succ)
+        # plt.axis('off')
+        save_file = osp.join(OUTPUT_DIR, 'base_{}.png'.format(num_succ))
+        plt.imsave(save_file, img)
+        target_starting_img.append(img)
+        num_succ += 1
+    if num_succ > num_to_plot:
+        break
+for i in range(num_to_plot):
+    img = target._obs['image'][i * target_traj_len]
+    img = process_image(img)
+    # plt.axis('off')
+    # plt.imshow(img)
+    plt.figure(num_succ)
+    save_file = osp.join(OUTPUT_DIR, 'target_{}.png'.format(i))
+    plt.imsave(save_file, img)
+    target_starting_img.append(img)
