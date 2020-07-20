@@ -1090,7 +1090,7 @@ def scripted_grasping_V6_place_then_open_V0(env, pool, success_pool, noise=0.2):
             action = (object_pos - ee_pos) * 7.0
             action = np.concatenate(
                 (action, np.asarray([0., -0.7, 0.])))
-        elif object_gripper_dist > 2 * dist_thresh:
+        elif object_gripper_dist > 2 * dist_thresh and args.allow_grasp_retries:
             # Open gripper to retry
             action = np.array([0, 0, 0, 0, 0.7, 0])
         elif not object_lifted_with_margin:
@@ -1225,7 +1225,7 @@ def scripted_grasping_V6_close_open_grasp_V0(env, pool, success_pool, noise=0.2)
             action = (object_pos - ee_pos) * 7.0
             action = np.concatenate(
                 (action, np.asarray([0., -0.7, 0.])))
-        elif object_gripper_dist > 2 * dist_thresh:
+        elif object_gripper_dist > 2 * dist_thresh and args.allow_grasp_retries:
             # Open gripper to retry
             action = np.array([0, 0, 0, 0, 0.7, 0])
         elif not object_lifted_with_margin:
@@ -1553,6 +1553,8 @@ if __name__ == "__main__":
                         action="store_true", default=False)
     parser.add_argument("-o", "--observation-mode", type=str, default='pixels',
                         choices=('state', 'pixels', 'pixels_debug'))
+    parser.add_argument("--allow_grasp_retries", dest="allow_grasp_retries",
+                        action="store_true", default=False)
 
     args = parser.parse_args()
 
