@@ -4,6 +4,7 @@ import pdb
 import pybullet as p
 import pybullet_data as pdata
 import math
+import numpy as np
 
 from roboverse.bullet.misc import (
   load_urdf,
@@ -107,8 +108,23 @@ lifted_long_box_open_top = loader(ASSET_PATH, os.path.join(obj_dir, "box_open_to
               pos=lifted_long_box_open_top_center_pos, # old: [0.8425, 0.05, -.295]
               scale=0.1)
 
+drawer_pos = [0.8425, 0.05, -.34]
 drawer = loader(ASSET_PATH, os.path.join(obj_dir, "drawer", "drawer.urdf"),
-              pos=[0.8425, 0.05, -.34],
+              pos=drawer_pos,
+              scale=0.1)
+
+drawer_bottom_pos = list(np.array(drawer_pos))
+drawer_bottom = loader(ASSET_PATH, os.path.join(obj_dir, "drawer", "right_side_handle_drawer.urdf"),
+              pos=drawer_pos,
+              scale=0.1)
+
+drawer_top_pos = list(np.array(drawer_bottom_pos) + np.array([0, 0, 0.07]))
+drawer_top = loader(ASSET_PATH, os.path.join(obj_dir, "drawer", "left_side_handle_drawer.urdf"),
+              pos=drawer_top_pos,
+              scale=0.1)
+
+drawer_no_handle = loader(ASSET_PATH, os.path.join(obj_dir, "drawer", "drawer_no_handle.urdf"),
+              pos=drawer_top_pos,
               scale=0.1)
 
 # test_box = loader(ASSET_PATH, os.path.join(obj_dir, "box_open_top", "box_open_top.urdf"),

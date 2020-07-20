@@ -208,13 +208,13 @@ def restore_state(filename):
 ####  drawer  ###
 #################
 
-def open_drawer(drawer, noisy_open=False):
-    slide_drawer(drawer, -1, noisy_open)
+def open_drawer(drawer, noisy_open=False, half_open=False):
+    slide_drawer(drawer, -1, noisy_open, half_open)
 
 def close_drawer(drawer):
     slide_drawer(drawer, 1)
 
-def slide_drawer(drawer, direction, noisy_open=False):
+def slide_drawer(drawer, direction, noisy_open=False, half_open=False):
     assert direction in [-1, 1]
     # -1 = open; 1 = close
     joint_names = [get_joint_info(drawer, j, 'joint_name') for j in range(p.getNumJoints(drawer))]
@@ -229,6 +229,9 @@ def slide_drawer(drawer, direction, noisy_open=False):
     if noisy_open and direction == -1:
         rand = np.random.uniform(0.125, 0.2)
         command *= rand
+
+    if half_open:
+        command *= 0.06
 
     # Wait a little before closing
     wait_ts = 0 if direction == -1 else 20
