@@ -8,23 +8,17 @@ import os
 import os.path as osp
 import itertools as it
 
-# FILE_PICK = '/media/avi/data/Work/data/2020-07-02T11-09-18_pool_50001_pick.pkl'
-# FILE_PLACE = '/media/avi/data/Work/data/2020-07-02T16-59-49_pool_20001_place.pkl'
-# FILE_PICK = '/media/avi/data/Work/github/jannerm/bullet-manipulation/data/july6_test_4_Widow200GraspV7BoxV0-v0_pixels_debug_50_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
-# FILE_PLACE = '/media/avi/data/Work/github/jannerm/bullet-manipulation/data/july6_test_2_Widow200GraspV6BoxPlaceOnlyV0-v0_pixels_debug_50_sparse_reward_scripted_actions_fixed_position_noise_std_0.05/railrl_consolidated.pkl'
-# OUTPUT_DIR = '/media/avi/data/Work/data/stitch_debug_v7_part2/'
-# FILE_PICK = '/nfs/kun1/users/avi/batch_rl_datasets/july6_Widow200GraspV7BoxV0-v0_pixels_debug_40K_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
-# FILE_PLACE = '/nfs/kun1/users/avi/batch_rl_datasets/july6_Widow200GraspV6BoxPlaceOnlyV0-v0_pixels_debug_40K_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
-FILE_PICK = '/nfs/kun1/users/albert/batch_rl_datasets/jul8_ik_theta_Widow200GraspV7BoxV0-v0_pixels_debug_40K_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
-FILE_PLACE = '/nfs/kun1/users/albert/batch_rl_datasets/jul8_ik_theta_Widow200GraspV6BoxPlaceOnlyV0-v0_pixels_debug_40K_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
-FILE_PICK_PLACE = '/nfs/kun1/users/albert/batch_rl_datasets/jun26_Widow200GraspV6BoxPlaceV0-v0_pixels_debug_10K_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
+# Three variables: Base (lick pick), Target (like place), and Full (like pick and place)
+FILE_BASE = '/nfs/kun1/users/albert/batch_rl_datasets/jul8_ik_theta_Widow200GraspV7BoxV0-v0_pixels_debug_40K_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
+FILE_TARGET = '/nfs/kun1/users/albert/batch_rl_datasets/jul8_ik_theta_Widow200GraspV6BoxPlaceOnlyV0-v0_pixels_debug_40K_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
+FILE_FULL = '/nfs/kun1/users/albert/batch_rl_datasets/jun26_Widow200GraspV6BoxPlaceV0-v0_pixels_debug_10K_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
 OUTPUT_DIR = 'stitch_data'
-PICK_STATE_ARRAY = osp.join(OUTPUT_DIR, "pick_robot_state.npy")
-PLACE_STATE_ARRAY = osp.join(OUTPUT_DIR, "place_robot_state.npy")
-PICK_REWARDS_ARRAY = osp.join(OUTPUT_DIR, "pick_rewards.npy")
-PLACE_REWARDS_ARRAY = osp.join(OUTPUT_DIR, "place_rewards.npy")
-PICK_PLACE_STATE_ARRAY = osp.join(OUTPUT_DIR, "pick_place_robot_state.npy")
-PICK_PLACE_REWARDS_ARRAY = osp.join(OUTPUT_DIR, "pick_place_robot_state.npy")
+BASE_STATE_ARRAY = osp.join(OUTPUT_DIR, "base_robot_state.npy")
+TARGET_STATE_ARRAY = osp.join(OUTPUT_DIR, "target_robot_state.npy")
+BASE_REWARDS_ARRAY = osp.join(OUTPUT_DIR, "base_rewards.npy")
+TARGET_REWARDS_ARRAY = osp.join(OUTPUT_DIR, "target_rewards.npy")
+FULL_STATE_ARRAY = osp.join(OUTPUT_DIR, "full_robot_state.npy")
+FULL_REWARDS_ARRAY = osp.join(OUTPUT_DIR, "full_robot_state.npy")
 
 if not osp.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
@@ -41,20 +35,20 @@ def save_to_npy(rb, prefix):
     for name, array in fnames_arrays:
         np.save("{}/{}_{}".format(OUTPUT_DIR, prefix, name), array)
 
-if not osp.exists(PICK_STATE_ARRAY) or not osp.exists(PICK_REWARDS_ARRAY):
-    with open(FILE_PICK, 'rb') as f:
-        pick = pickle.load(f)
-    save_to_npy(pick, "pick")
+if not osp.exists(BASE_STATE_ARRAY) or not osp.exists(BASE_REWARDS_ARRAY):
+    with open(FILE_BASE, 'rb') as f:
+        base = pickle.load(f)
+    save_to_npy(base, "base")
 
-if not osp.exists(PLACE_STATE_ARRAY) or not osp.exists(PLACE_REWARDS_ARRAY):
-    with open(FILE_PLACE, 'rb') as f:
-        place = pickle.load(f)
-    save_to_npy(place, "place")
+if not osp.exists(TARGET_STATE_ARRAY) or not osp.exists(TARGET_REWARDS_ARRAY):
+    with open(FILE_TARGET, 'rb') as f:
+        target = pickle.load(f)
+    save_to_npy(target, "target")
 
-if not osp.exists(PICK_PLACE_STATE_ARRAY) or not osp.exists(PICK_PLACE_REWARDS_ARRAY):
-    with open(FILE_PICK_PLACE, 'rb') as f:
-        pick_place = pickle.load(f)
-    save_to_npy(pick_place, "pick_place")
+if not osp.exists(FULL_STATE_ARRAY) or not osp.exists(FULL_REWARDS_ARRAY):
+    with open(FILE_FULL, 'rb') as f:
+        full = pickle.load(f)
+    save_to_npy(full, "full")
 
 def reshape_obs_by_traj(obs_array, traj_len):
     print("obs_array.shape", obs_array.shape)
@@ -117,20 +111,20 @@ def plot_dots(x_list, y_list, num_to_plot, color, dot="last", alpha=0.2):
         x_data, y_data = x_list[:num_to_plot], y_list[:num_to_plot]
     plt.scatter(x_data, y_data, color=color, alpha=alpha, zorder=1)
 
-def plot_trajs_dots_2dims(dim0, dim1, dims_name, pick_success_obs, place_success_obs, pick_place_success_obs, pick_place_first_lifted_pos, num_to_plot):
+def plot_trajs_dots_2dims(dim0, dim1, dims_name, base_success_obs, target_success_obs, full_success_obs, full_first_lifted_pos, num_to_plot):
     plt.figure(next(plot_num_counter))
-    plot_trajs(pick_success_obs[:,:,dim0], pick_success_obs[:,:,dim1], num_to_plot, "green", dims_name)
-    plot_trajs(place_success_obs[:,:,dim0], place_success_obs[:,:,dim1], num_to_plot, "orange", dims_name)
-    plot_dots(pick_success_obs[:,:,dim0], pick_success_obs[:,:,dim1], num_to_plot, "darkgreen", dot="last")
-    plot_dots(place_success_obs[:,:,dim0], place_success_obs[:,:,dim1], num_to_plot, "darkorange", dot="first")
-    plot_trajs(pick_place_success_obs[:,:,dim0], pick_place_success_obs[:,:,dim1], num_to_plot // 10, "blue", dims_name, zorder=2)
-    plot_dots(pick_place_first_lifted_pos[:,dim0], pick_place_first_lifted_pos[:,dim1], num_to_plot // 10, "darkblue", dot=None)
+    plot_trajs(base_success_obs[:,:,dim0], base_success_obs[:,:,dim1], num_to_plot, "green", dims_name)
+    plot_trajs(target_success_obs[:,:,dim0], target_success_obs[:,:,dim1], num_to_plot, "orange", dims_name)
+    plot_dots(base_success_obs[:,:,dim0], base_success_obs[:,:,dim1], num_to_plot, "darkgreen", dot="last")
+    plot_dots(target_success_obs[:,:,dim0], target_success_obs[:,:,dim1], num_to_plot, "darkorange", dot="first")
+    plot_trajs(full_success_obs[:,:,dim0], full_success_obs[:,:,dim1], num_to_plot // 10, "blue", dims_name, zorder=2)
+    plot_dots(full_first_lifted_pos[:,dim0], full_first_lifted_pos[:,dim1], num_to_plot // 10, "darkblue", dot=None)
     plt.savefig("{}/{}.png".format(OUTPUT_DIR, dims_name))
 
-def plot_all_trajs_and_dots(pick_success_obs, place_success_obs, pick_place_success_obs, pick_place_first_lifted_pos, num_to_plot):
+def plot_all_trajs_and_dots(base_success_obs, target_success_obs, full_success_obs, full_first_lifted_pos, num_to_plot):
     dims_list_to_plot = [(0, 1, "xy"), (1, 2, "yz"), (0, 2, "xz")]
     for dim0, dim1, dims_name in dims_list_to_plot:
-        plot_trajs_dots_2dims(dim0, dim1, dims_name, pick_success_obs, place_success_obs, pick_place_success_obs, pick_place_first_lifted_pos, num_to_plot)
+        plot_trajs_dots_2dims(dim0, dim1, dims_name, base_success_obs, target_success_obs, full_success_obs, full_first_lifted_pos, num_to_plot)
 
 def get_avg_theta_traj(obs_traj_array):
     assert obs_traj_array.shape[2] == 5
@@ -138,87 +132,87 @@ def get_avg_theta_traj(obs_traj_array):
     theta_idx = 3
     return np.mean(obs_traj_array[:,:,theta_idx], axis=0)
 
-def plot_avg_theta(pick_avg_theta_traj, place_avg_theta_traj, pick_place_avg_theta_traj):
+def plot_avg_theta(base_avg_theta_traj, target_avg_theta_traj, full_avg_theta_traj):
     plt.figure(next(plot_num_counter))
     plt.title("Average Theta")
-    plt.plot(list(range(len(pick_avg_theta_traj))), pick_avg_theta_traj, label="Avg Pick Theta")
-    plt.plot(list(np.array(list(range(len(place_avg_theta_traj)))) + len(pick_avg_theta_traj)), place_avg_theta_traj, label="Avg Place Theta")
-    plt.plot(list(range(len(pick_place_avg_theta_traj))), pick_place_avg_theta_traj, label="Avg Pick Place Theta")
+    plt.plot(list(range(len(base_avg_theta_traj))), base_avg_theta_traj, label="Avg Base Theta")
+    plt.plot(list(np.array(list(range(len(target_avg_theta_traj)))) + len(base_avg_theta_traj)), target_avg_theta_traj, label="Avg Target Theta")
+    plt.plot(list(range(len(full_avg_theta_traj))), full_avg_theta_traj, label="Avg Full Theta")
     plt.legend(loc=3)
     plt.xlabel("Timestep")
     plt.ylabel("Theta")
     plt.savefig("{}/{}.png".format(OUTPUT_DIR, "avg_theta"))
 
 num_to_plot = 500
-place_starting_img = []
-pick_final_img = []
+target_starting_img = []
+base_final_img = []
 num_succ = 0
-pick_traj_len = 25
-place_traj_len = 10
-pick_place_traj_len = 30
+base_traj_len = 25
+target_traj_len = 10
+full_traj_len = 30
 empty_traj_size = 100000
 plot_num_counter = it.count(0)
 
-# Process PICK data
-# pick_obs_array = pick._obs['robot_state'][:-empty_traj_size]
-pick_obs_array = np.load(PICK_STATE_ARRAY)[:-empty_traj_size]
-pick_obs_array = reshape_obs_by_traj(pick_obs_array, pick_traj_len)
-# pick_rewards_array = pick._rewards[:-empty_traj_size]
-pick_rewards_array = np.load(PICK_REWARDS_ARRAY)[:-empty_traj_size]
-pick_final_rewards_array = get_final_traj_rewards(pick_rewards_array, pick_traj_len)
-pick_successful_obs_array = get_successful_obs_traj(pick_obs_array, pick_final_rewards_array)
+# Process BASE data
+# base_obs_array = base._obs['robot_state'][:-empty_traj_size]
+base_obs_array = np.load(BASE_STATE_ARRAY)[:-empty_traj_size]
+base_obs_array = reshape_obs_by_traj(base_obs_array, base_traj_len)
+# base_rewards_array = base._rewards[:-empty_traj_size]
+base_rewards_array = np.load(BASE_REWARDS_ARRAY)[:-empty_traj_size]
+base_final_rewards_array = get_final_traj_rewards(base_rewards_array, base_traj_len)
+base_successful_obs_array = get_successful_obs_traj(base_obs_array, base_final_rewards_array)
 
-# Process PLACE data
-# place_obs_array = place._obs['robot_state'][:-empty_traj_size]
-place_obs_array = np.load(PLACE_STATE_ARRAY)[:-empty_traj_size]
-place_obs_array = reshape_obs_by_traj(place_obs_array, place_traj_len)
-# place_rewards_array = place._rewards[:-empty_traj_size]
-place_rewards_array = np.load(PLACE_REWARDS_ARRAY)[:-empty_traj_size]
-place_final_rewards_array = get_final_traj_rewards(place_rewards_array, place_traj_len)
-place_successful_obs_array = get_successful_obs_traj(place_obs_array, place_final_rewards_array)
+# Process TARGET data
+# target_obs_array = target._obs['robot_state'][:-empty_traj_size]
+target_obs_array = np.load(TARGET_STATE_ARRAY)[:-empty_traj_size]
+target_obs_array = reshape_obs_by_traj(target_obs_array, target_traj_len)
+# target_rewards_array = target._rewards[:-empty_traj_size]
+target_rewards_array = np.load(TARGET_REWARDS_ARRAY)[:-empty_traj_size]
+target_final_rewards_array = get_final_traj_rewards(target_rewards_array, target_traj_len)
+target_successful_obs_array = get_successful_obs_traj(target_obs_array, target_final_rewards_array)
 
-# Process PICK PLACE data
-# place_obs_array = place._obs['robot_state'][:-empty_traj_size]
-pick_place_obs_array = np.load(PICK_PLACE_STATE_ARRAY)[:-empty_traj_size]
-pick_place_obs_array = reshape_obs_by_traj(pick_place_obs_array, pick_place_traj_len)
-# place_rewards_array = place._rewards[:-empty_traj_size]
-pick_place_rewards_array = np.load(PICK_PLACE_REWARDS_ARRAY)[:-empty_traj_size]
-pick_place_final_rewards_array = get_final_traj_rewards(pick_place_rewards_array, pick_place_traj_len)
-pick_place_successful_obs_array = get_successful_obs_traj(pick_place_obs_array, pick_place_final_rewards_array)
+# Process FULL data
+# target_obs_array = target._obs['robot_state'][:-empty_traj_size]
+full_obs_array = np.load(FULL_STATE_ARRAY)[:-empty_traj_size]
+full_obs_array = reshape_obs_by_traj(full_obs_array, full_traj_len)
+# target_rewards_array = target._rewards[:-empty_traj_size]
+full_rewards_array = np.load(FULL_REWARDS_ARRAY)[:-empty_traj_size]
+full_final_rewards_array = get_final_traj_rewards(full_rewards_array, full_traj_len)
+full_successful_obs_array = get_successful_obs_traj(full_obs_array, full_final_rewards_array)
 
-print("pick_place_obs_array.shape", pick_place_obs_array.shape)
-pick_place_first_lifted_pos = get_obs_first_reward(pick_place_successful_obs_array)
-print("pick_place_first_lifted_pos.shape", pick_place_first_lifted_pos.shape)
+print("full_obs_array.shape", full_obs_array.shape)
+full_first_lifted_pos = get_obs_first_reward(full_successful_obs_array)
+print("full_first_lifted_pos.shape", full_first_lifted_pos.shape)
 
-plot_all_trajs_and_dots(pick_successful_obs_array, place_successful_obs_array, pick_place_successful_obs_array, pick_place_first_lifted_pos, num_to_plot=num_to_plot)
+plot_all_trajs_and_dots(base_successful_obs_array, target_successful_obs_array, full_successful_obs_array, full_first_lifted_pos, num_to_plot=num_to_plot)
 
-pick_avg_theta = get_avg_theta_traj(pick_successful_obs_array)
-print("pick_avg_theta", pick_avg_theta)
-place_avg_theta = get_avg_theta_traj(place_successful_obs_array)
-print("place_avg_theta", place_avg_theta)
-pick_place_avg_theta = get_avg_theta_traj(pick_place_successful_obs_array)
-print("pick_place_avg_theta", pick_place_avg_theta)
-plot_avg_theta(pick_avg_theta, place_avg_theta, pick_place_avg_theta)
+base_avg_theta = get_avg_theta_traj(base_successful_obs_array)
+print("base_avg_theta", base_avg_theta)
+target_avg_theta = get_avg_theta_traj(target_successful_obs_array)
+print("target_avg_theta", target_avg_theta)
+full_avg_theta = get_avg_theta_traj(full_successful_obs_array)
+print("full_avg_theta", full_avg_theta)
+plot_avg_theta(base_avg_theta, target_avg_theta, full_avg_theta)
 
-# for i in range(0, pick._rewards.shape[0], 5):
-#     if pick._rewards[i] > 0.0:
-#         # pick_final_states.append(pick._obs['robot_state'][i][:3])
-#         img = pick._obs['image'][i]
+# for i in range(0, base._rewards.shape[0], 5):
+#     if base._rewards[i] > 0.0:
+#         # base_final_states.append(base._obs['robot_state'][i][:3])
+#         img = base._obs['image'][i]
 #         img = process_image(img)
 #         plt.figure(num_succ)
 #         # plt.axis('off')
-#         save_file = osp.join(OUTPUT_DIR, 'pick_{}.png'.format(num_succ))
+#         save_file = osp.join(OUTPUT_DIR, 'base_{}.png'.format(num_succ))
 #         plt.imsave(save_file, img)
-#         place_starting_img.append(img)
+#         target_starting_img.append(img)
 #         num_succ += 1
 #     if num_succ > points_to_plot:
 #         break
 # for i in range(points_to_plot):
-#     img = place._obs['image'][i*10]
+#     img = target._obs['image'][i*10]
 #     img = process_image(img)
 #     # plt.axis('off')
 #     # plt.imshow(img)
 #     plt.figure(num_succ)
-#     save_file = osp.join(OUTPUT_DIR, 'place_{}.png'.format(i))
+#     save_file = osp.join(OUTPUT_DIR, 'target_{}.png'.format(i))
 #     plt.imsave(save_file, img)
-#     place_starting_img.append(img)
+#     target_starting_img.append(img)
