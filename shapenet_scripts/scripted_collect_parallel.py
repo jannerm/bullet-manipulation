@@ -52,6 +52,8 @@ if __name__ == "__main__":
     parser.add_argument("--random_actions", dest="random_actions",
                         action="store_true", default=False)
     parser.add_argument("-o", "--observation-mode", type=str, default='pixels')
+    parser.add_argument("--allow-grasp-retries", dest="allow_grasp_retries",
+                        action="store_true", default=False)
     args = parser.parse_args()
 
     assert args.semisparse != args.sparse
@@ -79,6 +81,8 @@ if __name__ == "__main__":
         command.append('--randomize')
     if args.random_actions:
         command.append('--random_actions')
+    if args.allow_grasp_retries:
+        command.append('--allow-grasp-retries')
 
     subprocesses = []
     for i in range(args.num_parallel_threads):
