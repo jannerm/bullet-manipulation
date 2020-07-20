@@ -660,6 +660,7 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
         [], [], [], [], [], []
 
     dist_thresh = 0.04 + np.random.normal(scale=0.01)
+    gripper_action = 0.3
 
     box_dist_thresh = 0.035 + np.random.normal(scale=0.01)
     box_dist_thresh = np.clip(box_dist_thresh, 0.025, 0.05)
@@ -706,7 +707,7 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
             # print('gripper closing')
             action = (blocking_object_pos - ee_pos) * 7.0
             action = np.concatenate(
-                (action, np.asarray([0., -0.7, 0.])))
+                (action, np.asarray([0., -gripper_action, 0.])))
         elif blocking_object_box_dist > box_dist_thresh and \
                 not info['blocking_object_in_box_success']:
             action = (box_pos - blocking_object_pos)*7.0
@@ -722,7 +723,7 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
             action = (box_pos - blocking_object_pos)*7.0
             action[2] = 0.2
             action = np.concatenate(
-                (action, np.asarray([0., 0.7, 0.])))
+                (action, np.asarray([0., gripper_action, 0.])))
         else:
             action = (ending_target_pos - ee_pos) * 7.0
             action = np.concatenate((action, np.asarray([theta_action, 0.0, 0.])))

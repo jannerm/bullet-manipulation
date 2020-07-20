@@ -128,22 +128,23 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
 
     def _gripper_simulate(self, pos, target_theta, delta_theta, gripper_action):
         # is_gripper_open = self._is_gripper_open()
+        GRIPPER_THRESH = 0.2
         is_gripper_open = self._gripper_open
-        if gripper_action > 0.5 and is_gripper_open:
+        if gripper_action > GRIPPER_THRESH and is_gripper_open:
             # keep it open
             gripper = -0.8
             self._simulate(pos, target_theta, gripper, delta_theta=delta_theta)
-        elif gripper_action > 0.5 and not is_gripper_open:
+        elif gripper_action > GRIPPER_THRESH and not is_gripper_open:
             # gripper is currently closed and we want to open it
             gripper = -0.8
             for _ in range(5):
                 self._simulate(pos, target_theta, gripper, delta_theta=0)
             self._gripper_open = True
-        elif gripper_action < -0.5 and not is_gripper_open:
+        elif gripper_action < -GRIPPER_THRESH and not is_gripper_open:
             # keep it closed
             gripper = 0.8
             self._simulate(pos, target_theta, gripper, delta_theta=delta_theta)
-        elif gripper_action < -0.5 and is_gripper_open:
+        elif gripper_action < -GRIPPER_THRESH and is_gripper_open:
             # gripper is open and we want to close it
             gripper = +0.8
             for _ in range(5):
@@ -154,7 +155,7 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
                 self._simulate(pos, target_theta, gripper, delta_theta=0)
 
             self._gripper_open = False
-        elif gripper_action <= 0.5 and gripper_action >= -0.5:
+        elif gripper_action <= GRIPPER_THRESH and gripper_action >= -GRIPPER_THRESH:
             # maintain current status
             if is_gripper_open:
                 gripper = -0.8
