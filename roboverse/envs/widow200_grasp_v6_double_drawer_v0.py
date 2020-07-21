@@ -335,8 +335,10 @@ def open_grasp_policy(EPSILON, noise, margin, save_video, env):
             if (gripper_handle_dist > dist_thresh
                 and not env.is_drawer_opened("bottom", widely=drawer_never_opened)):
                 # print('approaching handle')
-                handle_pos_offset = np.array([0, 0, 0])
-                action = (bottom_drawer_handle_pos + handle_pos_offset- ee_pos) * 7.0
+                handle_pos_offset = np.zeros((3,))
+                if np.abs(ee_pos[0] - bottom_drawer_handle_pos[0]) > dist_thresh:
+                    handle_pos_offset = np.array([0, -0.03, 0])
+                action = (bottom_drawer_handle_pos + handle_pos_offset - ee_pos) * 7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
                 if xy_diff > dist_thresh:
                     action[2] = 0.4 # force upward action
