@@ -19,7 +19,7 @@ table = bullet.objects.table()
 # box = bullet.objects.box()
 # box_open_top = bullet.objects.long_box_open_top()
 # tray = bullet.objects.widow200_tray()
-drawer = bullet.objects.drawer()
+drawer = bullet.objects.drawer_with_tray_inside()
 lifted_long_box_open_top = bullet.objects.lifted_long_box_open_top()
 
 object_names = []
