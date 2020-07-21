@@ -1178,6 +1178,7 @@ def scripted_grasping_V6_close_open_grasp_V0(env, pool, success_pool, noise=0.2)
                 ee_pos[2] < top_drawer_push_target_pos[2])
         theta_action = 0.
 
+        object_pos += (0.01, 0.0, 0.0)
         if (not env.is_drawer_closed("top") and not reached_pushing_region and
             not is_gripper_ready_to_push):
             # print("move up and left")

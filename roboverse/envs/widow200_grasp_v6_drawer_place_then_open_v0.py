@@ -44,8 +44,6 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
             object_name_scaling[1], blocking_object_name_scaling[1]]
         num_objects = 2
 
-        self._object_position_high = (.82, -.08, -.29)
-        self._object_position_low = (.82, -.09, -.29)
 
         self.task_type = task_type
         assert self.task_type in [
@@ -77,6 +75,8 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
             num_objects=num_objects, **kwargs)
 
         self._env_name = "Widow200GraspV6DrawerPlaceThenOpenV0Env"
+        self._object_position_high = (.84, -.08, -.29)
+        self._object_position_low = (.84, -.09, -.29)
 
         task_scripted_traj_len_map = {
             "Grasp": 25,
