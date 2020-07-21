@@ -72,7 +72,7 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
                                         visualize=False, rgba=[0, 1, 0, .1])
         self._tray = bullet.objects.widow200_hidden_tray()
         self._objects = {}
-        self._drawer = bullet.objects.drawer()
+        self._drawer = bullet.objects.drawer_with_tray_inside()
         bullet.open_drawer(self._drawer, noisy_open=self.noisily_open_drawer)
 
         object_positions = self._generate_object_positions()

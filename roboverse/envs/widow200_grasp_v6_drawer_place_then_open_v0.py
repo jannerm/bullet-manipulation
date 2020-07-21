@@ -75,8 +75,8 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
             num_objects=num_objects, **kwargs)
 
         self._env_name = "Widow200GraspV6DrawerPlaceThenOpenV0Env"
-        self._object_position_high = (.84, -.08, -.29)
-        self._object_position_low = (.84, -.09, -.29)
+        self._object_position_high = (.82, -.08, -.29)
+        self._object_position_low = (.82, -.09, -.29)
 
         task_scripted_traj_len_map = {
             "Grasp": 25,
@@ -105,7 +105,7 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
                                         visualize=False, rgba=[0, 1, 0, .1])
         self._tray = bullet.objects.widow200_hidden_tray()
         self._objects = {}
-        self._drawer = bullet.objects.drawer()
+        self._drawer = bullet.objects.drawer_with_tray_inside()
         bullet.open_drawer(self._drawer, noisy_open=self.noisily_open_drawer)
         object_position = np.random.uniform(
             self._object_position_low, self._object_position_high)
