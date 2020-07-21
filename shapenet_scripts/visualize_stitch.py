@@ -10,16 +10,17 @@ import itertools as it
 
 ########### PARAMS TO MODIFY:
 # Three variables: Base (lick pick), Target (like place), and Full (like pick and place)
-FILE_BASE = 'shapenet_scripts/../data/test_jul20_v3_Widow200GraspV6DrawerPlaceThenOpenV0PickPlaceOnly-v0_pixels_debug_100_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
-FILE_TARGET = 'shapenet_scripts/../data/test_jul20_v3_Widow200GraspV6DrawerPlaceThenOpenV0OpenGraspOnly-v0_pixels_debug_100_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
+FILE_BASE = 'shapenet_scripts/../data/test_jul20_v11_Widow200GraspV6DrawerOpenOnlyV0-v0_pixels_debug_100_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
+FILE_TARGET = 'shapenet_scripts/../data/test_jul20_v11_Widow200GraspV6DrawerGraspOnlyV0-v0_pixels_debug_100_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
 FILE_FULL = 'shapenet_scripts/../data/test_jul20_v3_Widow200GraspV6DrawerPlaceThenOpenV0-v0_pixels_debug_100_sparse_reward_scripted_actions_fixed_position_noise_std_0.2/railrl_consolidated.pkl'
 OUTPUT_DIR = 'stitch_data'
 
 num_to_plot = 100
 base_traj_len = 30
-target_traj_len = 50
-full_traj_len = 80
+target_traj_len = 25
+full_traj_len = 50
 empty_traj_size = 100000
+load_from_saved_npy = False
 ########## END PARAMS TO MODIFY
 
 BASE_STATE_ARRAY = osp.join(OUTPUT_DIR, "base_robot_state.npy")
@@ -44,20 +45,27 @@ def save_to_npy(rb, prefix):
     for name, array in fnames_arrays:
         np.save("{}/{}_{}".format(OUTPUT_DIR, prefix, name), array)
 
-if not osp.exists(BASE_STATE_ARRAY) or not osp.exists(BASE_REWARDS_ARRAY):
+if load_from_saved_npy:
+    if not osp.exists(BASE_STATE_ARRAY) or not osp.exists(BASE_REWARDS_ARRAY):
+        with open(FILE_BASE, 'rb') as f:
+            base = pickle.load(f)
+        save_to_npy(base, "base")
+
+    if not osp.exists(TARGET_STATE_ARRAY) or not osp.exists(TARGET_REWARDS_ARRAY):
+        with open(FILE_TARGET, 'rb') as f:
+            target = pickle.load(f)
+        save_to_npy(target, "target")
+
+    if not osp.exists(FULL_STATE_ARRAY) or not osp.exists(FULL_REWARDS_ARRAY):
+        with open(FILE_FULL, 'rb') as f:
+            full = pickle.load(f)
+        save_to_npy(full, "full")
+else:
     with open(FILE_BASE, 'rb') as f:
         base = pickle.load(f)
-    save_to_npy(base, "base")
 
-if not osp.exists(TARGET_STATE_ARRAY) or not osp.exists(TARGET_REWARDS_ARRAY):
     with open(FILE_TARGET, 'rb') as f:
         target = pickle.load(f)
-    save_to_npy(target, "target")
-
-if not osp.exists(FULL_STATE_ARRAY) or not osp.exists(FULL_REWARDS_ARRAY):
-    with open(FILE_FULL, 'rb') as f:
-        full = pickle.load(f)
-    save_to_npy(full, "full")
 
 def reshape_obs_by_traj(obs_array, traj_len):
     print("obs_array.shape", obs_array.shape)
@@ -198,21 +206,8 @@ plot_num_counter = it.count(0)
 # print("full_avg_theta", full_avg_theta)
 # plot_avg_theta(base_avg_theta, target_avg_theta, full_avg_theta)
 
-# Lazily reload buffers since this takes forever
-try:
-    base
-except NameError:
-    with open(FILE_BASE, 'rb') as f:
-        base = pickle.load(f)
-
-try:
-    target
-except NameError:
-    with open(FILE_TARGET, 'rb') as f:
-        target = pickle.load(f)
-
 for i in range(base_traj_len - 1, np.load(BASE_REWARDS_ARRAY).shape[0], base_traj_len):
-    if np.load(BASE_REWARDS_ARRAY)[i] > 0.0:
+    if np.load(BASE_REWARDS_ARRAY)[i] >= 0.0:
         # base_final_states.append(base._obs['robot_state'][i][:3])
         img = base._obs['image'][i]
         img = process_image(img)

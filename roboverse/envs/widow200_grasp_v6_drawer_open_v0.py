@@ -25,6 +25,7 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
         camera_target_pos = [1.05, -0.05, -0.1]
         camera_pitch = -50
         self.noisily_open_drawer = noisily_open_drawer
+        # When True, drawer does not open all the way
         self.close_drawer_on_reset = close_drawer_on_reset
 
         super().__init__(*args,
@@ -34,17 +35,24 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
             camera_pitch=camera_pitch,
             **kwargs)
         self._env_name = "Widow200GraspV6DrawerOpenV0Env"
-        self._object_position_high = (.82, -.08, -.29)
-        self._object_position_low = (.82, -.09, -.29)
+
+        self.open_only = open_only
+
+        object_pos_offset = np.zeros((3,))
+        if not self.close_drawer_on_reset:
+            # Grasp only.
+            object_pos_offset[1] = np.random.uniform(0, 0.02)
+            # drop object more to the right
+            # because of noisy open positions
+        self._object_position_high = (.82, -.08, -.29) + object_pos_offset
+        self._object_position_low = (.82, -.09, -.29) + object_pos_offset
+
         self._success_dist_threshold = success_dist_threshold
         # self._scaling_local_list = scaling_local_list
         # self.set_scaling_dicts()
         # self.obs_img_dim = 228
 
         self.scripted_traj_len = 50
-
-        # When True, drawer does not open all the way
-        self.open_only = open_only
 
         if not self.close_drawer_on_reset:
             # self._object_position_high = (.82, -.07, -.29)
