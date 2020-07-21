@@ -348,7 +348,7 @@ def open_grasp_policy(EPSILON, noise, margin, save_video, env):
                 action = np.array([0, -1.0, 0])
                 # action = np.asarray([0., 0., 0.7])
                 action = np.concatenate(
-                    (action, np.asarray([0.01, 0., -0.01])))
+                    (action, np.asarray([0, 0., 0])))
             elif (object_gripper_dist > dist_thresh
                 and env._gripper_open and gripper_handle_dist < 1.5 * dist_thresh):
                 # print("Lift upward")
