@@ -770,7 +770,12 @@ def scripted_grasping_V6_opening_V0(env, pool, success_pool, noise=0.2):
     actions, observations, next_observations, rewards, terminals, infos = \
         [], [], [], [], [], []
 
-    dist_thresh = 0.04 + np.random.normal(scale=0.01)
+    dist_thresh = 0.045 + np.random.normal(scale=0.01)
+    dist_thresh = np.clip(dist_thresh, 0.040, 0.060)
+
+    object_thresh = 0.04 + np.random.normal(scale=0.01)
+    object_thresh = np.clip(object_thresh, 0.030, 0.050)
+
     drawer_never_opened = True
 
     for _ in range(args.num_timesteps):
@@ -792,13 +797,14 @@ def scripted_grasping_V6_opening_V0(env, pool, success_pool, noise=0.2):
         gripper_handle_dist = np.linalg.norm(handle_pos - ee_pos)
         theta_action = 0.
 
+        object_pos += (0.01, 0.0, 0.0)
         if (gripper_handle_dist > dist_thresh
             and not env.is_drawer_opened(widely=drawer_never_opened)):
             # print('approaching handle')
             action = (handle_pos - ee_pos) * 7.0
             xy_diff = np.linalg.norm(action[:2]/7.0)
             if xy_diff > 0.75 * dist_thresh:
-                action[2] = 0.5 # force upward action to avoid upper box
+                action[2] = 0.0 # force upward action to avoid upper box
             action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
         elif not env.is_drawer_opened(widely=drawer_never_opened):
             # print("opening drawer")
@@ -806,14 +812,20 @@ def scripted_grasping_V6_opening_V0(env, pool, success_pool, noise=0.2):
             # action = np.asarray([0., 0., 0.7])
             action = np.concatenate(
                 (action, np.asarray([0., 0., 0.])))
-        elif (object_gripper_dist > dist_thresh
+        elif (object_gripper_dist > object_thresh
             and env._gripper_open and gripper_handle_dist < 1.5 * dist_thresh):
             # print("Lift upward")
             drawer_never_opened = False
-            action = np.array([0, 0, 0.7]) # force upward action to avoid upper box
+            if ee_pos[2] < -.15:
+                action = env.gripper_goal_location - ee_pos
+                action[2]  = 0.7  # force upward action to avoid upper box
+            else:
+                action = env.gripper_goal_location - ee_pos
+                action *= 7.0
+                action[2]  *= 0.5  # force upward action to avoid upper box
             action = np.concatenate(
                 (action, np.asarray([theta_action, 0., 0.])))
-        elif object_gripper_dist > dist_thresh and env._gripper_open:
+        elif object_gripper_dist > object_thresh and env._gripper_open:
             # print("Move toward object")
             action = (object_pos - ee_pos) * 7.0
             xy_diff = np.linalg.norm(action[:2]/7.0)

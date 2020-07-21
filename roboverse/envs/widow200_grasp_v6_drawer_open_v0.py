@@ -44,8 +44,8 @@ class Widow200GraspV6DrawerOpenV0Env(Widow200GraspV6BoxV0Env):
             object_pos_offset[1] = np.random.uniform(0, 0.02)
             # drop object more to the right
             # because of noisy open positions
-        self._object_position_high = (.82, -.08, -.29) + object_pos_offset
-        self._object_position_low = (.82, -.09, -.29) + object_pos_offset
+        self._object_position_high = (.84, -.08, -.29) + object_pos_offset
+        self._object_position_low = (.84, -.09, -.29) + object_pos_offset
 
         self._success_dist_threshold = success_dist_threshold
         # self._scaling_local_list = scaling_local_list
