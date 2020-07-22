@@ -204,6 +204,12 @@ def _get_continuous_gripper_state(gripper, gripper_bounds, l_limits, r_limits):
 def restore_state(filename):
     p.restoreState(fileName=filename)
 
+def move_to_neutral(RESET_JOINTS, robot_id):
+    for i in range(len(RESET_JOINTS)):
+        p.setJointMotorControl2(robot_id, i, p.POSITION_CONTROL, RESET_JOINTS[i])
+    for i in range(30):
+        p.stepSimulation()
+
 #################
 ####  drawer  ###
 #################
