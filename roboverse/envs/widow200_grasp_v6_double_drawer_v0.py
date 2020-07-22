@@ -31,8 +31,8 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
             scaling_local_list=scaling_local_list,
             **kwargs)
         self._env_name = "Widow200GraspV6DoubleDrawerV0Env"
-        self._object_position_high = (.82, -.08, -.29)
-        self._object_position_low = (.82, -.09, -.29)
+        self._object_position_high = (.84, -.08, -.29)
+        self._object_position_low = (.84, -.09, -.29)
         self._success_dist_threshold = success_dist_threshold
 
         if self.task == "Close":
@@ -51,7 +51,7 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
                                         visualize=False, rgba=[0, 1, 0, .1])
         self._tray = bullet.objects.widow200_hidden_tray()
         self._objects = {}
-        self._bottom_drawer = bullet.objects.drawer_bottom()
+        self._bottom_drawer = bullet.objects.drawer_with_tray_inside()
         bullet.open_drawer(self._bottom_drawer)
         object_positions = self._generate_object_positions()
         self._load_objects(object_positions)
