@@ -46,8 +46,8 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
 
 
         self.task_type = task_type
-        assert self.task_type in [
-            "OpenGrasp", "Grasp", "PickPlaceOpenGrasp", "PickPlace", "PickPlaceOpen"]
+        assert self.task_type in ["OpenGrasp", "Grasp", "PickPlaceOpenGrasp",
+            "PickPlace", "PickPlace40", "PickPlaceOpen"]
         self.box_high = lifted_long_box_open_top_center_pos + np.array([0.0525, 0.04, 0.035])
         self.box_low = lifted_long_box_open_top_center_pos + np.array([-0.0525, -0.04, -0.01])
 
@@ -81,6 +81,7 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
         task_scripted_traj_len_map = {
             "Grasp": 25,
             "PickPlace": 30,
+            "PickPlace40": 40,
             "OpenGrasp": 50,
             "PickPlaceOpen":60,
             "PickPlaceOpenGrasp": 80,
@@ -209,10 +210,7 @@ class Widow200GraspV6DrawerPlaceThenOpenV0PickPlaceOnlyEnv(Widow200GraspV6Drawer
     Task: grasp blocking_obj, put in box.
     """
 
-    def __init__(self,
-                 *args,
-                 task_type="PickPlace",
-                 **kwargs):
+    def __init__(self, *args, task_type="PickPlace", **kwargs):
         super().__init__(*args, task_type=task_type, **kwargs)
 
     def get_reward(self, info):
@@ -221,6 +219,17 @@ class Widow200GraspV6DrawerPlaceThenOpenV0PickPlaceOnlyEnv(Widow200GraspV6Drawer
         reward = float(info['blocking_object_in_box_success'])
         reward = self.adjust_rew_if_use_positive(reward)
         return reward
+
+class Widow200GraspV6DrawerPlaceThenOpenV0PickPlace40OnlyEnv(Widow200GraspV6DrawerPlaceThenOpenV0PickPlaceOnlyEnv):
+    """
+    Setup: blocking_obj blocking the drawer from being opened.
+    obj in closed drawer.
+    Task: grasp blocking_obj, put in box.
+    Same as PickPlaceOnly, but with 40 timesteps.
+    """
+
+    def __init__(self, *args, task_type="PickPlace40", **kwargs):
+        super().__init__(*args, task_type=task_type, **kwargs)
 
 def drawer_place_then_open_policy(EPSILON, noise, margin, save_video, env):
     object_ind = 0
@@ -490,7 +499,7 @@ if __name__ == "__main__":
 
     mode = "PickPlaceOnly"
 
-    gui = True
+    gui = False
     reward_type = "sparse"
     obs_mode = "pixels_debug"
     if mode == "PlaceThenOpen":
@@ -501,6 +510,12 @@ if __name__ == "__main__":
         drawer_place_then_open_policy(EPSILON, noise, margin, save_video, env)
     elif mode == "PickPlaceOnly":
         env = roboverse.make("Widow200GraspV6DrawerPlaceThenOpenV0PickPlaceOnly-v0",
+                             gui=gui,
+                             reward_type=reward_type,
+                             observation_mode=obs_mode)
+        drawer_place_only_policy(EPSILON, noise, margin, save_video, env)
+    elif mode == "PickPlace40Only":
+        env = roboverse.make("Widow200GraspV6DrawerPlaceThenOpenV0PickPlace40Only-v0",
                              gui=gui,
                              reward_type=reward_type,
                              observation_mode=obs_mode)

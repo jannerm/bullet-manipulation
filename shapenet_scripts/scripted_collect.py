@@ -1602,6 +1602,7 @@ def main(args):
         V6_GRASPING_V0_DRAWER_CLOSING_OPENING_ENVS +
         V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_ENVS +
         V6_GRASPING_V0_DOUBLE_DRAWER_OPENING_ENVS +
+        V6_GRASPING_V0_DRAWER_CLOSED_PLACING_40_ENV +
         V7_GRASPING_ENVS)
 
     if args.env in PROXY_ENVS_MAP:
@@ -1673,7 +1674,8 @@ def main(args):
             success = False
             scripted_grasping_V6_placing_V0(
                 env, railrl_pool, railrl_success_pool, noise=args.noise_std)
-        elif args.env in V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV:
+        elif args.env in (V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV +
+            V6_GRASPING_V0_DRAWER_CLOSED_PLACING_40_ENV):
             assert not render_images
             success = False
             scripted_grasping_V6_drawer_closed_placing_V0(
@@ -1768,7 +1770,8 @@ def main(args):
             V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV +
             V6_GRASPING_V0_DRAWER_CLOSING_OPENING_ENVS +
             V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_ENVS +
-            V6_GRASPING_V0_DOUBLE_DRAWER_OPENING_ENVS):
+            V6_GRASPING_V0_DOUBLE_DRAWER_OPENING_ENVS +
+            V6_GRASPING_V0_DRAWER_CLOSED_PLACING_40_ENV):
             # For non terminating envs: we reshape the rewards
             # array and count the number of trajectories with
             # a sucess in the last timestep.
@@ -1828,6 +1831,8 @@ if __name__ == "__main__":
         V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV +
         V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_ENVS):
         args.num_timesteps = 30
+    elif args.env in V6_GRASPING_V0_DRAWER_CLOSED_PLACING_40_ENV:
+        args.num_timesteps = 40
     elif args.env in V6_GRASPING_V0_PLACING_ONLY_ENVS:
         args.num_timesteps = 10
     elif args.env in (V6_GRASPING_V0_DRAWER_PLACING_ENVS +

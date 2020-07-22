@@ -584,6 +584,13 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'reward_height_threshold': -.275,}
     },
     {
+        'id': 'Widow200GraspV6DrawerPlaceThenOpenV0PickPlace40Only-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v6_drawer_place_then_open_v0:Widow200GraspV6DrawerPlaceThenOpenV0PickPlace40OnlyEnv'),
+        'kwargs': {'max_force': 10,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.275,}
+    },
+    {
         'id': 'Widow200GraspV6DrawerPlaceThenOpenV0PickPlaceOnlyRandQuat-v0',
         'entry_point': ('roboverse.envs.widow200_grasp_v6_drawer_place_then_open_v0:Widow200GraspV6DrawerPlaceThenOpenV0PickPlaceOnlyEnv'),
         'kwargs': {'max_force': 10,
