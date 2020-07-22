@@ -4,17 +4,20 @@ import pybullet as p
 from gym.spaces import Box, Dict
 from collections import OrderedDict
 from roboverse.envs.sawyer_base import SawyerBaseEnv
-#from multiworld.envs.env_util import create_stats_ordered_dict
+from multiworld.envs.env_util import create_stats_ordered_dict
 from roboverse.bullet.misc import load_obj, deg_to_quat, draw_bbox
 import os.path as osp
 import importlib.util
 import random
 import pickle
 import gym
+from bullet_objects import loader, metadata
 
-#SHAPENET_ASSET_PATH = "/home/ashvin/ros_ws/src/ashvindev/bullet-objects/ShapeNetCore/"
-SHAPENET_ASSET_PATH = "/Users/sasha/Desktop/gauss/ashvindev/bullet-objects/ShapeNetCore/"
-test_set = ['mug', 'square_deep_bowl', 'bathtub', 'crooked_lid_trash_can', 'beer_bottle', 
+# SHAPENET_ASSET_PATH = "/home/ashvin/ros_ws/src/ashvindev/bullet-objects/ShapeNetCore/"
+# SHAPENET_ASSET_PATH = "/Users/sasha/Desktop/gauss/ashvindev/bullet-objects/ShapeNetCore/"
+# SHAPENET_ASSET_PATH = "/home/ashvin/code/bullet-objects/ShapeNetCore/"
+SHAPENET_ASSET_PATH = "roboverse/envs/assets/objects/ShapeNetCore"
+test_set = ['mug', 'square_deep_bowl', 'bathtub', 'crooked_lid_trash_can', 'beer_bottle',
     'l_automatic_faucet', 'toilet_bowl', 'narrow_top_vase']
 
 def import_shapenet_metadata():
@@ -30,13 +33,13 @@ def load_shapenet_object(object_path, scaling, object_position, scale_local=0.5)
 
     # Randomize initial theta
     quat = deg_to_quat(np.random.randint(0, 360, size=3))
-    
+
     # With p=0.5, randomize color
     if np.random.uniform() < 0.5:
         rgba = list(np.random.choice(range(257), size=3) / 256.0) + [1]
     else:
         rgba = None
-   
+
     obj = load_obj(
         SHAPENET_ASSET_PATH + '/ShapeNetCore_vhacd/{0}/{1}/model.obj'.format(dir_name, object_name),
         SHAPENET_ASSET_PATH + '/ShapeNetCore.v2/{0}/{1}/models/model_normalized.obj'.format(dir_name, object_name),
@@ -52,7 +55,7 @@ class SawyerRigMultiobjV0(SawyerBaseEnv):
                  reward_min=-2.5,
                  randomize=True,
                  observation_mode='state',
-                 obs_img_dim=48,
+                 obs_img_dim=84,
                  success_threshold=0.05,
                  transpose_image=False,
                  invisible_robot=False,
@@ -108,7 +111,7 @@ class SawyerRigMultiobjV0(SawyerBaseEnv):
         super().__init__(*args, **kwargs)
 
     def get_object_info(self):
-        complete_object_dict, scaling = import_shapenet_metadata()
+        complete_object_dict, scaling = metadata.obj_path_map, metadata.path_scaling_map
         complete = self.object_subset is None
         train = self.object_subset == 'train'
         test = self.object_subset == 'test'
@@ -160,7 +163,7 @@ class SawyerRigMultiobjV0(SawyerBaseEnv):
             visualize=False, rgba=[0,1,0,.1])
         self._end_effector = bullet.get_index_by_attribute(
             self._sawyer, 'link_name', 'gripper_site')
-        
+
         if self._randomize:
             object_position = np.random.uniform(
                 low=self._object_position_low, high=self._object_position_high)
@@ -171,7 +174,7 @@ class SawyerRigMultiobjV0(SawyerBaseEnv):
         self.curr_object = object_name
 
         self._objects = {
-            'obj': load_shapenet_object(
+            'obj': loader.load_shapenet_object(
                 object_id,
                 self.scaling,
                 object_position)
@@ -202,8 +205,7 @@ class SawyerRigMultiobjV0(SawyerBaseEnv):
                 delta_pos, delta_yaw, gripper = action[0], action[1], action[2]
             else:
                 raise RuntimeError('Unrecognized action: {}'.format(action))
-            delta_yaw *= self.ddeg_constant
-            delta_angle = [0, 0, delta_yaw]
+            delta_angle = [0, 0, delta_yaw * self.ddeg_constant]
             return np.array(delta_pos), np.array(delta_angle), gripper
         else:
             if len(action) == 1:
@@ -218,7 +220,7 @@ class SawyerRigMultiobjV0(SawyerBaseEnv):
 
     def step(self, *action):
         pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
-       
+
         if self.DoF == 3:
             delta_pos, gripper = self._format_action(*action)
         else:
@@ -377,7 +379,7 @@ class SawyerRigMultiobjV0(SawyerBaseEnv):
         height = self.format_obs(next_obs['state_observation'])[:, 4:7][:, 2]
         reward = (height > self.pickup_eps) - 1
         return reward
-    
+
     def compute_reward_gr(self, obs, actions, next_obs, contexts):
         obj_state = self.format_obs(next_obs['state_observation'])[:, 4:7]
         obj_goal = self.format_obs(contexts['state_desired_goal'])[:, 4:7]
@@ -407,7 +409,7 @@ class SawyerRigMultiobjV0(SawyerBaseEnv):
                                            quat_to_deg=False)
         object_pos = object_info['pos']
         object_theta = object_info['theta']
-        
+
         observation = np.concatenate(
             (end_effector_pos, gripper_tips_distance,
              object_pos, object_theta))
