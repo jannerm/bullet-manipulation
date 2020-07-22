@@ -399,6 +399,9 @@ def scripted_grasping_V6(env, pool, success_pool, noise=0.2):
         object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
         theta_action = 0.
 
+        if "Drawer" in env._env_name:
+            object_pos += (0.01, 0.0, 0.0)
+
         if object_gripper_dist > dist_thresh and env._gripper_open:
             # print('approaching')
             action = (object_pos - ee_pos) * 7.0
