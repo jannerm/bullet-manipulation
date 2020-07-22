@@ -51,6 +51,9 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
         self.box_high = lifted_long_box_open_top_center_pos + np.array([0.0525, 0.04, 0.035])
         self.box_low = lifted_long_box_open_top_center_pos + np.array([-0.0525, -0.04, -0.01])
 
+        self._object_position_high = (.84, -.08, -.29)
+        self._object_position_low = (.84, -.09, -.29)
+
         if self.task_type in ["OpenGrasp", "Grasp"]:
             # Only open and/or grasping required. So blocking object is dropped in box.
             # Drop the object in the box.
@@ -75,9 +78,6 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
             num_objects=num_objects, **kwargs)
 
         self._env_name = "Widow200GraspV6DrawerPlaceThenOpenV0Env"
-        self._object_position_high = (.84, -.08, -.29)
-        self._object_position_low = (.84, -.09, -.29)
-
         task_scripted_traj_len_map = {
             "Grasp": 25,
             "PickPlace": 30,
