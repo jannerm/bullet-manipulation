@@ -946,9 +946,11 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
                 (action, np.asarray([theta_action, 0., 0.])))
         else:
             # print("Move toward neutral")
-            action = (ending_target_pos - ee_pos) * 7.0
+            # action = (ending_target_pos - ee_pos) * 7.0
+            action = np.zeros((3,))
             action = np.concatenate(
-                (action, np.asarray([0., 0., 0.])))
+                (action, np.asarray([0., 0., 0.7])))
+            # 0.7 = move to reset.
 
         noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
         action += np.random.normal(scale=noise_scalings)
