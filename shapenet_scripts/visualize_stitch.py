@@ -45,27 +45,20 @@ def save_to_npy(rb, prefix):
     for name, array in fnames_arrays:
         np.save("{}/{}_{}".format(OUTPUT_DIR, prefix, name), array)
 
-if load_from_saved_npy:
-    if not osp.exists(BASE_STATE_ARRAY) or not osp.exists(BASE_REWARDS_ARRAY):
-        with open(FILE_BASE, 'rb') as f:
-            base = pickle.load(f)
-        save_to_npy(base, "base")
-
-    if not osp.exists(TARGET_STATE_ARRAY) or not osp.exists(TARGET_REWARDS_ARRAY):
-        with open(FILE_TARGET, 'rb') as f:
-            target = pickle.load(f)
-        save_to_npy(target, "target")
-
-    if not osp.exists(FULL_STATE_ARRAY) or not osp.exists(FULL_REWARDS_ARRAY):
-        with open(FILE_FULL, 'rb') as f:
-            full = pickle.load(f)
-        save_to_npy(full, "full")
-else:
+if not osp.exists(BASE_STATE_ARRAY) or not osp.exists(BASE_REWARDS_ARRAY) or not load_from_saved_npy:
     with open(FILE_BASE, 'rb') as f:
         base = pickle.load(f)
+    save_to_npy(base, "base")
 
+if not osp.exists(TARGET_STATE_ARRAY) or not osp.exists(TARGET_REWARDS_ARRAY) or not load_from_saved_npy:
     with open(FILE_TARGET, 'rb') as f:
         target = pickle.load(f)
+    save_to_npy(target, "target")
+
+if not osp.exists(FULL_STATE_ARRAY) or not osp.exists(FULL_REWARDS_ARRAY) or not load_from_saved_npy:
+    with open(FILE_FULL, 'rb') as f:
+        full = pickle.load(f)
+    save_to_npy(full, "full")
 
 def reshape_obs_by_traj(obs_array, traj_len):
     print("obs_array.shape", obs_array.shape)
