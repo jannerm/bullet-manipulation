@@ -67,9 +67,9 @@ class Widow200GraspV6DrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerOpenV0Env):
             # The task starts with needing to place blocking object in the box.
             # Blocking = Obstruction object
             # Drop object blocking drawer
-            blocking_object_offset = np.array([0.02, -0.05, -0.05])
-            self._blocking_object_position_high = self._object_position_high + blocking_object_offset
-            self._blocking_object_position_low = self._object_position_low + blocking_object_offset
+            # blocking_object_offset = np.array([0.02, -0.05, -0.05])
+            self._blocking_object_position_high = np.array([0.86, -0.13, -0.34])
+            self._blocking_object_position_low = np.array([0.86, -0.14, -0.34])
             self._success_dist_threshold = success_dist_threshold
 
         super().__init__(*args,
