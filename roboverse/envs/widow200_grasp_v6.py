@@ -37,6 +37,12 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
         info = dict(object_gripper_dist=object_gripper_dist)
         return info
 
+    def _move_to_neutral(self):
+        for i in range(len(self.RESET_JOINTS)):
+            p.setJointMotorControl2(self._robot_id, i, p.POSITION_CONTROL, self.RESET_JOINTS[i])
+        for i in range(30):
+            p.stepSimulation()
+
     def step(self, action):
         action = np.asarray(action)
         pos = list(bullet.get_link_state(self._robot_id, self._end_effector, 'pos'))
@@ -62,6 +68,13 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
         self._prev_pos = bullet.get_link_state(self._robot_id, self._end_effector,
                                                'pos')
         done = False
+
+        # In Grasp V6, the 6th action dim corresponds to a binary
+        # move to reset command.
+        if action[5] > 0.5:
+            # currently nothing happens for large negative action[5] commands.
+            self._move_to_neutral()
+
         return observation, reward, done, info
 
 class Widow200GraspV6RandObjEnv(RandObjEnv, Widow200GraspV6Env):
