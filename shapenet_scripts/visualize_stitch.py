@@ -21,6 +21,8 @@ target_traj_len = 25
 full_traj_len = 50
 empty_traj_size = 100000
 load_from_saved_npy = False
+positive_reward_plot_criteria = False
+after_reset_plot_criteria = True
 ########## END PARAMS TO MODIFY
 
 BASE_STATE_ARRAY = osp.join(OUTPUT_DIR, "base_robot_state.npy")
@@ -205,27 +207,26 @@ plot_num_counter = it.count(0)
 reset_action_dim = 5
 base_actions_arr = np.load(BASE_ACTIONS_ARRAY)
 
-for i in range(np.load(BASE_REWARDS_ARRAY).shape[0]):
-    plot_criteria = True
-    if positive_reward_plot_criteria:
-        plot_criteria = plot_criteria and np.load(BASE_REWARDS_ARRAY)[i] > 0.0
-    if after_reset_plot_criteria:
-        # reset_actions = base_actions_arr[i - (base_traj_len - 1) : i + 1][:,reset_action_dim]
-        # indices_after_reset = np.where(reset_actions >= 0.5)
-        plot_criteria = plot_criteria and base_actions_arr[i][reset_action_dim] >= 0.5
-        
-    if plot_criteria:
-        # base_final_states.append(base._obs['robot_state'][i][:3])
-        img = base._obs['image'][i]
-        img = process_image(img)
-        plt.figure(num_succ)
-        # plt.axis('off')
-        save_file = osp.join(OUTPUT_DIR, 'base_{}.png'.format(num_succ))
-        plt.imsave(save_file, img)
-        target_starting_img.append(img)
-        num_succ += 1
-    if num_succ > num_to_plot:
-        break
+for i in range(np.load(BASE_REWARDS_ARRAY).shape[0] // base_traj_len):
+    plot_criteria = False
+    for j in range(base_traj_len):
+        t = i * base_traj_len + j
+        if after_reset_plot_criteria and base_actions_arr[t][reset_action_dim] >= 0.5:
+            plot_criteria = True
+
+        if plot_criteria:
+            # base_final_states.append(base._obs['robot_state'][i][:3])
+            img = base._obs['image'][t]
+            img = process_image(img)
+            plt.figure(num_succ)
+            # plt.axis('off')
+            save_file = osp.join(OUTPUT_DIR, 'base_{}.png'.format(num_succ))
+            plt.imsave(save_file, img)
+            target_starting_img.append(img)
+            num_succ += 1
+            print("t", t, "i", i, "j", j, "num_succ", num_succ)
+        if num_succ > num_to_plot:
+            break
 for i in range(num_to_plot):
     img = target._obs['image'][i * target_traj_len]
     img = process_image(img)
