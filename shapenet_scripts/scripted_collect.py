@@ -728,8 +728,10 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
             action = np.concatenate(
                 (action, np.asarray([0., 0.7, 0.])))
         else:
-            action = (ending_target_pos - ee_pos) * 7.0
-            action = np.concatenate((action, np.asarray([theta_action, 0.0, 0.])))
+            # action = (ending_target_pos - ee_pos) * 7.0
+            action = np.zeros((3,))
+            action = np.concatenate((action, np.asarray([theta_action, 0.0, 0.7])))
+            # Move to neutral
 
         noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
         action += np.random.normal(scale=noise_scalings)
