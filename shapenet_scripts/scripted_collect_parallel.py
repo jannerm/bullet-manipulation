@@ -76,7 +76,7 @@ if __name__ == "__main__":
                '-n {}'.format(num_trajectories_per_thread),
                '-p {}'.format(args.num_parallel_threads),
                '-o{}'.format(args.observation_mode),
-               '--joint-norm-thresh {}'.format(args.joint_norm_thresh),
+               '-j {}'.format(args.joint_norm_thresh),
                ]
     if args.sparse:
         command.append('--sparse')
