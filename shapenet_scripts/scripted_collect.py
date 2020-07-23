@@ -1220,7 +1220,7 @@ def scripted_grasping_V6_close_open_grasp_V0(env, pool, success_pool, noise=0.2)
         elif not env.is_drawer_closed("top"):
             # print("close top drawer")
             reached_pushing_region = True
-            top_drawer_offset = np.array([0, 0, 0.01])
+            top_drawer_offset = np.array([0, 0, 0.02])
             action = (top_drawer_pos + top_drawer_offset - ee_pos) * 7.0
             action[0] *= 3
             action[1] *= 0.6
@@ -1228,7 +1228,8 @@ def scripted_grasping_V6_close_open_grasp_V0(env, pool, success_pool, noise=0.2)
         elif (gripper_handle_dist > dist_thresh
             and not env.is_drawer_opened("bottom", widely=drawer_never_opened)):
             # print('approaching handle')
-            action = (bottom_drawer_handle_pos - ee_pos) * 7.0
+            handle_offset = np.array([0.02, 0, 0])
+            action = (bottom_drawer_handle_pos + handle_offset - ee_pos) * 7.0
             xy_diff = np.linalg.norm(action[:2]/7.0)
             if xy_diff > 0.75 * dist_thresh:
                 action[2] = 0.0 # force upward action
