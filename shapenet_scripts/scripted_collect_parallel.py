@@ -54,6 +54,10 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--observation-mode", type=str, default='pixels')
     parser.add_argument("--allow-grasp-retries", dest="allow_grasp_retries",
                         action="store_true", default=False)
+    parser.add_argument("--joint-norm-thresh", dest="joint_norm_thresh",
+                        type=float, default=0.05)
+    parser.add_argument("--one-reset-per-traj", dest="one_reset_per_traj",
+                        action="store_true", default=False)
     args = parser.parse_args()
 
     assert args.semisparse != args.sparse
@@ -72,6 +76,7 @@ if __name__ == "__main__":
                '-n {}'.format(num_trajectories_per_thread),
                '-p {}'.format(args.num_parallel_threads),
                '-o{}'.format(args.observation_mode),
+               '--joint-norm-thresh {}'.format(args.joint_norm_thresh),
                ]
     if args.sparse:
         command.append('--sparse')
@@ -83,6 +88,8 @@ if __name__ == "__main__":
         command.append('--random_actions')
     if args.allow_grasp_retries:
         command.append('--allow-grasp-retries')
+    if args.one_reset_per_traj:
+        command.append('--one-reset-per-traj')
 
     subprocesses = []
     for i in range(args.num_parallel_threads):
