@@ -697,6 +697,10 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
         info = env.get_info()
         z_diff = abs(blocking_object_pos[2] + blocking_object_pos_offset[2] - ee_pos[2])
 
+        currJointStates = bullet.get_joint_positions(
+            env._robot_id)[1][:len(env.RESET_JOINTS)]
+        joint_norm_dev_from_neutral = np.linalg.norm(currJointStates - env.RESET_JOINTS)
+
         if (blocking_object_gripper_dist > dist_thresh ) and \
                 env._gripper_open and not info['blocking_object_in_box_success']:
             # print('approaching')
@@ -728,11 +732,17 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
             action[2] = 0.2
             action = np.concatenate(
                 (action, np.asarray([0., 0.7, 0.])))
-        else:
+        elif joint_norm_dev_from_neutral > 0.05:
+            # print("Move toward neutral")
             # action = (ending_target_pos - ee_pos) * 7.0
             action = np.zeros((3,))
-            action = np.concatenate((action, np.asarray([theta_action, 0.0, 0.7])))
-            # Move to neutral
+            action = np.concatenate(
+                (action, np.asarray([0., 0., 0.7])))
+            # 0.7 = move to reset.
+        else:
+            action = np.zeros((3,))
+            action = np.concatenate(
+                (action, np.asarray([0., 0., 0.])))
 
         noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
         action += np.random.normal(scale=noise_scalings)
@@ -927,10 +937,9 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
         gripper_handle_dist = np.linalg.norm(handle_pos - ee_pos)
         theta_action = 0.
 
-        currJointStates = bullet.get_joint_states(env._robot_id)
-        neutralJointStates = env.RESET_JOINTS
-        print("currJointStates", currJointStates)
-        print("neutralJointStates", neutralJointStates)
+        currJointStates = bullet.get_joint_positions(
+            env._robot_id)[1][:len(env.RESET_JOINTS)]
+        joint_norm_dev_from_neutral = np.linalg.norm(currJointStates - env.RESET_JOINTS)
 
         if (gripper_handle_dist > dist_thresh
             and not env.is_drawer_opened(widely=drawer_never_opened)):
@@ -952,13 +961,17 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
             action = np.array([0, 0, 0.7]) # force upward action to avoid upper box
             action = np.concatenate(
                 (action, np.asarray([theta_action, 0., 0.])))
-        else:
+        elif joint_norm_dev_from_neutral > 0.05:
             # print("Move toward neutral")
             # action = (ending_target_pos - ee_pos) * 7.0
             action = np.zeros((3,))
             action = np.concatenate(
                 (action, np.asarray([0., 0., 0.7])))
             # 0.7 = move to reset.
+        else:
+            action = np.zeros((3,))
+            action = np.concatenate(
+                (action, np.asarray([0., 0., 0.])))
 
         noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
         action += np.random.normal(scale=noise_scalings)
