@@ -567,10 +567,6 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
     box_dist_thresh = 0.035 + np.random.normal(scale=0.01)
     box_dist_thresh = np.clip(box_dist_thresh, 0.025, 0.05)
 
-    assert args.num_timesteps == env.scripted_traj_len, (
-        "args.num_timesteps: {} != env.scripted_traj_len: {}".format(
-        args.num_timesteps, env.scripted_traj_len))
-
     for t_ind in range(args.num_timesteps):
 
         if isinstance(observation, dict):
@@ -669,9 +665,7 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
     box_dist_thresh = 0.035 + np.random.normal(scale=0.01)
     box_dist_thresh = np.clip(box_dist_thresh, 0.025, 0.05)
 
-    assert args.num_timesteps == env.scripted_traj_len, (
-        "args.num_timesteps: {} != env.scripted_traj_len: {}".format(
-        args.num_timesteps, env.scripted_traj_len))
+    reset_never_taken = True
 
     for t_ind in range(args.num_timesteps):
 
@@ -700,6 +694,9 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
         currJointStates = bullet.get_joint_positions(
             env._robot_id)[1][:len(env.RESET_JOINTS)]
         joint_norm_dev_from_neutral = np.linalg.norm(currJointStates - env.RESET_JOINTS)
+
+        eligible_for_reset = ((args.one_reset_per_traj and reset_never_taken) or
+            (not args.one_reset_per_traj))
 
         if (blocking_object_gripper_dist > dist_thresh ) and \
                 env._gripper_open and not info['blocking_object_in_box_success']:
@@ -732,12 +729,18 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
             action[2] = 0.2
             action = np.concatenate(
                 (action, np.asarray([0., 0.7, 0.])))
-        elif joint_norm_dev_from_neutral > 0.2:
+        elif ((joint_norm_dev_from_neutral > args.joint_norm_thresh) and
+            eligible_for_reset):
             # print("Move toward neutral")
             action = np.asarray([0., 0., 0., 0., 0., 0.7])
             # 0.7 = move to reset.
+            reset_never_taken = False
         else:
-            action = np.zeros((6,))
+            if not eligible_for_reset:
+                action = (ending_target_pos - ee_pos) * 7.0
+                action = np.concatenate((action, np.zeros((3,))))
+            else:
+                action = np.zeros((6,))
 
         noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
         action += np.random.normal(scale=noise_scalings)
@@ -910,6 +913,7 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
     dist_thresh = 0.04 + np.random.normal(scale=0.01)
     max_theta_action_magnitude = 0.2
     drawer_never_opened = True
+    reset_never_taken = True
 
     for _ in range(args.num_timesteps):
 
@@ -936,6 +940,9 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
             env._robot_id)[1][:len(env.RESET_JOINTS)]
         joint_norm_dev_from_neutral = np.linalg.norm(currJointStates - env.RESET_JOINTS)
 
+        eligible_for_reset = ((args.one_reset_per_traj and reset_never_taken) or
+            (not args.one_reset_per_traj))
+
         if (gripper_handle_dist > dist_thresh
             and not env.is_drawer_opened(widely=drawer_never_opened)):
             # print('approaching handle')
@@ -956,12 +963,18 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
             action = np.array([0, 0, 0.7]) # force upward action to avoid upper box
             action = np.concatenate(
                 (action, np.asarray([theta_action, 0., 0.])))
-        elif joint_norm_dev_from_neutral > 0.2:
+        elif ((joint_norm_dev_from_neutral > args.joint_norm_thresh) and
+            eligible_for_reset):
             # print("Move toward neutral")
             action = np.asarray([0., 0., 0., 0., 0., 0.7])
             # 0.7 = move to reset.
+            reset_never_taken = False
         else:
-            action = np.zeros((6,))
+            if not eligible_for_reset:
+                action = (ending_target_pos - ee_pos) * 7.0
+                action = np.concatenate((action, np.zeros((3,))))
+            else:
+                action = np.zeros((6,))
 
         noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
         action += np.random.normal(scale=noise_scalings)
@@ -1017,10 +1030,6 @@ def scripted_grasping_V6_place_then_open_V0(env, pool, success_pool, noise=0.2):
     box_dist_thresh = np.clip(box_dist_thresh, 0.025, 0.05)
 
     drawer_never_opened = True
-
-    assert args.num_timesteps == env.scripted_traj_len, (
-        "args.num_timesteps: {} != env.scripted_traj_len: {}".format(
-        args.num_timesteps, env.scripted_traj_len))
 
     for t_ind in range(args.num_timesteps):
 
@@ -1633,6 +1642,10 @@ def main(args):
                          observation_mode=args.observation_mode,
                          transpose_image=True)
 
+    assert args.num_timesteps == env.scripted_traj_len, (
+        "args.num_timesteps: {} != env.scripted_traj_len: {}".format(
+        args.num_timesteps, env.scripted_traj_len))
+
     num_success = 0
     if args.env == 'SawyerGraspOne-v0' or args.env == 'SawyerReach-v0':
         pool = roboverse.utils.DemoPool()
@@ -1831,6 +1844,10 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--observation-mode", type=str, default='pixels',
                         choices=('state', 'pixels', 'pixels_debug'))
     parser.add_argument("--allow-grasp-retries", dest="allow_grasp_retries",
+                        action="store_true", default=False)
+    parser.add_argument("--joint-norm-thresh", dest="joint_norm_thresh",
+                        type=float, default=0.05)
+    parser.add_argument("--one-reset-per-traj", dest="one_reset_per_traj",
                         action="store_true", default=False)
 
     args = parser.parse_args()
