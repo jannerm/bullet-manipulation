@@ -7,6 +7,7 @@ import pickle
 
 import roboverse
 import skvideo.io
+import roboverse.bullet as bullet
 
 from railrl.data_management.env_replay_buffer import EnvReplayBuffer
 from railrl.data_management.obs_dict_replay_buffer import \
@@ -925,6 +926,11 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
 
         gripper_handle_dist = np.linalg.norm(handle_pos - ee_pos)
         theta_action = 0.
+
+        currJointStates = bullet.get_joint_states(env._robot_id)
+        neutralJointStates = env.RESET_JOINTS
+        print("currJointStates", currJointStates)
+        print("neutralJointStates", neutralJointStates)
 
         if (gripper_handle_dist > dist_thresh
             and not env.is_drawer_opened(widely=drawer_never_opened)):

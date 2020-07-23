@@ -27,9 +27,11 @@ BASE_STATE_ARRAY = osp.join(OUTPUT_DIR, "base_robot_state.npy")
 TARGET_STATE_ARRAY = osp.join(OUTPUT_DIR, "target_robot_state.npy")
 BASE_REWARDS_ARRAY = osp.join(OUTPUT_DIR, "base_rewards.npy")
 TARGET_REWARDS_ARRAY = osp.join(OUTPUT_DIR, "target_rewards.npy")
+BASE_ACTIONS_ARRAY = osp.join(OUTPUT_DIR, "base_actions.npy")
+TARGET_ACTIONS_ARRAY = osp.join(OUTPUT_DIR, "target_actions.npy")
 FULL_STATE_ARRAY = osp.join(OUTPUT_DIR, "full_robot_state.npy")
-FULL_REWARDS_ARRAY = osp.join(OUTPUT_DIR, "full_robot_state.npy")
-
+FULL_REWARDS_ARRAY = osp.join(OUTPUT_DIR, "full_rewards.npy")
+FULL_ACTIONS_ARRAY = osp.join(OUTPUT_DIR, "full_actions.npy")
 if not osp.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 def process_image(image):
@@ -40,22 +42,23 @@ def process_image(image):
 def save_to_npy(rb, prefix):
     fnames_arrays = [
         ("robot_state", rb._obs['robot_state']),
-        ("rewards", rb._rewards)
+        ("rewards", rb._rewards),
+        ("actions", rb._actions),
     ]
     for name, array in fnames_arrays:
         np.save("{}/{}_{}".format(OUTPUT_DIR, prefix, name), array)
 
-if not osp.exists(BASE_STATE_ARRAY) or not osp.exists(BASE_REWARDS_ARRAY) or not load_from_saved_npy:
+if not osp.exists(BASE_STATE_ARRAY) or not osp.exists(BASE_REWARDS_ARRAY) or not osp.exists(BASE_ACTIONS_ARRAY) or not load_from_saved_npy:
     with open(FILE_BASE, 'rb') as f:
         base = pickle.load(f)
     save_to_npy(base, "base")
 
-if not osp.exists(TARGET_STATE_ARRAY) or not osp.exists(TARGET_REWARDS_ARRAY) or not load_from_saved_npy:
+if not osp.exists(TARGET_STATE_ARRAY) or not osp.exists(TARGET_REWARDS_ARRAY) or not osp.exists(TARGET_ACTIONS_ARRAY) or not load_from_saved_npy:
     with open(FILE_TARGET, 'rb') as f:
         target = pickle.load(f)
     save_to_npy(target, "target")
 
-if not osp.exists(FULL_STATE_ARRAY) or not osp.exists(FULL_REWARDS_ARRAY) or not load_from_saved_npy:
+if not osp.exists(FULL_STATE_ARRAY) or not osp.exists(FULL_REWARDS_ARRAY) or not osp.exists(FULL_ACTIONS_ARRAY) or not load_from_saved_npy:
     with open(FILE_FULL, 'rb') as f:
         full = pickle.load(f)
     save_to_npy(full, "full")
@@ -199,8 +202,15 @@ plot_num_counter = it.count(0)
 # print("full_avg_theta", full_avg_theta)
 # plot_avg_theta(base_avg_theta, target_avg_theta, full_avg_theta)
 
+reset_action_dim = 5
 for i in range(base_traj_len - 1, np.load(BASE_REWARDS_ARRAY).shape[0], base_traj_len):
-    if np.load(BASE_REWARDS_ARRAY)[i] >= 0.0:
+    plot_criteria = True
+    if positive_reward_plot_criteria:
+        plot_criteria = plot_criteria and np.load(BASE_REWARDS_ARRAY)[i] > 0.0
+    if after_reset_plot_criteria:
+        plot_criteria = plot_criteria and np.load(BASE_ACTIONS_ARRAY)[i][reset_action_dim] >= 0.5
+        
+    if plot_criteria:
         # base_final_states.append(base._obs['robot_state'][i][:3])
         img = base._obs['image'][i]
         img = process_image(img)
