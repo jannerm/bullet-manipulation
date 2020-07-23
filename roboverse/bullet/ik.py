@@ -207,8 +207,11 @@ def restore_state(filename):
 def move_to_neutral(RESET_JOINTS, robot_id):
     for i in range(len(RESET_JOINTS)):
         p.setJointMotorControl2(robot_id, i, p.POSITION_CONTROL, RESET_JOINTS[i])
-    for i in range(30):
+    joint_norm_dev_from_neutral = 1.0
+    while joint_norm_dev_from_neutral > 0.01:
         p.stepSimulation()
+        currJointStates = get_joint_positions(robot_id)[1][:len(RESET_JOINTS)]
+        joint_norm_dev_from_neutral = np.linalg.norm(currJointStates - RESET_JOINTS)
 
 #################
 ####  drawer  ###
