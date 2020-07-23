@@ -1845,8 +1845,7 @@ if __name__ == "__main__":
                         choices=('state', 'pixels', 'pixels_debug'))
     parser.add_argument("--allow-grasp-retries", dest="allow_grasp_retries",
                         action="store_true", default=False)
-    parser.add_argument("--joint-norm-thresh", dest="joint_norm_thresh",
-                        type=float, default=0.05)
+    parser.add_argument("-j", "--joint-norm-thresh", type=float, default=0.05)
     parser.add_argument("--one-reset-per-traj", dest="one_reset_per_traj",
                         action="store_true", default=False)
 
