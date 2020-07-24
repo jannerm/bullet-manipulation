@@ -1376,8 +1376,14 @@ def scripted_grasping_V6_double_drawer_open_grasp_V0(env, pool, success_pool, no
         if (gripper_handle_dist > dist_thresh
             and not env.is_drawer_opened("bottom", widely=drawer_never_opened)):
             # print('approaching handle')
-            if np.abs(ee_pos[0] - bottom_drawer_handle_pos[0]) > dist_thresh:
-                handle_pos_offset = np.array([0, -0.05, 0])
+
+            if np.abs(ee_pos[0] - bottom_drawer_handle_pos[0]) > 2 * dist_thresh:
+                handle_pos_offset = np.array([0, -0.07, 0])
+            elif np.abs(ee_pos[0] - bottom_drawer_handle_pos[0]) > dist_thresh:
+                handle_pos_offset = np.array([0, -0.01, 0])
+            else:
+                handle_pos_offset = np.zeros((3,))
+
             action = (bottom_drawer_handle_pos + handle_pos_offset - ee_pos) * 7.0
             xy_diff = np.linalg.norm(action[:2]/7.0)
             if xy_diff > dist_thresh:
@@ -1499,6 +1505,13 @@ def scripted_grasping_V6_double_drawer_close_V0(env, pool, success_pool, noise=0
                 ee_pos[2] < top_drawer_push_target_pos[2])
         theta_action = 0.
 
+        currJointStates = bullet.get_joint_positions(
+            env._robot_id)[1][:len(env.RESET_JOINTS)]
+        joint_norm_dev_from_neutral = np.linalg.norm(currJointStates - env.RESET_JOINTS)
+
+        eligible_for_reset = ((args.one_reset_per_traj and reset_never_taken) or
+            (not args.one_reset_per_traj))
+
         if (not env.is_drawer_closed("top") and not reached_pushing_region and
             not is_gripper_ready_to_push):
             # print("move up and left")
@@ -1514,7 +1527,7 @@ def scripted_grasping_V6_double_drawer_close_V0(env, pool, success_pool, noise=0
             action = np.concatenate((action, np.array([theta_action, 0.7, 0])))
         elif ((joint_norm_dev_from_neutral > args.joint_norm_thresh) and
             eligible_for_reset):
-            # print("Move toward neutral")
+            # print("Take neutral action")
             action = np.asarray([0., 0., 0., 0., 0., 0.7])
             # 0.7 = move to reset.
             reset_never_taken = False
