@@ -1345,7 +1345,12 @@ def scripted_grasping_V6_double_drawer_open_grasp_V0(env, pool, success_pool, no
     actions, observations, next_observations, rewards, terminals, infos = \
         [], [], [], [], [], []
 
-    dist_thresh = 0.04 + np.random.normal(scale=0.01)
+    dist_thresh = 0.045 + np.random.normal(scale=0.01)
+    dist_thresh = np.clip(dist_thresh, 0.040, 0.060)
+
+    object_thresh = 0.04 + np.random.normal(scale=0.01)
+    object_thresh = np.clip(object_thresh, 0.030, 0.050)
+
     drawer_never_opened = True
 
     for _ in range(args.num_timesteps):
@@ -1371,7 +1376,6 @@ def scripted_grasping_V6_double_drawer_open_grasp_V0(env, pool, success_pool, no
         if (gripper_handle_dist > dist_thresh
             and not env.is_drawer_opened("bottom", widely=drawer_never_opened)):
             # print('approaching handle')
-            handle_pos_offset = np.zeros((3,))
             if np.abs(ee_pos[0] - bottom_drawer_handle_pos[0]) > dist_thresh:
                 handle_pos_offset = np.array([0, -0.05, 0])
             action = (bottom_drawer_handle_pos + handle_pos_offset - ee_pos) * 7.0
@@ -1384,7 +1388,7 @@ def scripted_grasping_V6_double_drawer_open_grasp_V0(env, pool, success_pool, no
             action = np.array([0, -1.0, 0])
             # action = np.asarray([0., 0., 0.7])
             action = np.concatenate(
-                (action, np.asarray([0, 0., 0])))
+                (action, np.asarray([0, 0.7, 0])))
         elif (object_gripper_dist > dist_thresh
             and env._gripper_open and gripper_handle_dist < 1.5 * dist_thresh):
             # print("Lift upward")
@@ -1397,7 +1401,7 @@ def scripted_grasping_V6_double_drawer_open_grasp_V0(env, pool, success_pool, no
                 action *= 7.0
                 action[2]  *= 0.5  # force upward action to avoid upper box
             action = np.concatenate(
-                (action, np.asarray([theta_action, 0., 0.])))
+                (action, np.asarray([theta_action, 0.7, 0.])))
         elif object_gripper_dist > dist_thresh and env._gripper_open:
             # print("Move toward object")
             action = (object_pos - ee_pos) * 7.0
@@ -1405,7 +1409,7 @@ def scripted_grasping_V6_double_drawer_open_grasp_V0(env, pool, success_pool, no
             if xy_diff > dist_thresh:
                 action[2] = 0.3
             action = np.concatenate(
-                (action, np.asarray([0., 0., 0.])))
+                (action, np.asarray([0., 0.7, 0.])))
         elif env._gripper_open:
             # print('gripper closing')
             action = (object_pos - ee_pos) * 7.0
@@ -1471,9 +1475,11 @@ def scripted_grasping_V6_double_drawer_close_V0(env, pool, success_pool, noise=0
     actions, observations, next_observations, rewards, terminals, infos = \
         [], [], [], [], [], []
 
-    dist_thresh = 0.04 + np.random.normal(scale=0.01)
+    dist_thresh = 0.045 + np.random.normal(scale=0.01)
+    dist_thresh = np.clip(dist_thresh, 0.040, 0.060)
     drawer_never_opened = True
     reached_pushing_region = False
+    reset_never_taken = True
 
     for _ in range(args.num_timesteps):
 
@@ -1497,19 +1503,27 @@ def scripted_grasping_V6_double_drawer_close_V0(env, pool, success_pool, noise=0
             not is_gripper_ready_to_push):
             # print("move up and left")
             action = np.concatenate(
-                ([-0.2, -0.4, -0.2], np.array([theta_action, 0, 0])))
+                ([-0.2, -0.4, -0.2], np.array([theta_action, 0.7, 0])))
         elif not env.is_drawer_closed("top"):
             # print("close top drawer")
             reached_pushing_region = True
-            action = (top_drawer_pos - ee_pos) * 7.0
+            top_drawer_offset = np.array([0, 0, 0.02])
+            action = (top_drawer_pos + top_drawer_offset - ee_pos) * 7.0
             action[0] *= 3
             action[1] *= 0.6
-            action = np.concatenate((action, np.array([theta_action, 0, 0])))
-        else:
+            action = np.concatenate((action, np.array([theta_action, 0.7, 0])))
+        elif ((joint_norm_dev_from_neutral > args.joint_norm_thresh) and
+            eligible_for_reset):
             # print("Move toward neutral")
-            action = (ending_target_pos - ee_pos) * 7.0
-            action = np.concatenate(
-                (action, np.asarray([0., 0., 0.])))
+            action = np.asarray([0., 0., 0., 0., 0., 0.7])
+            # 0.7 = move to reset.
+            reset_never_taken = False
+        else:
+            if not eligible_for_reset:
+                action = (ending_target_pos - ee_pos) * 7.0
+                action = np.concatenate((action, np.zeros((3,))))
+            else:
+                action = np.zeros((6,))
 
 
         noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
