@@ -46,9 +46,9 @@ class Widow200GraspV6DrawerOpenThenPlaceV0Env(Widow200GraspV6DrawerOpenV0Env):
         super().__init__(*args, object_names=object_names,
             scaling_local_list=scaling_local_list, **kwargs)
 
-        margin = 0.02
-        self._object_position_high = np.array(list(self.box_high[:2]) + [-0.2]) - margin
-        self._object_position_low = np.array(list(self.box_low[:2]) + [-0.2]) + margin
+        margin = 0.0225
+        self._object_position_high = np.array(list(self.box_high[:2] - margin) + [-0.2])
+        self._object_position_low = np.array(list(self.box_low[:2] + margin) + [-0.2])
 
         drawer_urdf_size = np.array([1.4, 1.2, 0])
         half_drawer_dims = 0.5 * 0.1 * drawer_urdf_size
