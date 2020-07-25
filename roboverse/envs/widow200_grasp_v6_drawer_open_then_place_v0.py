@@ -147,7 +147,10 @@ class Widow200GraspV6DrawerOpenThenPlaceV0Env(Widow200GraspV6DrawerOpenV0Env):
 
         # object above drawer:
         object_above_drawer = np.all(self.object_within_drawer_bounds()[:2])
-        info['object_above_drawer_success'] = object_above_drawer
+        info['object_above_drawer_success'] = float(object_above_drawer)
+
+        # object in drawer:
+        info['object_in_drawer_success'] = float(self.is_object_in_drawer())
 
         return info
 
