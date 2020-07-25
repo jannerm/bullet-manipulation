@@ -54,7 +54,7 @@ class Widow200GraspV6DrawerOpenThenPlaceV0Env(Widow200GraspV6DrawerOpenV0Env):
         half_drawer_dims = 0.5 * 0.1 * drawer_urdf_size
         half_drawer_z_dim = 0.5 * np.array([0, 0, drawer_urdf_size[2]])
         # drawer high and low offsets from the drawer bottom.
-        self.drawer_high_offset = half_drawer_dims + np.array([0, 0, 0.1])
+        self.drawer_high_offset = half_drawer_dims + np.array([0, 0, 0.05])
         self.drawer_low_offset = -1 * half_drawer_dims + np.array([0, 0, -0.05])
 
         self._env_name = "Widow200GraspV6DrawerOpenThenPlaceV0Env"
