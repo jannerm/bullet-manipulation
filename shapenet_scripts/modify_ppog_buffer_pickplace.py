@@ -72,6 +72,7 @@ def main():
                     observations=[],
                     next_observations=[],
                 )
+                break
 
     with open(OUTPUT_BUFFER, 'wb+') as fp:
         pickle.dump(output_buffer, fp)
