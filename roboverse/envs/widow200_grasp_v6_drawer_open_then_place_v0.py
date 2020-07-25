@@ -76,12 +76,15 @@ class Widow200GraspV6DrawerOpenThenPlaceV0Env(Widow200GraspV6DrawerOpenV0Env):
         object_position = np.random.uniform(
             self._object_position_low, self._object_position_high)
 
-        self.load_object(self.object_name, object_position)
+        # For some reason this is important for the drawer to be openable by the robot.
+        bullet.close_drawer(self._drawer)
+        # End
 
         if self.task_type == "PickPlace":
             bullet.open_drawer(self._drawer, noisy_open=self.noisily_open_drawer)
 
-        self._box = bullet.objects.lifted_long_box_open_top()
+        self.object_tray = bullet.objects.small_object_tray()
+        self.load_object(self.object_name, object_position)
 
     def load_object(self, name, pos, quat=[1, -1, 0, 0]):
         self._objects[name] = load_shapenet_object(
@@ -181,6 +184,9 @@ def drawer_open_then_place_policy(EPSILON, noise, margin, save_video, env):
         box_dist_thresh = 0.035 + np.random.normal(scale=0.01)
         box_dist_thresh = np.clip(box_dist_thresh, 0.025, 0.05)
 
+        object_thresh = 0.04 + np.random.normal(scale=0.01)
+        object_thresh = np.clip(object_thresh, 0.030, 0.050)
+
         drawer_never_opened = True
 
         images, images_for_gif = [], [] # new video at the start of each trajectory
@@ -198,9 +204,11 @@ def drawer_open_then_place_policy(EPSILON, noise, margin, save_video, env):
 
             object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
             gripper_handle_dist = np.linalg.norm(handle_pos - ee_pos)
+            object_drawer_dist = np.linalg.norm(object_pos - drawer_pos)
             theta_action = 0.
 
             info = env.get_info()
+            z_diff = abs(object_pos[2] - ee_pos[2])
 
             if (gripper_handle_dist > dist_thresh
                 and not env.is_drawer_opened(widely=drawer_never_opened)):
@@ -237,12 +245,12 @@ def drawer_open_then_place_policy(EPSILON, noise, margin, save_video, env):
                 if xy_diff > 0.03:
                     action[2] *= 0.3
                 action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
-            elif (env._gripper_open and blocking_object_box_dist > box_dist_thresh and
+            elif (env._gripper_open and object_drawer_dist > dist_thresh and
                 not env.is_object_in_drawer()):
                 action = (object_pos - ee_pos) * 7.0
                 action = np.concatenate(
                     (action, np.asarray([0., -0.7, 0.])))
-            elif (object_box_dist > box_dist_thresh and
+            elif (object_drawer_dist > dist_thresh and
                 not info['object_above_drawer_success']):
                 action = (drawer_pos - object_pos)*7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
@@ -302,7 +310,7 @@ if __name__ == "__main__":
 
     mode = "OpenThenPlace"
 
-    gui = False
+    gui = True
     reward_type = "sparse"
     obs_mode = "pixels_debug"
     if mode == "OpenThenPlace":
