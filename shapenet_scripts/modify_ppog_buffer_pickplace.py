@@ -75,7 +75,7 @@ def main():
 
     with open(OUTPUT_BUFFER, 'wb+') as fp:
         pickle.dump(output_buffer, fp)
-        print('saved to {}'.format(OUTPUT_BUFFER))
+        print('saved to {}'.format(OUTPUT_BUFFER), protocol=4)
 
 
 if __name__ == "__main__":
