@@ -606,6 +606,14 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'reward_height_threshold': -.275,
                    'task_type': "OpenGrasp"}
     },
+    # Drawer Open then Place Tasks
+    {
+        'id': 'Widow200GraspV6DrawerOpenThenPlaceV0-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v6_drawer_open_then_place_v0:Widow200GraspV6DrawerOpenThenPlaceV0Env'),
+        'kwargs': {'max_force': 10,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.275,}
+    },
     # Double Drawer Envs
     {
         'id': 'Widow200GraspV6DoubleDrawerV0CloseOpenGrasp-v0',
