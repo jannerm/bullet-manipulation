@@ -26,8 +26,8 @@ class Widow200GraspV6DrawerOpenThenPlaceV0Env(Widow200GraspV6DrawerOpenV0Env):
 
     def __init__(self,
                  *args,
-                 object_names=("ball",),
-                 scaling_local_list=[0.5],
+                 object_names=("hex_deep_bowl",),
+                 scaling_local_list=[0.3],
                  success_dist_threshold=0.04,
                  noisily_open_drawer=False,
                  task_type="OpenPickPlace",
@@ -49,11 +49,11 @@ class Widow200GraspV6DrawerOpenThenPlaceV0Env(Widow200GraspV6DrawerOpenV0Env):
         self._object_position_high = np.array(list(self.box_high[:2]) + [-0.2])
         self._object_position_low = np.array(list(self.box_low[:2]) + [-0.2])
 
-        box_urdf_size = np.array([1.4, 1.2, 0.4])
-        half_box_dims = 0.5 * 0.1 * box_urdf_size
-        half_box_z_dim = 0.5 * np.array([0, 0, box_urdf_size[2]])
-        self.drawer_high = self.get_drawer_bottom_pos() + half_box_dims + 2 * half_box_z_dim
-        self.drawer_low = self.get_drawer_bottom_pos() - half_box_dims + half_box_z_dim
+        drawer_urdf_size = np.array([1.4, 1.2, 0.4])
+        half_drawer_dims = 0.5 * 0.1 * drawer_urdf_size
+        half_drawer_z_dim = 0.5 * np.array([0, 0, drawer_urdf_size[2]])
+        self.drawer_high = self.get_drawer_bottom_pos() + half_drawer_dims + half_drawer_z_dim
+        self.drawer_low = self.get_drawer_bottom_pos() - half_drawer_dims + half_drawer_z_dim
 
         self._env_name = "Widow200GraspV6DrawerOpenThenPlaceV0Env"
         task_scripted_traj_len_map = {
@@ -204,29 +204,28 @@ def drawer_open_then_place_policy(EPSILON, noise, margin, save_video, env):
 
             object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
             gripper_handle_dist = np.linalg.norm(handle_pos - ee_pos)
-            object_drawer_dist = np.linalg.norm(object_pos - drawer_pos)
+            object_drawer_xy_dist = np.linalg.norm(object_pos[:2] - drawer_pos[:2])
             theta_action = 0.
 
             info = env.get_info()
-            z_diff = abs(object_pos[2] - ee_pos[2])
 
             if (gripper_handle_dist > dist_thresh
                 and not env.is_drawer_opened(widely=drawer_never_opened)):
-                # print('approaching handle')
+                print('approaching handle')
                 action = (handle_pos - ee_pos) * 7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
                 if xy_diff > 0.75 * dist_thresh:
                     action[2] = 0.0 # force upward action to avoid upper box
                 action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
             elif not env.is_drawer_opened(widely=drawer_never_opened):
-                # print("opening drawer")
+                print("opening drawer")
                 action = np.array([0, -1.0, 0])
                 # action = np.asarray([0., 0., 0.7])
                 action = np.concatenate(
                     (action, np.asarray([0., 0., 0.])))
             elif (object_gripper_dist > object_thresh
                 and env._gripper_open and gripper_handle_dist < 1.5 * dist_thresh):
-                # print("Lift upward")
+                print("Lift upward")
                 drawer_never_opened = False
                 if ee_pos[2] < -.15:
                     action = env.gripper_goal_location - ee_pos
@@ -237,21 +236,26 @@ def drawer_open_then_place_policy(EPSILON, noise, margin, save_video, env):
                     action[2]  *= 0.5  # force upward action to avoid upper box
                 action = np.concatenate(
                     (action, np.asarray([theta_action, 0., 0.])))
-            elif ((object_gripper_dist > dist_thresh or z_diff > 0.015) and
+            elif ((object_gripper_dist > dist_thresh) and
                 env._gripper_open and not info['object_above_drawer_success']):
-                # print('approaching')
+                print('approaching')
+                print("object_pos", object_pos)
+                print("env.drawer_high", env.drawer_high)
+                print("env.drawer_low", env.drawer_low)
                 action = (object_pos - ee_pos) * 7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
-                if xy_diff > 0.03:
-                    action[2] *= 0.3
+                if xy_diff > dist_thresh:
+                    action[2] = 0.3
                 action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
-            elif (env._gripper_open and object_drawer_dist > dist_thresh and
+            elif (env._gripper_open and object_drawer_xy_dist > dist_thresh and
                 not env.is_object_in_drawer()):
+                print("close gripper")
                 action = (object_pos - ee_pos) * 7.0
                 action = np.concatenate(
                     (action, np.asarray([0., -0.7, 0.])))
-            elif (object_drawer_dist > dist_thresh and
+            elif (object_drawer_xy_dist > dist_thresh and
                 not info['object_above_drawer_success']):
+                print("move_to_drawer")
                 action = (drawer_pos - object_pos)*7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
                 if "DrawerPlaceThenOpen" or "DrawerOpenThenPlace" in env._env_name:
@@ -262,10 +266,13 @@ def drawer_open_then_place_policy(EPSILON, noise, margin, save_video, env):
                 # print("object_pos", object_pos)
             elif not env.is_object_in_drawer():
                 # object is now above the drawer.
-                # print("gripper opening")
+                print("gripper opening")
                 action = np.array([0., 0., 0., 0., 0.7, 0.])
             else:
                 # Move above tray's xy-center.
+                print("object_pos", object_pos)
+                print("env.drawer_high", env.drawer_high)
+                print("env.drawer_low", env.drawer_low)
                 tray_info = roboverse.bullet.get_body_info(
                     env._tray, quat_to_deg=False)
                 tray_center = np.asarray(tray_info['pos'])
