@@ -4,7 +4,7 @@ from roboverse.envs.rand_obj import RandObjEnv
 from roboverse.utils.shapenet_utils import load_shapenet_object, \
     import_shapenet_metadata
 import roboverse.bullet as bullet
-from roboverse.bullet.objects import lifted_long_box_open_top_center_pos
+from roboverse.bullet.objects import small_tray_center_pos
 import roboverse.utils as utils
 import numpy as np
 import time
@@ -26,8 +26,8 @@ class Widow200GraspV6DrawerOpenThenPlaceV0Env(Widow200GraspV6DrawerOpenV0Env):
 
     def __init__(self,
                  *args,
-                 object_names=("hex_deep_bowl",),
-                 scaling_local_list=[0.3],
+                 object_names=("ball",),
+                 scaling_local_list=[0.5],
                  success_dist_threshold=0.04,
                  noisily_open_drawer=False,
                  task_type="OpenPickPlace",
@@ -38,22 +38,24 @@ class Widow200GraspV6DrawerOpenThenPlaceV0Env(Widow200GraspV6DrawerOpenV0Env):
 
         self.task_type = task_type
         assert self.task_type in ["OpenPickPlace", "Open", "PickPlace"]
-        self.box_high = lifted_long_box_open_top_center_pos + np.array([0.0525, 0.04, 0.035])
-        self.box_low = lifted_long_box_open_top_center_pos + np.array([-0.0525, -0.04, -0.01])
+        self.box_high = small_tray_center_pos + np.array([0.0525, 0.04, 0.035])
+        self.box_low = small_tray_center_pos + np.array([-0.0525, -0.04, -0.01])
 
         self._success_dist_threshold = success_dist_threshold
 
         super().__init__(*args, object_names=object_names,
             scaling_local_list=scaling_local_list, **kwargs)
 
-        self._object_position_high = np.array(list(self.box_high[:2]) + [-0.2])
-        self._object_position_low = np.array(list(self.box_low[:2]) + [-0.2])
+        margin = 0.02
+        self._object_position_high = np.array(list(self.box_high[:2]) + [-0.2]) - margin
+        self._object_position_low = np.array(list(self.box_low[:2]) + [-0.2]) + margin
 
-        drawer_urdf_size = np.array([1.4, 1.2, 0.4])
+        drawer_urdf_size = np.array([1.4, 1.2, 0])
         half_drawer_dims = 0.5 * 0.1 * drawer_urdf_size
         half_drawer_z_dim = 0.5 * np.array([0, 0, drawer_urdf_size[2]])
-        self.drawer_high = self.get_drawer_bottom_pos() + half_drawer_dims + half_drawer_z_dim
-        self.drawer_low = self.get_drawer_bottom_pos() - half_drawer_dims + half_drawer_z_dim
+        # drawer high and low offsets from the drawer bottom.
+        self.drawer_high_offset = half_drawer_dims + np.array([0, 0, 0.1])
+        self.drawer_low_offset = -1 * half_drawer_dims + np.array([0, 0, -0.05])
 
         self._env_name = "Widow200GraspV6DrawerOpenThenPlaceV0Env"
         task_scripted_traj_len_map = {
@@ -108,8 +110,10 @@ class Widow200GraspV6DrawerOpenThenPlaceV0Env(Widow200GraspV6DrawerOpenV0Env):
     def object_within_drawer_bounds(self):
         """Returns a boolean vector."""
         object_pos = self.get_object_pos()
-        object_within_drawer_bounds = ((self.drawer_low <= object_pos)
-            & (object_pos <= self.drawer_high))
+        drawer_low = self.get_drawer_bottom_pos() + self.drawer_low_offset
+        drawer_high = self.get_drawer_bottom_pos() + self.drawer_high_offset
+        object_within_drawer_bounds = ((drawer_low <= object_pos)
+            & (object_pos <= drawer_high))
         return object_within_drawer_bounds
 
     def is_object_in_drawer(self):
@@ -179,12 +183,12 @@ def drawer_open_then_place_policy(EPSILON, noise, margin, save_video, env):
     object_ind = 0
     for i in range(200):
         obs = env.reset()
-        print("env.scripted_traj_len", env.scripted_traj_len)
+        # print("env.scripted_traj_len", env.scripted_traj_len)
 
         dist_thresh = 0.04 + np.random.normal(scale=0.01)
 
-        box_dist_thresh = 0.035 + np.random.normal(scale=0.01)
-        box_dist_thresh = np.clip(box_dist_thresh, 0.025, 0.05)
+        drawer_dist_thresh = 0.035 + np.random.normal(scale=0.01)
+        drawer_dist_thresh = np.clip(drawer_dist_thresh, 0.025, 0.05)
 
         object_thresh = 0.04 + np.random.normal(scale=0.01)
         object_thresh = np.clip(object_thresh, 0.030, 0.050)
@@ -213,21 +217,21 @@ def drawer_open_then_place_policy(EPSILON, noise, margin, save_video, env):
 
             if (gripper_handle_dist > dist_thresh
                 and not env.is_drawer_opened(widely=drawer_never_opened)):
-                print('approaching handle')
+                # print('approaching handle')
                 action = (handle_pos - ee_pos) * 7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
                 if xy_diff > 0.75 * dist_thresh:
                     action[2] = 0.0 # force upward action to avoid upper box
                 action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
             elif not env.is_drawer_opened(widely=drawer_never_opened):
-                print("opening drawer")
+                # print("opening drawer")
                 action = np.array([0, -1.0, 0])
                 # action = np.asarray([0., 0., 0.7])
                 action = np.concatenate(
                     (action, np.asarray([0., 0., 0.])))
             elif (object_gripper_dist > object_thresh
                 and env._gripper_open and gripper_handle_dist < 1.5 * dist_thresh):
-                print("Lift upward")
+                # print("Lift upward")
                 drawer_never_opened = False
                 if ee_pos[2] < -.15:
                     action = env.gripper_goal_location - ee_pos
@@ -240,10 +244,8 @@ def drawer_open_then_place_policy(EPSILON, noise, margin, save_video, env):
                     (action, np.asarray([theta_action, 0., 0.])))
             elif ((object_gripper_dist > dist_thresh) and
                 env._gripper_open and not info['object_above_drawer_success']):
-                print('approaching')
-                print("object_pos", object_pos)
-                print("env.drawer_high", env.drawer_high)
-                print("env.drawer_low", env.drawer_low)
+                # print('approaching')
+                # print("object_pos", object_pos)
                 action = (object_pos - ee_pos) * 7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
                 if xy_diff > dist_thresh:
@@ -251,13 +253,12 @@ def drawer_open_then_place_policy(EPSILON, noise, margin, save_video, env):
                 action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
             elif (env._gripper_open and object_drawer_xy_dist > dist_thresh and
                 not env.is_object_in_drawer()):
-                print("close gripper")
+                # print("close gripper")
                 action = (object_pos - ee_pos) * 7.0
                 action = np.concatenate(
                     (action, np.asarray([0., -0.7, 0.])))
-            elif (object_drawer_xy_dist > dist_thresh and
-                not info['object_above_drawer_success']):
-                print("move_to_drawer")
+            elif object_drawer_xy_dist > drawer_dist_thresh:
+                # print("move_to_drawer")
                 action = (drawer_pos - object_pos)*7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
                 if "DrawerPlaceThenOpen" or "DrawerOpenThenPlace" in env._env_name:
@@ -268,13 +269,10 @@ def drawer_open_then_place_policy(EPSILON, noise, margin, save_video, env):
                 # print("object_pos", object_pos)
             elif not env.is_object_in_drawer():
                 # object is now above the drawer.
-                print("gripper opening")
+                # print("gripper opening")
                 action = np.array([0., 0., 0., 0., 0.7, 0.])
             else:
                 # Move above tray's xy-center.
-                print("object_pos", object_pos)
-                print("env.drawer_high", env.drawer_high)
-                print("env.drawer_low", env.drawer_low)
                 tray_info = roboverse.bullet.get_body_info(
                     env._tray, quat_to_deg=False)
                 tray_center = np.asarray(tray_info['pos'])
@@ -312,7 +310,7 @@ def drawer_open_then_place_policy(EPSILON, noise, margin, save_video, env):
                 duration=env.scripted_traj_len * 2, loop=0)
 
 
-def drawer_open_then_place_policy(EPSILON, noise, margin, save_video, env):
+def drawer_pick_place_policy(EPSILON, noise, margin, save_video, env):
     object_ind = 0
     for i in range(200):
         obs = env.reset()
@@ -320,8 +318,8 @@ def drawer_open_then_place_policy(EPSILON, noise, margin, save_video, env):
 
         dist_thresh = 0.04 + np.random.normal(scale=0.01)
 
-        box_dist_thresh = 0.035 + np.random.normal(scale=0.01)
-        box_dist_thresh = np.clip(box_dist_thresh, 0.025, 0.05)
+        drawer_dist_thresh = 0.035 + np.random.normal(scale=0.01)
+        drawer_dist_thresh = np.clip(drawer_dist_thresh, 0.025, 0.05)
 
         object_thresh = 0.04 + np.random.normal(scale=0.01)
         object_thresh = np.clip(object_thresh, 0.030, 0.050)
@@ -434,7 +432,7 @@ if __name__ == "__main__":
 
     mode = "OpenThenPlace"
 
-    gui = True
+    gui = False
     reward_type = "sparse"
     obs_mode = "pixels_debug"
     if mode == "OpenThenPlace":
@@ -450,6 +448,6 @@ if __name__ == "__main__":
                              gui=gui,
                              reward_type=reward_type,
                              observation_mode=obs_mode)
-        drawer_open_then_place_policy(EPSILON, noise, margin, save_video, env)
+        drawer_pick_place_policy(EPSILON, noise, margin, save_video, env)
     else:
         raise NotImplementedError
