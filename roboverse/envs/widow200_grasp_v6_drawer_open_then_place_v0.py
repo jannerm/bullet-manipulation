@@ -261,9 +261,7 @@ def drawer_open_then_place_policy(EPSILON, noise, margin, save_video, env):
                 # print("move_to_drawer")
                 action = (drawer_pos - object_pos)*7.0
                 xy_diff = np.linalg.norm(action[:2]/7.0)
-                if "DrawerPlaceThenOpen" or "DrawerOpenThenPlace" in env._env_name:
-                    # print("don't droop down until xy-close to box")
-                    action[2] = 0.2
+                action[2] = 0.2
                 action = np.concatenate(
                     (action, np.asarray([0., 0., 0.])))
                 # print("object_pos", object_pos)
