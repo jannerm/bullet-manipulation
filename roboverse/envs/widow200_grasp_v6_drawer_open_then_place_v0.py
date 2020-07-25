@@ -204,8 +204,6 @@ def drawer_open_then_place_policy(EPSILON, noise, margin, save_video, env):
             drawer_pos = env.get_drawer_bottom_pos()
             object_pos = obj_obs[object_ind * 7 : object_ind * 7 + 3]
             handle_pos = env.get_handle_pos()
-            object_lifted_with_margin = object_pos[2] > (
-                env._reward_height_thresh + margin)
             # object_pos += np.random.normal(scale=0.02, size=(3,))
 
             object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
