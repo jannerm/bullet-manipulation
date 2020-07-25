@@ -108,6 +108,10 @@ lifted_long_box_open_top = loader(ASSET_PATH, os.path.join(obj_dir, "box_open_to
               pos=lifted_long_box_open_top_center_pos, # old: [0.8425, 0.05, -.295]
               scale=0.1)
 
+small_object_tray = loader(ASSET_PATH, os.path.join(obj_dir, "tray", "tray.urdf"),
+              pos=lifted_long_box_open_top_center_pos,
+              scale=0.2)
+
 drawer_pos = [0.8425, 0.05, -.34]
 drawer = loader(ASSET_PATH, os.path.join(obj_dir, "drawer", "drawer.urdf"),
               pos=drawer_pos,
