@@ -736,11 +736,7 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
             # 0.7 = move to reset.
             reset_never_taken = False
         else:
-            if not eligible_for_reset:
-                action = (ending_target_pos - ee_pos) * 7.0
-                action = np.concatenate((action, np.zeros((3,))))
-            else:
-                action = np.zeros((6,))
+            action = np.zeros((6,))
 
         noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
         action += np.random.normal(scale=noise_scalings)
