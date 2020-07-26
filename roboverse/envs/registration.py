@@ -646,11 +646,10 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
     },
     {
         'id': 'Widow200GraspV6DoubleDrawerV0OpenGrasp-v0',
-        'entry_point': ('roboverse.envs.widow200_grasp_v6_double_drawer_v0:Widow200GraspV6DoubleDrawerV0Env'),
+        'entry_point': ('roboverse.envs.widow200_grasp_v6_double_drawer_v0:Widow200GraspV6DoubleDrawerV0OpenGraspEnv'),
         'kwargs': {'max_force': 10,
                    'action_scale': 0.05,
-                   'reward_height_threshold': -.275,
-                   'task': 'OpenGrasp',}
+                   'reward_height_threshold': -.275,}
     },
     {
         'id': 'Widow200GraspV6DoubleDrawerV0CloseOpen-v0',
