@@ -776,6 +776,8 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
     pool.add_path(path)
     if rewards[-1] > 0:
         success_pool.add_path(path)
+        if args.end_at_neutral:
+            return 1 # Only return 1 if end_at_neutral == True and last timestep was success.
 
 def scripted_grasping_V6_open_place_placing_V0(env, pool, success_pool, noise=0.2):
     observation = env.reset()
@@ -1114,6 +1116,8 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
     pool.add_path(path)
     if rewards[-1] > 0:
         success_pool.add_path(path)
+        if args.end_at_neutral:
+            return 1
 
 def scripted_grasping_V6_place_then_open_V0(env, pool, success_pool, noise=0.2):
     observation = env.reset()
@@ -1657,7 +1661,7 @@ def scripted_grasping_V6_double_drawer_close_V0(env, pool, success_pool, noise=0
 
         observation = next_observation
 
-        if done:
+        if done or (not reset_never_taken and args.end_at_neutral):
             break
 
     path = dict(
@@ -1677,6 +1681,8 @@ def scripted_grasping_V6_double_drawer_close_V0(env, pool, success_pool, noise=0
     pool.add_path(path)
     if rewards[-1] > 0:
         success_pool.add_path(path)
+        if args.end_at_neutral:
+            return 1
 
 def scripted_grasping_V6_open_then_place_V0(env, pool, success_pool, noise=0.2):
     observation = env.reset()
@@ -1901,6 +1907,13 @@ def main(args):
         V6_GRASPING_V0_DRAWER_OPEN_PLACE_PLACING_ENVS +
         V7_GRASPING_ENVS)
 
+    if args.end_at_neutral:
+        assert args.env in (
+            V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV +
+            V6_GRASPING_V0_DRAWER_CLOSED_PLACING_40_ENV +
+            V6_GRASPING_V0_DRAWER_OPENING_ONLY_ENVS +
+            V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_ENVS)
+
     if args.env in PROXY_ENVS_MAP:
         roboverse_env_name = PROXY_ENVS_MAP[args.env]
     else:
@@ -1915,7 +1928,8 @@ def main(args):
         "args.num_timesteps: {} != env.scripted_traj_len: {}".format(
         args.num_timesteps, env.scripted_traj_len))
 
-    num_success = 0
+    num_success = 0 # Not really used for WidowX envs.
+    end_at_neutral_num_successes = 0 # used if args.end_at_neutral == True.
     if args.env == 'SawyerGraspOne-v0' or args.env == 'SawyerReach-v0':
         pool = roboverse.utils.DemoPool()
         success_pool = roboverse.utils.DemoPool()
@@ -1978,8 +1992,9 @@ def main(args):
             V6_GRASPING_V0_DRAWER_CLOSED_PLACING_40_ENV):
             assert not render_images
             success = False
-            scripted_grasping_V6_drawer_closed_placing_V0(
+            result = scripted_grasping_V6_drawer_closed_placing_V0(
                 env, railrl_pool, railrl_success_pool, noise=args.noise_std)
+            end_at_neutral_num_successes += (result == 1)
         elif args.env in V6_GRASPING_V0_DRAWER_OPENING_ENVS:
             assert not render_images
             success = False
@@ -1988,8 +2003,9 @@ def main(args):
         elif args.env in V6_GRASPING_V0_DRAWER_OPENING_ONLY_ENVS:
             assert not render_images
             success = False
-            scripted_grasping_V6_opening_only_V0(
+            result = scripted_grasping_V6_opening_only_V0(
                 env, railrl_pool, railrl_success_pool, noise=args.noise_std)
+            end_at_neutral_num_successes += (result == 1)
         elif args.env in V6_GRASPING_V0_DRAWER_PLACING_OPENING_ENVS:
             assert not render_images
             success = False
@@ -2003,8 +2019,9 @@ def main(args):
         elif args.env in V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_ENVS:
             assert not render_images
             success = False
-            scripted_grasping_V6_double_drawer_close_V0(
+            result = scripted_grasping_V6_double_drawer_close_V0(
                 env, railrl_pool, railrl_success_pool, noise=args.noise_std)
+            end_at_neutral_num_successes += (result == 1)
         elif args.env in V6_GRASPING_V0_DOUBLE_DRAWER_OPENING_ENVS:
             assert not render_images
             success = False
@@ -2087,15 +2104,19 @@ def main(args):
             # For non terminating envs: we reshape the rewards
             # array and count the number of trajectories with
             # a sucess in the last timestep.
-            reshaped_rewards_pool = np.reshape(
-                railrl_success_pool._rewards[:-1],
-                (args.num_trajectories, args.num_timesteps))
-            # print("reshaped_rewards_pool[:,-1]", reshaped_rewards_pool[:,-1])
-            print('Num success: {}. Proxy_Env: {}'.format(
-                np.sum(reshaped_rewards_pool[:,-1] > 0),
-                args.env in PROXY_ENVS_MAP))
-            # Num success has little meaning if it is a proxy env, since
-            # the reward function corresponds to that of another env.
+            if args.end_at_neutral:
+                print("End at neutral env. Num success:",
+                    end_at_neutral_num_successes)
+            else:
+                reshaped_rewards_pool = np.reshape(
+                    railrl_success_pool._rewards[:-1],
+                    (args.num_trajectories, args.num_timesteps))
+                # print("reshaped_rewards_pool[:,-1]", reshaped_rewards_pool[:,-1])
+                print('Num success: {}. Proxy_Env: {}'.format(
+                    np.sum(reshaped_rewards_pool[:,-1] > 0),
+                    args.env in PROXY_ENVS_MAP))
+                # Num success has little meaning if it is a proxy env, since
+                # the reward function corresponds to that of another env.
         else:
             print('Num success: {}'.format(
                 np.sum(railrl_success_pool._rewards > 0)))
