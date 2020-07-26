@@ -1124,7 +1124,7 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
         if args.end_at_neutral:
             return 1
 
-def scripted_grasping_V6_place_then_open_V0(env, pool, success_pool, noise=0.2):
+def scripted_grasping_V6_place_then_open_V0(env, pool, success_pool, allow_grasp_retries=False, noise=0.2):
     observation = env.reset()
     margin = 0.025
     object_ind = 0
@@ -1143,7 +1143,7 @@ def scripted_grasping_V6_place_then_open_V0(env, pool, success_pool, noise=0.2):
 
     drawer_never_opened = True
 
-    for t_ind in range(args.num_timesteps):
+    for t_ind in range(env.scripted_traj_len):
 
         if isinstance(observation, dict):
             object_pos = observation[env.object_obs_key][
@@ -2153,7 +2153,8 @@ def main(args):
             assert not render_images
             success = False
             scripted_grasping_V6_place_then_open_V0(
-                env, railrl_pool, railrl_success_pool, noise=args.noise_std)
+                env, railrl_pool, railrl_success_pool,
+                allow_grasp_retries=args.allow_grasp_retries, noise=args.noise_std)
         elif args.env in V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_OPENING_GRASPING_ENVS:
             assert not render_images
             success = False
