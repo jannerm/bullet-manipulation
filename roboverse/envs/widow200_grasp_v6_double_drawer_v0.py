@@ -32,8 +32,8 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
             scaling_local_list=scaling_local_list,
             **kwargs)
         self._env_name = "Widow200GraspV6DoubleDrawerV0Env"
-        self._object_position_high = (.84, -.08, -.29)
-        self._object_position_low = (.84, -.09, -.29)
+        self._object_position_high = (.84, -.05, -.29)
+        self._object_position_low = (.84, -.06, -.29)
         self._success_dist_threshold = success_dist_threshold
 
         self.task_to_traj_len_map = {
@@ -54,7 +54,7 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
                                         visualize=False, rgba=[0, 1, 0, .1])
         self._tray = bullet.objects.widow200_hidden_tray()
         self._objects = {}
-        self._bottom_drawer = bullet.objects.drawer_with_tray_inside()
+        self._bottom_drawer = bullet.objects.drawer_bottom()
         bullet.open_drawer(self._bottom_drawer)
         object_positions = self._generate_object_positions()
         self._load_objects(object_positions)
@@ -92,11 +92,11 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
         return np.array(handle_pos)
 
     def is_drawer_opened(self, drawer_name, widely=False):
-        opened_thresh = 0.0 if not widely else -0.05
+        opened_thresh = 0.03 if not widely else -0.02
         return self.get_drawer_bottom_pos(drawer_name)[1] < opened_thresh
 
     def is_drawer_closed(self, drawer_name):
-        closed_thresh = 0.03
+        closed_thresh = 0.06
         return self.get_drawer_bottom_pos(drawer_name)[1] > closed_thresh
 
     def get_info(self):
