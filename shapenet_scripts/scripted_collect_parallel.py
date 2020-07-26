@@ -13,6 +13,11 @@ def get_data_save_directory(args):
     else:
         data_save_directory += '_{}'.format(args.num_trajectories)
 
+    if args.end_at_neutral:
+        data_save_directory += '_end_at_neutral'
+
+    data_save_directory += '_noise_std_{}'.format(args.noise_std)
+
     if args.sparse:
         data_save_directory += '_sparse_reward'
     elif args.semisparse:
@@ -20,17 +25,15 @@ def get_data_save_directory(args):
     else:
         data_save_directory += '_dense_reward'
 
-    if args.random_actions:
-        data_save_directory += '_random_actions'
-    else:
-        data_save_directory += '_scripted_actions'
-
-    if args.randomize:
-        data_save_directory += '_randomize'
-    else:
-        data_save_directory += '_fixed_position'
-
-    data_save_directory += '_noise_std_{}'.format(args.noise_std)
+    # if args.random_actions:
+    #     data_save_directory += '_random_actions'
+    # else:
+    #     data_save_directory += '_scripted_actions'
+    #
+    # if args.randomize:
+    #     data_save_directory += '_randomize'
+    # else:
+    #     data_save_directory += '_fixed_position'
 
     return data_save_directory
 
@@ -57,6 +60,8 @@ if __name__ == "__main__":
     parser.add_argument("--joint-norm-thresh", dest="joint_norm_thresh",
                         type=float, default=0.05)
     parser.add_argument("--one-reset-per-traj", dest="one_reset_per_traj",
+                        action="store_true", default=False)
+    parser.add_argument("--end-at-neutral", dest="end_at_neutral",
                         action="store_true", default=False)
     args = parser.parse_args()
 
@@ -90,6 +95,8 @@ if __name__ == "__main__":
         command.append('--allow-grasp-retries')
     if args.one_reset_per_traj:
         command.append('--one-reset-per-traj')
+    if args.end_at_neutral:
+        command.append('--end-at-neutral')
 
     subprocesses = []
     for i in range(args.num_parallel_threads):

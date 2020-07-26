@@ -755,6 +755,10 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
         if done:
             break
 
+        if not reset_never_taken and args.end_at_neutral:
+            break
+
+
     path = dict(
         actions=actions,
         rewards=np.asarray(rewards).reshape((-1, 1)),
@@ -1092,6 +1096,9 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
         observation = next_observation
 
         if done:
+            break
+
+        if not reset_never_taken and args.end_at_neutral:
             break
 
     path = dict(
@@ -2131,6 +2138,8 @@ if __name__ == "__main__":
                         action="store_true", default=False)
     parser.add_argument("-j", "--joint-norm-thresh", type=float, default=0.05)
     parser.add_argument("--one-reset-per-traj", dest="one_reset_per_traj",
+                        action="store_true", default=False)
+    parser.add_argument("--end-at-neutral", dest="end_at_neutral",
                         action="store_true", default=False)
 
     args = parser.parse_args()
