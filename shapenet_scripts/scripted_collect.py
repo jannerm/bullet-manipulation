@@ -822,13 +822,14 @@ def scripted_grasping_V6_open_place_placing_V0(env, pool, success_pool, noise=0.
             if xy_diff > dist_thresh:
                 action[2] = 0.3
             action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
-        elif (env._gripper_open and object_drawer_xy_dist > dist_thresh and
+        elif (env._gripper_open and object_drawer_xy_dist > drawer_dist_thresh and
             not env.is_object_in_drawer()):
             # print("close gripper")
             action = (object_pos - ee_pos) * 7.0
             action = np.concatenate(
                 (action, np.asarray([0., -0.7, 0.])))
-        elif object_drawer_xy_dist > drawer_dist_thresh:
+        elif (object_drawer_xy_dist > drawer_dist_thresh and
+            not env.is_object_in_drawer()):
             # print("move_to_drawer")
             action = (drawer_pos - object_pos)*7.0
             xy_diff = np.linalg.norm(action[:2]/7.0)
@@ -842,12 +843,7 @@ def scripted_grasping_V6_open_place_placing_V0(env, pool, success_pool, noise=0.
             action = np.array([0., 0., 0., 0., 0.7, 0.])
         else:
             # Move above tray's xy-center.
-            tray_info = roboverse.bullet.get_body_info(
-                env._tray, quat_to_deg=False)
-            tray_center = np.asarray(tray_info['pos'])
-            action = (tray_center - ee_pos)[:2]
-            action = np.concatenate(
-                (action, np.asarray([0., 0., 0., 0.])))
+            action = np.zeros((6,))
 
         noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
         action += np.random.normal(scale=noise_scalings)
@@ -1728,7 +1724,7 @@ def scripted_grasping_V6_open_then_place_V0(env, pool, success_pool, noise=0.2):
             xy_diff = np.linalg.norm(action[:2]/7.0)
             if xy_diff > 0.75 * dist_thresh:
                 action[2] = 0.5 # force upward action to avoid upper box
-            action = np.concatenate((action, np.asarray([theta_action,0.7,0.])))
+            action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
         elif not env.is_drawer_opened(widely=drawer_never_opened):
             # print("opening drawer")
             action = np.array([0, -1.0, 0])
@@ -1761,7 +1757,7 @@ def scripted_grasping_V6_open_then_place_V0(env, pool, success_pool, noise=0.2):
             if xy_diff > dist_thresh:
                 action[2] = 0.3
             action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
-        elif (env._gripper_open and object_drawer_xy_dist > dist_thresh and
+        elif (env._gripper_open and object_drawer_xy_dist > drawer_dist_thresh and
             not env.is_object_in_drawer()):
             # print("close gripper")
             action = (object_pos - ee_pos) * 7.0
@@ -1780,13 +1776,7 @@ def scripted_grasping_V6_open_then_place_V0(env, pool, success_pool, noise=0.2):
             # print("gripper opening")
             action = np.array([0., 0., 0., 0., 0.7, 0.])
         else:
-            # Move above tray's xy-center.
-            tray_info = roboverse.bullet.get_body_info(
-                env._tray, quat_to_deg=False)
-            tray_center = np.asarray(tray_info['pos'])
-            action = (tray_center - ee_pos)[:2]
-            action = np.concatenate(
-                (action, np.asarray([0., 0., 0., 0.])))
+            action = np.zeros((6,))
 
 
         noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
