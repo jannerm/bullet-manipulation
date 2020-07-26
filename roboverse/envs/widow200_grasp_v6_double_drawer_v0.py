@@ -128,7 +128,6 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
         return info
 
 class Widow200GraspV6DoubleDrawerV0CloseEnv(Widow200GraspV6DoubleDrawerV0Env):
-    """Task is to open drawer, then grasp object inside it."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, task="Close", **kwargs)
 
@@ -137,8 +136,11 @@ class Widow200GraspV6DoubleDrawerV0CloseEnv(Widow200GraspV6DoubleDrawerV0Env):
         reward = self.adjust_rew_if_use_positive(reward)
         return reward
 
+class Widow200GraspV6DoubleDrawerV0OpenGraspEnv(Widow200GraspV6DoubleDrawerV0Env):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, task="OpenGrasp", **kwargs)
+
 class Widow200GraspV6DoubleDrawerV0CloseOpenEnv(Widow200GraspV6DoubleDrawerV0Env):
-    """Task is to open drawer, then grasp object inside it."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, task="CloseOpen", **kwargs)
 
@@ -148,7 +150,6 @@ class Widow200GraspV6DoubleDrawerV0CloseOpenEnv(Widow200GraspV6DoubleDrawerV0Env
         return reward
 
 class Widow200GraspV6DoubleDrawerV0OpenEnv(Widow200GraspV6DoubleDrawerV0Env):
-    """Task is to open drawer, then grasp object inside it."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, task="Open", **kwargs)
 
@@ -158,7 +159,6 @@ class Widow200GraspV6DoubleDrawerV0OpenEnv(Widow200GraspV6DoubleDrawerV0Env):
         return reward
 
 class Widow200GraspV6DoubleDrawerV0GraspEnv(Widow200GraspV6DoubleDrawerV0Env):
-    """Task is to open drawer, then grasp object inside it."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, task="Grasp", **kwargs)
 
