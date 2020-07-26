@@ -13,6 +13,9 @@ def get_data_save_directory(args):
     else:
         data_save_directory += '_{}'.format(args.num_trajectories)
 
+    if args.suboptimal:
+        data_save_directory += '_nonrelevant'
+
     if args.end_at_neutral:
         data_save_directory += '_end_at_neutral'
 
@@ -63,6 +66,8 @@ if __name__ == "__main__":
                         action="store_true", default=False)
     parser.add_argument("--end-at-neutral", dest="end_at_neutral",
                         action="store_true", default=False)
+    parser.add_argument("--suboptimal", dest="suboptimal",
+                        action="store_true", default=False)
     args = parser.parse_args()
 
     assert args.semisparse != args.sparse
@@ -72,8 +77,12 @@ if __name__ == "__main__":
     if args.num_trajectories % args.num_parallel_threads != 0:
         num_trajectories_per_thread += 1
     save_directory = get_data_save_directory(args)
+    if args.suboptimal:
+        script_name = 'suboptimal_scripted_collect.py'
+    else:
+        script_name = 'scripted_collect.py'
     command = ['python',
-               'shapenet_scripts/scripted_collect.py',
+               'shapenet_scripts/{}'.format(script_name),
                '-e{}'.format(args.env),
                '-d{}'.format(save_directory),
                '--noise-std',
