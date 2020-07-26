@@ -1248,7 +1248,7 @@ def scripted_grasping_V6_place_then_open_V0(env, pool, success_pool, allow_grasp
             action = (object_pos - ee_pos) * 7.0
             action = np.concatenate(
                 (action, np.asarray([0., -0.7, 0.])))
-        elif object_gripper_dist > 2 * dist_thresh and args.allow_grasp_retries:
+        elif object_gripper_dist > 2 * dist_thresh and allow_grasp_retries:
             # Open gripper to retry
             action = np.array([0, 0, 0, 0, 0.7, 0])
         elif not object_lifted_with_margin:
@@ -1301,7 +1301,7 @@ def scripted_grasping_V6_place_then_open_V0(env, pool, success_pool, allow_grasp
     if rewards[-1] > 0:
         success_pool.add_path(path)
 
-def scripted_grasping_V6_close_open_grasp_V0(env, pool, success_pool, noise=0.2):
+def scripted_grasping_V6_close_open_grasp_V0(env, pool, success_pool, allow_grasp_retries=False, noise=0.2):
     observation = env.reset()
     object_ind = 0
     margin = 0.025
@@ -1317,7 +1317,7 @@ def scripted_grasping_V6_close_open_grasp_V0(env, pool, success_pool, noise=0.2)
     drawer_never_opened = True
     reached_pushing_region = False
 
-    for _ in range(args.num_timesteps):
+    for _ in range(env.scripted_traj_len):
 
         if isinstance(observation, dict):
             object_pos = observation[env.object_obs_key][
@@ -1396,7 +1396,7 @@ def scripted_grasping_V6_close_open_grasp_V0(env, pool, success_pool, noise=0.2)
             action = (object_pos - ee_pos) * 7.0
             action = np.concatenate(
                 (action, np.asarray([0., -0.7, 0.])))
-        elif object_gripper_dist > 2 * dist_thresh and args.allow_grasp_retries:
+        elif object_gripper_dist > 2 * dist_thresh and allow_grasp_retries:
             # Open gripper to retry
             action = np.array([0, 0, 0, 0, 0.7, 0])
         elif not object_lifted_with_margin:
@@ -2159,7 +2159,8 @@ def main(args):
             assert not render_images
             success = False
             scripted_grasping_V6_close_open_grasp_V0(
-                env, railrl_pool, railrl_success_pool, noise=args.noise_std)
+                env, railrl_pool, railrl_success_pool,
+                allow_grasp_retries=args.allow_grasp_retries, noise=args.noise_std)
         elif args.env in V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_ENVS:
             assert not render_images
             success = False

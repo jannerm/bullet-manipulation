@@ -10,6 +10,7 @@ from scripted_collect import *
 
 env_to_policy_map = {
     frozenset(V6_GRASPING_V0_DRAWER_PLACING_OPENING_ENVS): scripted_grasping_V6_place_then_open_V0,
+    frozenset(V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_OPENING_GRASPING_ENVS):scripted_grasping_V6_close_open_grasp_V0,
 }
 
 class BulletVideoLogger:
@@ -18,6 +19,9 @@ class BulletVideoLogger:
         self.noise = noise
         self.video_save_dir = video_save_dir
         self.image_size = 512
+
+        if not os.path.exists(self.video_save_dir):
+            os.makedirs(self.video_save_dir)
         # camera settings
         self.camera_target_pos = [1.05, -0.05, -0.1]
         self.camera_pitch = -30
@@ -55,7 +59,7 @@ class BulletVideoLogger:
 
     def save_video_from_path(self, single_path_pool, path_idx):
         actions = single_path_pool._actions
-        assert path_idx * self.env.scripted_traj_len < actions.shape[0]
+        assert self.env.scripted_traj_len < actions.shape[0]
         print("single_path_pool._actions.shape", single_path_pool._actions.shape)
         images = []
         reward_list = []
@@ -65,12 +69,9 @@ class BulletVideoLogger:
                 self.image_size, self.image_size,
                 self.view_matrix, self.projection_matrix)
             images.append(img)
-            action = actions[path_idx * self.env.scripted_traj_len + t]
             obs, rew, done, info = self.env.step(actions[t])
 
-        save_path = "{}/eval_{}.mp4".format(self.video_save_dir, path_idx)
-        if not os.path.exists(args.video_save_dir):
-            os.makedirs(args.video_save_dir)
+        save_path = "{}/scripted_{}.mp4".format(self.video_save_dir, path_idx)
         skvideo.io.vwrite(save_path, images)
 
 
