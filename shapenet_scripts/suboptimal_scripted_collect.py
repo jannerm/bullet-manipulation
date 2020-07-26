@@ -36,7 +36,6 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
 
     box_pos = np.random.uniform(
         low=(0.6925, - 0.25, - 0.345), high=(0.9, -0.05, - 0.345))
-    print(box_pos)
 
     for t_ind in range(args.num_timesteps):
 
