@@ -245,7 +245,6 @@ class Widow200GraspV6DrawerPlaceThenOpenV0OpenOnlyEnv(Widow200GraspV6DrawerPlace
 class Widow200GraspV6DrawerPlaceThenOpenV0GraspOnlyEnv(Widow200GraspV6DrawerPlaceThenOpenV0Env):
     def __init__(self, *args, task_type="Grasp", **kwargs):
         super().__init__(*args, task_type=task_type, **kwargs)
-        self.noisily_open_drawer = True
 
 def drawer_place_then_open_policy(EPSILON, noise, margin, save_video, env):
     object_ind = 0
