@@ -122,15 +122,17 @@ drawer_with_tray_inside = loader(ASSET_PATH, os.path.join(obj_dir, "drawer", "dr
               pos=drawer_pos,
               scale=0.1)
 
-drawer_bottom_pos = list(np.array(drawer_pos))
-drawer_bottom = loader(ASSET_PATH, os.path.join(obj_dir, "drawer", "right_side_handle_drawer.urdf"),
-              pos=drawer_pos,
+drawer_bottom_pos = list(np.array(drawer_pos) + np.array([0, 0.03, 0]))
+print("drawer_bottom_pos", drawer_bottom_pos)
+drawer_bottom = loader(ASSET_PATH, os.path.join(obj_dir, "drawer", "drawer_with_tray_inside.urdf"),
+              pos=drawer_bottom_pos,
               scale=0.1)
 
 drawer_top_pos = list(np.array(drawer_bottom_pos) + np.array([0, 0, 0.07]))
-drawer_top = loader(ASSET_PATH, os.path.join(obj_dir, "drawer", "left_side_handle_drawer.urdf"),
-              pos=drawer_top_pos,
-              scale=0.1)
+print("drawer_top_pos", drawer_top_pos)
+# drawer_top = loader(ASSET_PATH, os.path.join(obj_dir, "drawer", "left_side_handle_drawer.urdf"),
+#               pos=drawer_top_pos,
+#               scale=0.1)
 
 drawer_no_handle = loader(ASSET_PATH, os.path.join(obj_dir, "drawer", "drawer_no_handle.urdf"),
               pos=drawer_top_pos,
