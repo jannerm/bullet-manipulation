@@ -497,9 +497,9 @@ if __name__ == "__main__":
     margin = 0.025
     save_video = True
 
-    mode = "PickPlaceOnly"
+    mode = "OpenGraspOnly"
 
-    gui = False
+    gui = True
     reward_type = "sparse"
     obs_mode = "pixels_debug"
     if mode == "PlaceThenOpen":
