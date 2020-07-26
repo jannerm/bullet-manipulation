@@ -24,7 +24,7 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
         self.noisily_open_drawer = noisily_open_drawer
 
         assert task in ["CloseOpenGrasp", "Close", "OpenGrasp",
-            "CloseOpen", "Grasp"]
+            "CloseOpen", "Grasp", "Open"]
         self.task = task
 
         super().__init__(*args,
@@ -39,6 +39,7 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
         self.task_to_traj_len_map = {
             'Close': 30,
             'OpenGrasp': 50,
+            'Open': 30,
             'Grasp': 25,
             'CloseOpen': 60,
             'CloseOpenGrasp': 80,
@@ -65,8 +66,8 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
 
         self._top_drawer = bullet.objects.drawer_no_handle()
 
-        if not self.task in ["OpenGrasp", "Grasp"]:
-            # Open Top drawer only if it is not openGrasp or Grasp.
+        if not self.task in ["OpenGrasp", "Grasp", "Open"]:
+            # Open Top drawer only if it is not openGrasp, Grasp, or Open.
             # (both assume top already closed)
             bullet.open_drawer(
                 self._top_drawer, noisy_open=self.noisily_open_drawer, half_open=True)
@@ -140,6 +141,16 @@ class Widow200GraspV6DoubleDrawerV0CloseOpenEnv(Widow200GraspV6DoubleDrawerV0Env
     """Task is to open drawer, then grasp object inside it."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, task="CloseOpen", **kwargs)
+
+    def get_reward(self, info):
+        reward = float(self.is_drawer_opened("bottom", widely=True))
+        reward = self.adjust_rew_if_use_positive(reward)
+        return reward
+
+class Widow200GraspV6DoubleDrawerV0OpenEnv(Widow200GraspV6DoubleDrawerV0Env):
+    """Task is to open drawer, then grasp object inside it."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, task="Open", **kwargs)
 
     def get_reward(self, info):
         reward = float(self.is_drawer_opened("bottom", widely=True))

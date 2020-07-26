@@ -1033,9 +1033,15 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
             ee_pos = observation[:3]
 
         handle_offset = np.array([0, -0.01, 0])
-        handle_pos = env.get_handle_pos() + handle_offset
-        # Make robot aim a little to the left of the handle
-        # Effective neutral pos.
+
+        if "DoubleDrawer" in args.env:
+            handle_pos = env.get_bottom_drawer_handle_pos() + handle_offset
+            drawer_opened = env.is_drawer_opened("bottom", widely=drawer_never_opened)
+        else:
+            handle_pos = env.get_handle_pos() + handle_offset
+            drawer_opened = env.is_drawer_opened(widely=drawer_never_opened)
+            # Make robot aim a little to the left of the handle
+
         object_lifted_with_margin = object_pos[2] > (
             env._reward_height_thresh + margin)
 
@@ -1045,19 +1051,18 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
         currJointStates = bullet.get_joint_positions(
             env._robot_id)[1][:len(env.RESET_JOINTS)]
         joint_norm_dev_from_neutral = np.linalg.norm(currJointStates - env.RESET_JOINTS)
-
         eligible_for_reset = ((args.one_reset_per_traj and reset_never_taken) or
             (not args.one_reset_per_traj))
 
         if (gripper_handle_dist > dist_thresh
-            and not env.is_drawer_opened(widely=drawer_never_opened)):
+            and not drawer_opened):
             # print('approaching handle')
             action = (handle_pos - ee_pos) * 7.0
             xy_diff = np.linalg.norm(action[:2]/7.0)
             if xy_diff > 0.75 * dist_thresh:
                 action[2] = 0.5 # force upward action to avoid upper box
             action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
-        elif not env.is_drawer_opened(widely=drawer_never_opened):
+        elif not drawer_opened:
             # print("opening drawer")
             action = np.array([0, -1.0, 0])
             # action = np.asarray([0., 0., 0.7])
