@@ -1684,6 +1684,143 @@ def scripted_grasping_V6_double_drawer_close_V0(env, pool, success_pool, noise=0
         if args.end_at_neutral:
             return 1
 
+def scripted_grasping_V6_double_drawer_close_open_V0(env, pool, success_pool, noise=0.2):
+    observation = env.reset()
+    object_ind = 0
+    margin = 0.025
+    actions, observations, next_observations, rewards, terminals, infos = \
+        [], [], [], [], [], []
+
+    dist_thresh = 0.045 + np.random.normal(scale=0.01)
+    dist_thresh = np.clip(dist_thresh, 0.040, 0.060)
+    drawer_never_opened = True
+    reached_pushing_region = False
+    reset_never_taken = True
+
+    for _ in range(args.num_timesteps):
+
+        if isinstance(observation, dict):
+            object_pos = observation[env.object_obs_key][
+                         object_ind * 7 : object_ind * 7 + 3]
+            ee_pos = observation[env.fc_input_key][:3]
+        else:
+            object_pos = observation[
+                         object_ind * 7 + 8: object_ind * 7 + 8 + 3]
+            ee_pos = observation[:3]
+
+        top_drawer_pos = env.get_drawer_bottom_pos("top")
+        top_drawer_push_target_pos = (top_drawer_pos +
+            np.array([0, -0.15, 0.02]))
+        is_gripper_ready_to_push = (ee_pos[1] < top_drawer_push_target_pos[1] and
+                ee_pos[2] < top_drawer_push_target_pos[2])
+        bottom_drawer_handle_pos = env.get_bottom_drawer_handle_pos()
+        object_lifted_with_margin = object_pos[2] > (
+            env._reward_height_thresh + margin)
+
+        object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
+        gripper_handle_dist = np.linalg.norm(bottom_drawer_handle_pos - ee_pos)
+        theta_action = 0.
+
+        currJointStates = bullet.get_joint_positions(
+            env._robot_id)[1][:len(env.RESET_JOINTS)]
+        joint_norm_dev_from_neutral = np.linalg.norm(currJointStates - env.RESET_JOINTS)
+
+        eligible_for_reset = ((args.one_reset_per_traj and reset_never_taken) or
+            (not args.one_reset_per_traj))
+
+        if (not env.is_drawer_closed("top") and not reached_pushing_region and
+            not is_gripper_ready_to_push):
+            # print("move up and left")
+            action = np.concatenate(
+                ([-0.2, -0.4, -0.2], np.array([theta_action, 0.7, 0])))
+        elif not env.is_drawer_closed("top"):
+            # print("close top drawer")
+            reached_pushing_region = True
+            top_drawer_offset = np.array([0, 0, 0.02])
+            action = (top_drawer_pos + top_drawer_offset - ee_pos) * 7.0
+            action[0] *= 3
+            action[1] *= 0.6
+            action = np.concatenate((action, np.array([theta_action, 0.7, 0])))
+        elif (gripper_handle_dist > dist_thresh
+            and not env.is_drawer_opened("bottom", widely=drawer_never_opened)):
+            # print('approaching handle')
+            handle_offset = np.array([0.02, 0, 0])
+            action = (bottom_drawer_handle_pos + handle_offset - ee_pos) * 7.0
+            xy_diff = np.linalg.norm(action[:2]/7.0)
+            if xy_diff > 0.75 * dist_thresh:
+                action[2] = 0.0 # force upward action
+            action = np.concatenate((action, np.asarray([theta_action,0.7,0.])))
+        elif not env.is_drawer_opened("bottom", widely=drawer_never_opened):
+            # print("opening drawer")
+            action = np.array([0, -1.0, 0])
+            # action = np.asarray([0., 0., 0.7])
+            action = np.concatenate(
+                (action, np.asarray([0., 0.7, 0.])))
+        elif (object_gripper_dist > dist_thresh
+            and env._gripper_open and gripper_handle_dist < 1.5 * dist_thresh):
+            # print("Lift upward")
+            drawer_never_opened = False
+            if ee_pos[2] < -.15:
+                action = env.gripper_goal_location - ee_pos
+                action[2]  = 0.7  # force upward action to avoid upper box
+            else:
+                action = env.gripper_goal_location - ee_pos
+                action *= 7.0
+                action[2]  *= 0.5  # force upward action to avoid upper box
+            action = np.concatenate(
+                (action, np.asarray([theta_action, 0.7, 0.])))
+        elif ((joint_norm_dev_from_neutral > args.joint_norm_thresh) and
+            eligible_for_reset):
+            # print("Take neutral action")
+            action = np.asarray([0., 0., 0., 0., 0., 0.7])
+            # 0.7 = move to reset.
+            reset_never_taken = False
+        else:
+            if not eligible_for_reset:
+                action = (ending_target_pos - ee_pos) * 7.0
+                action = np.concatenate((action, np.zeros((3,))))
+            else:
+                action = np.zeros((6,))
+
+
+        noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
+        action += np.random.normal(scale=noise_scalings)
+        action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
+
+        next_observation, reward, done, info = env.step(action)
+
+        actions.append(action)
+        observations.append(observation)
+        rewards.append(reward)
+        terminals.append(done)
+        infos.append(info)
+        next_observations.append(next_observation)
+
+        observation = next_observation
+
+        if done or (not reset_never_taken and args.end_at_neutral):
+            break
+
+    path = dict(
+        actions=actions,
+        rewards=np.asarray(rewards).reshape((-1, 1)),
+        terminals=np.asarray(terminals).reshape((-1, 1)),
+        infos=infos,
+        observations=observations,
+        next_observations=next_observations,
+    )
+
+    if not isinstance(observation, dict):
+        path_length = len(rewards)
+        path['agent_infos'] = np.asarray([{} for i in range(path_length)])
+        path['env_infos'] = np.asarray([{} for i in range(path_length)])
+
+    pool.add_path(path)
+    if rewards[-1] > 0:
+        success_pool.add_path(path)
+        if args.end_at_neutral:
+            return 1
+
 def scripted_grasping_V6_open_then_place_V0(env, pool, success_pool, noise=0.2):
     observation = env.reset()
     object_ind = 0
@@ -1899,9 +2036,10 @@ def main(args):
         V6_GRASPING_V0_DRAWER_GRASPING_ONLY_ENVS +
         V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV +
         V6_GRASPING_V0_DRAWER_PLACING_OPENING_ENVS +
-        V6_GRASPING_V0_DRAWER_CLOSING_OPENING_ENVS +
+        V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_OPENING_GRASPING_ENVS +
         V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_ENVS +
         V6_GRASPING_V0_DOUBLE_DRAWER_OPENING_ENVS +
+        V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_OPENING_ENVS +
         V6_GRASPING_V0_DRAWER_CLOSED_PLACING_40_ENV +
         V6_GRASPING_V0_DRAWER_OPENING_PLACING_ENVS +
         V6_GRASPING_V0_DRAWER_OPEN_PLACE_PLACING_ENVS +
@@ -1912,7 +2050,7 @@ def main(args):
             V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV +
             V6_GRASPING_V0_DRAWER_CLOSED_PLACING_40_ENV +
             V6_GRASPING_V0_DRAWER_OPENING_ONLY_ENVS +
-            V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_ENVS)
+            V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_OPENING_ENVS)
 
     if args.env in PROXY_ENVS_MAP:
         roboverse_env_name = PROXY_ENVS_MAP[args.env]
@@ -2011,7 +2149,7 @@ def main(args):
             success = False
             scripted_grasping_V6_place_then_open_V0(
                 env, railrl_pool, railrl_success_pool, noise=args.noise_std)
-        elif args.env in V6_GRASPING_V0_DRAWER_CLOSING_OPENING_ENVS:
+        elif args.env in V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_OPENING_GRASPING_ENVS:
             assert not render_images
             success = False
             scripted_grasping_V6_close_open_grasp_V0(
@@ -2019,7 +2157,12 @@ def main(args):
         elif args.env in V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_ENVS:
             assert not render_images
             success = False
-            result = scripted_grasping_V6_double_drawer_close_V0(
+            scripted_grasping_V6_double_drawer_close_V0(
+                env, railrl_pool, railrl_success_pool, noise=args.noise_std)
+        elif args.env in V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_OPENING_ENVS:
+            assert not render_images
+            success = False
+            result = scripted_grasping_V6_double_drawer_close_open_V0(
                 env, railrl_pool, railrl_success_pool, noise=args.noise_std)
             end_at_neutral_num_successes += (result == 1)
         elif args.env in V6_GRASPING_V0_DOUBLE_DRAWER_OPENING_ENVS:
@@ -2095,9 +2238,10 @@ def main(args):
             V6_GRASPING_V0_DRAWER_GRASPING_ONLY_ENVS +
             V6_GRASPING_V0_DRAWER_PLACING_OPENING_ENVS +
             V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV +
-            V6_GRASPING_V0_DRAWER_CLOSING_OPENING_ENVS +
+            V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_OPENING_GRASPING_ENVS +
             V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_ENVS +
             V6_GRASPING_V0_DOUBLE_DRAWER_OPENING_ENVS +
+            V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_OPENING_ENVS +
             V6_GRASPING_V0_DRAWER_CLOSED_PLACING_40_ENV +
             V6_GRASPING_V0_DRAWER_OPENING_PLACING_ENVS +
             V6_GRASPING_V0_DRAWER_OPEN_PLACE_PLACING_ENVS):
@@ -2178,9 +2322,10 @@ if __name__ == "__main__":
         V6_GRASPING_V0_DRAWER_OPENING_ENVS +
         V6_GRASPING_V0_DOUBLE_DRAWER_OPENING_ENVS):
         args.num_timesteps = 50
-    elif args.env in V6_GRASPING_V0_DRAWER_OPENING_PLACING_ENVS:
+    elif args.env in (V6_GRASPING_V0_DRAWER_OPENING_PLACING_ENVS +
+        V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_OPENING_ENVS):
         args.num_timesteps = 60
     elif args.env in (V6_GRASPING_V0_DRAWER_PLACING_OPENING_ENVS +
-        V6_GRASPING_V0_DRAWER_CLOSING_OPENING_ENVS):
+        V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_OPENING_GRASPING_ENVS):
         args.num_timesteps = 80
     main(args)
