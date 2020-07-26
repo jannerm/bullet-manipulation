@@ -2255,7 +2255,6 @@ def main(args):
                 reshaped_rewards_pool = np.reshape(
                     railrl_success_pool._rewards[:-1],
                     (args.num_trajectories, args.num_timesteps))
-                # print("reshaped_rewards_pool[:,-1]", reshaped_rewards_pool[:,-1])
                 print('Num success: {}. Proxy_Env: {}'.format(
                     np.sum(reshaped_rewards_pool[:,-1] > 0),
                     args.env in PROXY_ENVS_MAP))
