@@ -2055,7 +2055,8 @@ def main(args):
             V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV +
             V6_GRASPING_V0_DRAWER_CLOSED_PLACING_40_ENV +
             V6_GRASPING_V0_DRAWER_OPENING_ONLY_ENVS +
-            V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_OPENING_ENVS)
+            V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_OPENING_ENVS +
+            V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_ENVS)
 
     if args.env in PROXY_ENVS_MAP:
         roboverse_env_name = PROXY_ENVS_MAP[args.env]
@@ -2164,8 +2165,9 @@ def main(args):
         elif args.env in V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_ENVS:
             assert not render_images
             success = False
-            scripted_grasping_V6_double_drawer_close_V0(
+            result = scripted_grasping_V6_double_drawer_close_V0(
                 env, railrl_pool, railrl_success_pool, noise=args.noise_std)
+            end_at_neutral_num_successes += (result == 1)
         elif args.env in V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_OPENING_ENVS:
             assert not render_images
             success = False
