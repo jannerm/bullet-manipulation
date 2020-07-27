@@ -2134,8 +2134,13 @@ def scripted_grasping_V6_double_drawer_close_open_grasp_place_V0(env, pool, succ
             action = np.concatenate(
                 (action, np.asarray([0., 0.7, 0.])))
         else:
-            action = np.zeros((6,))
-            action[2] = 0.5
+            # Move above tray's xy-center.
+            tray_info = roboverse.bullet.get_body_info(
+                env._tray, quat_to_deg=False)
+            tray_center = np.asarray(tray_info['pos'])
+            action = (tray_center - ee_pos)[:2]
+            action = np.concatenate(
+                (action, np.asarray([0., 0., 0., 0.])))
 
 
         noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
@@ -2268,8 +2273,13 @@ def scripted_grasping_V6_double_drawer_open_grasp_place_V0(env, pool, success_po
             action = np.concatenate(
                 (action, np.asarray([0., 0.7, 0.])))
         else:
-            action = np.zeros((6,))
-            action[2] = 0.5
+            # Move above tray's xy-center.
+            tray_info = roboverse.bullet.get_body_info(
+                env._tray, quat_to_deg=False)
+            tray_center = np.asarray(tray_info['pos'])
+            action = (tray_center - ee_pos)[:2]
+            action = np.concatenate(
+                (action, np.asarray([0., 0., 0., 0.])))
 
 
         noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
