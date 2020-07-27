@@ -686,6 +686,14 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'action_scale': 0.05,
                    'reward_height_threshold': -.275,}
     },
+    # Double Drawer Pick Place Open Grasp
+    {
+        'id': 'Widow200GraspV6DoubleDrawerPlaceThenOpenV0-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v6_double_drawer_place_then_open_v0:Widow200GraspV6DoubleDrawerPlaceThenOpenV0Env'),
+        'kwargs': {'max_force': 10,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.275,}
+    },
     # Used for stitching exps.
     {
         'id': 'Widow200GraspV6DrawerGraspOnlyV0-v0',
