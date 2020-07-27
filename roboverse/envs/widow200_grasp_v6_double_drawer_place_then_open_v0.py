@@ -200,7 +200,7 @@ class Widow200GraspV6DoubleDrawerPlaceThenOpenV0Env(Widow200GraspV6DrawerPlaceTh
 
         return info
 
-class Widow200GraspV6DoubleDrawerPlaceThenOpenV0PickPlaceOnlyEnv(Widow200GraspV6DoubleDrawerPlaceThenOpenV0Env):
+class Widow200GraspV6DoubleDrawerPlaceThenOpenV0PickPlaceEnv(Widow200GraspV6DoubleDrawerPlaceThenOpenV0Env):
     """
     Setup: blocking_obj blocking the drawer from being opened.
     obj in closed drawer.
@@ -217,16 +217,25 @@ class Widow200GraspV6DoubleDrawerPlaceThenOpenV0PickPlaceOnlyEnv(Widow200GraspV6
         reward = self.adjust_rew_if_use_positive(reward)
         return reward
 
-class Widow200GraspV6DoubleDrawerPlaceThenOpenV0OpenOnlyEnv(Widow200GraspV6DoubleDrawerPlaceThenOpenV0Env):
+class Widow200GraspV6DoubleDrawerPlaceThenOpenV0OpenEnv(Widow200GraspV6DoubleDrawerPlaceThenOpenV0Env):
     def __init__(self, *args, task_type="Open", **kwargs):
         super().__init__(*args, task_type=task_type, **kwargs)
 
     def get_reward(self, info):
-        reward = float(self.is_drawer_opened(widely=True))
+        reward = float(self.is_drawer_opened("bottom", widely=True))
         reward = self.adjust_rew_if_use_positive(reward)
         return reward
 
-class Widow200GraspV6DoubleDrawerPlaceThenOpenV0GraspOnlyEnv(Widow200GraspV6DoubleDrawerPlaceThenOpenV0Env):
+class Widow200GraspV6DoubleDrawerPlaceThenOpenV0PickPlaceOpenEnv(Widow200GraspV6DoubleDrawerPlaceThenOpenV0Env):
+    def __init__(self, *args, task_type="PickPlaceOpen", **kwargs):
+        super().__init__(*args, task_type=task_type, **kwargs)
+
+    def get_reward(self, info):
+        reward = float(self.is_drawer_opened("bottom", widely=True))
+        reward = self.adjust_rew_if_use_positive(reward)
+        return reward
+
+class Widow200GraspV6DoubleDrawerPlaceThenOpenV0GraspEnv(Widow200GraspV6DoubleDrawerPlaceThenOpenV0Env):
     def __init__(self, *args, task_type="Grasp", **kwargs):
         super().__init__(*args, task_type=task_type, **kwargs)
 
