@@ -39,7 +39,7 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
         num_objects = 2
 
         assert task in ["CloseOpenGrasp", "Close", "OpenGrasp",
-            "CloseOpen", "Grasp", "Open"]
+            "CloseOpen", "Grasp", "Open", "GraspThenPlace"]
         self.task = task
 
         # Blocking Object pos:
@@ -68,6 +68,7 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
             'Grasp': 25,
             'CloseOpen': 60,
             'CloseOpenGrasp': 80,
+            'GraspThenPlace': 30,
         }
         self.scripted_traj_len = self.task_to_traj_len_map[self.task]
 
@@ -105,13 +106,13 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
             (object_position, blocking_object_position), axis=0)
         self.load_object(self.object_name, object_position)
 
-        if not self.task == "Grasp":
+        if not (self.task == "Grasp" or self.task == "GraspThenPlace"):
             # Grasp assumes the bottom drawer is opened
             bullet.close_drawer(self._bottom_drawer)
 
         self._top_drawer = bullet.objects.drawer_no_handle()
 
-        if not self.task in ["OpenGrasp", "Grasp", "Open"]:
+        if not self.task in ["OpenGrasp", "Grasp", "Open", "GraspThenPlace"]:
             # Open Top drawer only if it is not openGrasp, Grasp, or Open.
             # (both assume top already closed)
             bullet.open_drawer(
@@ -150,6 +151,10 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
         closed_thresh = 0.06
         return self.get_drawer_bottom_pos(drawer_name)[1] > closed_thresh
 
+    def get_box_pos(self):
+        box_open_top_info = bullet.get_body_info(self._box, quat_to_deg=False)
+        return np.asarray(box_open_top_info['pos'])
+
     def get_info(self):
         info = {}
 
@@ -162,6 +167,16 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
         ee_pos = np.array(self.get_end_effector_pos())
         object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
         info['object_gripper_dist'] = object_gripper_dist
+
+        box_pos = self.get_box_pos()
+        object_box_dist = np.linalg.norm(object_pos - box_pos)
+
+        # object_box_dist_success = int(object_box_dist < self._success_dist_threshold)
+
+        object_within_box_bounds = ((self.box_low <= object_pos)
+            & (object_pos <= self.box_high))
+        object_in_box_success = int(np.all(object_within_box_bounds))
+        info['object_in_box_success'] = object_in_box_success
 
         for drawer_name in ['top', 'bottom']:
             info['is_{}_drawer_opened'.format(drawer_name)] = int(
@@ -212,6 +227,16 @@ class Widow200GraspV6DoubleDrawerV0OpenEnv(Widow200GraspV6DoubleDrawerV0Env):
 class Widow200GraspV6DoubleDrawerV0GraspEnv(Widow200GraspV6DoubleDrawerV0Env):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, task="Grasp", **kwargs)
+
+
+class Widow200GraspV6DoubleDrawerV0GraspThenPlaceEnv(Widow200GraspV6DoubleDrawerV0Env):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, task="GraspThenPlace", **kwargs)
+
+    # def get_reward(self, info):
+    #     reward = float(info['object_in_box_success'])
+    #     reward = self.adjust_rew_if_use_positive(reward)
+    #     return reward
 
 def close_open_grasp_policy(EPSILON, noise, margin, save_video, env):
     object_ind = 0
