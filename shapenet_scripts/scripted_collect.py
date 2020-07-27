@@ -567,7 +567,7 @@ def scripted_grasping_then_placing_V6(env, pool, success_pool, noise=0.2):
 
         if done:
             break
-    print(reward)
+
     path = dict(
         actions=actions,
         rewards=np.asarray(rewards).reshape((-1, 1)),
