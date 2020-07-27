@@ -1,5 +1,4 @@
 import skvideo.io
-
 import roboverse
 from railrl.data_management.env_replay_buffer import EnvReplayBuffer
 from railrl.data_management.obs_dict_replay_buffer import \
@@ -14,10 +13,11 @@ env_to_policy_map = {
 }
 
 class BulletVideoLogger:
-    def __init__(self, env_name, video_save_dir, noise=0.2):
+    def __init__(self, env_name, video_save_dir, success_only, noise=0.2):
         self.env_name = env_name
         self.noise = noise
         self.video_save_dir = video_save_dir
+        self.success_only = success_only
         self.image_size = 512
 
         if not os.path.exists(self.video_save_dir):
@@ -34,6 +34,7 @@ class BulletVideoLogger:
         # end camera settings
         self.env = self.instantiate_env()
         self.scripted_policy_func = self.get_scripted_policy_func(env_name)
+        self.trajectories_collected = 0
 
     def instantiate_env(self):
         env = roboverse.make(self.env_name, reward_type="sparse",
@@ -46,7 +47,9 @@ class BulletVideoLogger:
             if env_name in env_group:
                 return env_to_policy_map[env_group]
 
-    def get_single_path_pool(self):
+    def get_single_path_pool_and_success(self):
+        self.trajectories_collected += 1
+        print("trajectories collected", self.trajectories_collected)
         pool_size = self.env.scripted_traj_len + 1
         obs_keys = (self.env.cnn_input_key, self.env.fc_input_key)
         railrl_pool = ObsDictReplayBuffer(pool_size, self.env,
@@ -55,6 +58,18 @@ class BulletVideoLogger:
             observation_keys=obs_keys)
         self.scripted_policy_func(
             self.env, railrl_pool, railrl_success_pool, noise=self.noise)
+        success = railrl_pool._rewards[self.env.scripted_traj_len - 1]
+        print(railrl_pool._rewards.T)
+        return railrl_pool, success
+
+    def get_single_path_pool(self):
+        if self.success_only:
+            success = False
+            while not success:
+                railrl_pool, success = self.get_single_path_pool_and_success()
+            print("collected success", railrl_pool, success)
+        else:
+            railrl_pool, _ = self.get_single_path_pool_and_success()
         return railrl_pool
 
     def save_video_from_path(self, single_path_pool, path_idx):
@@ -86,7 +101,10 @@ if __name__ == "__main__":
     parser.add_argument("--env", type=str)
     parser.add_argument("--video-save-dir", type=str, default="scripted_rollouts")
     parser.add_argument("--num-videos", type=int, default=1)
+    parser.add_argument("--success-only", action="store_true", default=False)
+    # Currently, success-only collects only successful trajectories,
+    # but these trajectories do not always succeed again due to randomized initial conditions
     args = parser.parse_args()
 
-    vid_log = BulletVideoLogger(args.env, args.video_save_dir)
+    vid_log = BulletVideoLogger(args.env, args.video_save_dir, args.success_only)
     vid_log.save_videos(args.num_videos)
