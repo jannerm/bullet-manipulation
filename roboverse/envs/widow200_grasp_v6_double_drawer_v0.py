@@ -39,7 +39,8 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
         num_objects = 2
 
         assert task in ["CloseOpenGrasp", "Close", "OpenGrasp",
-            "CloseOpen", "Grasp", "Open", "GraspPlace"]
+            "CloseOpen", "Grasp", "Open", "GraspPlace",
+            "OpenGraspPlace", "CloseOpenGraspPlace"]
         self.task = task
 
         # Blocking Object pos:
@@ -65,10 +66,12 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
             'Close': 30,
             'OpenGrasp': 50,
             'Open': 30,
+            'GraspPlace': 30,
             'Grasp': 25,
             'CloseOpen': 60,
             'CloseOpenGrasp': 80,
-            'GraspPlace': 30,
+            'OpenGraspPlace': 60,
+            'CloseOpenGraspPlace': 90,
         }
         self.scripted_traj_len = self.task_to_traj_len_map[self.task]
 
@@ -112,7 +115,7 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
 
         self._top_drawer = bullet.objects.drawer_no_handle()
 
-        if not self.task in ["OpenGrasp", "Grasp", "Open", "GraspPlace"]:
+        if not self.task in ["OpenGrasp", "Grasp", "Open", "GraspPlace", "OpenGraspPlace"]:
             # Open Top drawer only if it is not openGrasp, Grasp, or Open.
             # (both assume top already closed)
             bullet.open_drawer(
@@ -230,10 +233,11 @@ class Widow200GraspV6DoubleDrawerV0GraspEnv(Widow200GraspV6DoubleDrawerV0Env):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, task="Grasp", **kwargs)
 
+# Below are the envs with reward function of object in box.
 
-class Widow200GraspV6DoubleDrawerV0GraspPlaceEnv(Widow200GraspV6DoubleDrawerV0Env):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, task="GraspPlace", **kwargs)
+class Widow200GraspV6DoubleDrawerV0CloseOpenGraspPlaceEnv(Widow200GraspV6DoubleDrawerV0Env):
+    def __init__(self, *args, task="CloseOpenGraspPlace", **kwargs):
+        super().__init__(*args, task=task, **kwargs)
 
     def get_reward(self, info):
         if not info:
@@ -241,6 +245,14 @@ class Widow200GraspV6DoubleDrawerV0GraspPlaceEnv(Widow200GraspV6DoubleDrawerV0En
         reward = float(info['object_in_box_success'])
         reward = self.adjust_rew_if_use_positive(reward)
         return reward
+
+class Widow200GraspV6DoubleDrawerV0GraspPlaceEnv(Widow200GraspV6DoubleDrawerV0CloseOpenGraspPlaceEnv):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, task="GraspPlace", **kwargs)
+
+class Widow200GraspV6DoubleDrawerV0OpenGraspPlaceEnv(Widow200GraspV6DoubleDrawerV0CloseOpenGraspPlaceEnv):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, task="OpenGraspPlace", **kwargs)
 
 def close_open_grasp_policy(EPSILON, noise, margin, save_video, env):
     object_ind = 0
