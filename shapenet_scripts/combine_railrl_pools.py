@@ -20,6 +20,7 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--data-directory", type=str, required=True)
     parser.add_argument("-o", "--observation-mode", type=str, default='state',
                         choices=('state', 'pixels', 'pixels_debug'))
+    parser.add_argument("--success-only", dest="success_only", action="store_true", default=False)
     args = parser.parse_args()
 
     if osp.exists(NFS_PATH):
@@ -35,7 +36,8 @@ if __name__ == "__main__":
 
     for root, dirs, files in os.walk(data_directory):
         for f in files:
-            if "pool" in f and "success_only" not in f: # ignore success pools.
+            merge_f = ("pool" in f) and (("success_only" in f) == args.success_only)
+            if merge_f:
                 with open(os.path.join(root, f), 'rb') as fp:
                     print("f", f)
                     pool = pickle.load(fp)
@@ -122,5 +124,8 @@ if __name__ == "__main__":
     else:
         raise NotImplementedError
 
-    path = osp.join(data_directory, 'railrl_consolidated.pkl')
+    if not args.success_only:
+        path = osp.join(data_directory, 'railrl_consolidated.pkl')
+    else:
+        path = osp.join(data_directory, 'railrl_consolidated_success.pkl')
     pickle.dump(consolidated_pool, open(path, 'wb'), protocol=4)
