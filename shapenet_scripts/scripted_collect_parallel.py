@@ -68,7 +68,7 @@ if __name__ == "__main__":
                         action="store_true", default=False)
     parser.add_argument("--suboptimal", dest="suboptimal",
                         action="store_true", default=False)
-    parser.add_argument("--success-only", action="store_true", default=False)
+    parser.add_argument("--save-success-pool", action="store_true", default=False)
     args = parser.parse_args()
 
     assert args.semisparse != args.sparse
@@ -124,9 +124,11 @@ if __name__ == "__main__":
                      '-d{}'.format(save_directory),
                      '-o{}'.format(args.observation_mode),
                      '-e{}'.format(args.env)]
-    if args.success_only:
-        merge_command.append('--success-only')
 
     subprocess.call(merge_command)
+
+    if args.save_success_pool:
+        merge_command.append('--success-only')
+        subprocess.call(merge_command)
 
     print(exit_codes)

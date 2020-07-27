@@ -384,7 +384,7 @@ def scripted_grasping_V6(env, pool, success_pool, noise=0.2):
     dist_thresh = 0.045 + np.random.normal(scale=0.01)
     dist_thresh = np.clip(dist_thresh, 0.035, 0.060)
 
-    for _ in range(args.num_timesteps):
+    for _ in range(env.scripted_traj_len):
 
         if isinstance(observation, dict):
             object_pos = observation[env.object_obs_key][
@@ -482,7 +482,7 @@ def scripted_grasping_V7(env, pool, success_pool, noise=0.2):
     dist_thresh = 0.045 + np.random.normal(scale=0.01)
     dist_thresh = np.clip(dist_thresh, 0.035, 0.060)
 
-    for _ in range(args.num_timesteps):
+    for _ in range(env.scripted_traj_len):
 
         if isinstance(observation, dict):
             object_pos = observation[env.object_obs_key][
@@ -567,7 +567,7 @@ def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
     box_dist_thresh = 0.035 + np.random.normal(scale=0.01)
     box_dist_thresh = np.clip(box_dist_thresh, 0.025, 0.05)
 
-    for t_ind in range(args.num_timesteps):
+    for t_ind in range(env.scripted_traj_len):
 
         if isinstance(observation, dict):
             object_pos = observation[env.object_obs_key][
@@ -667,7 +667,7 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
 
     reset_never_taken = True
 
-    for t_ind in range(args.num_timesteps):
+    for t_ind in range(env.scripted_traj_len):
 
         if isinstance(observation, dict):
             blocking_object_pos = observation[env.object_obs_key][
@@ -795,7 +795,7 @@ def scripted_grasping_V6_open_place_placing_V0(env, pool, success_pool, noise=0.
 
     drawer_never_opened = True
 
-    for t_ind in range(args.num_timesteps):
+    for t_ind in range(env.scripted_traj_len):
 
         if isinstance(observation, dict):
             object_pos = observation[env.object_obs_key][
@@ -898,7 +898,7 @@ def scripted_grasping_V6_opening_V0(env, pool, success_pool, noise=0.2):
 
     drawer_never_opened = True
 
-    for _ in range(args.num_timesteps):
+    for _ in range(env.scripted_traj_len):
 
         if isinstance(observation, dict):
             object_pos = observation[env.object_obs_key][
@@ -1021,7 +1021,7 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
     drawer_never_opened = True
     reset_never_taken = True
 
-    for _ in range(args.num_timesteps):
+    for _ in range(env.scripted_traj_len):
 
         if isinstance(observation, dict):
             object_pos = observation[env.object_obs_key][
@@ -1455,7 +1455,7 @@ def scripted_grasping_V6_close_open_grasp_V0(env, pool, success_pool, allow_gras
     if rewards[-1] > 0:
         success_pool.add_path(path)
 
-def scripted_grasping_V6_double_drawer_open_grasp_V0(env, pool, success_pool, noise=0.2):
+def scripted_grasping_V6_double_drawer_open_grasp_V0(env, pool, success_pool, allow_grasp_retries=False, noise=0.2):
     observation = env.reset()
     object_ind = 0
     margin = 0.025
@@ -1470,7 +1470,7 @@ def scripted_grasping_V6_double_drawer_open_grasp_V0(env, pool, success_pool, no
 
     drawer_never_opened = True
 
-    for _ in range(args.num_timesteps):
+    for _ in range(env.scripted_traj_len):
 
         if isinstance(observation, dict):
             object_pos = observation[env.object_obs_key][
@@ -1538,7 +1538,7 @@ def scripted_grasping_V6_double_drawer_open_grasp_V0(env, pool, success_pool, no
             action = (object_pos - ee_pos) * 7.0
             action = np.concatenate(
                 (action, np.asarray([0., -0.7, 0.])))
-        elif object_gripper_dist > 2 * dist_thresh and args.allow_grasp_retries:
+        elif object_gripper_dist > 2 * dist_thresh and allow_grasp_retries:
             # Open gripper to retry
             action = np.array([0, 0, 0, 0, 0.7, 0])
         elif not object_lifted_with_margin:
@@ -1604,7 +1604,7 @@ def scripted_grasping_V6_double_drawer_close_V0(env, pool, success_pool, noise=0
     reached_pushing_region = False
     reset_never_taken = True
 
-    for _ in range(args.num_timesteps):
+    for _ in range(env.scripted_traj_len):
 
         if isinstance(observation, dict):
             object_pos = observation[env.object_obs_key][
@@ -1707,7 +1707,7 @@ def scripted_grasping_V6_double_drawer_close_open_V0(env, pool, success_pool, no
     reached_pushing_region = False
     reset_never_taken = True
 
-    for _ in range(args.num_timesteps):
+    for _ in range(env.scripted_traj_len):
 
         if isinstance(observation, dict):
             object_pos = observation[env.object_obs_key][
@@ -1849,7 +1849,7 @@ def scripted_grasping_V6_open_then_place_V0(env, pool, success_pool, noise=0.2):
     drawer_never_opened = True
     reset_never_taken = True
 
-    for _ in range(args.num_timesteps):
+    for _ in range(env.scripted_traj_len):
 
         if isinstance(observation, dict):
             object_pos = observation[env.object_obs_key][
@@ -2183,7 +2183,8 @@ def main(args):
             assert not render_images
             success = False
             scripted_grasping_V6_double_drawer_open_grasp_V0(
-                env, railrl_pool, railrl_success_pool, noise=args.noise_std)
+                env, railrl_pool, railrl_success_pool,
+                allow_grasp_retries=args.allow_grasp_retries, noise=args.noise_std)
         elif args.env in V6_GRASPING_V0_DRAWER_OPENING_PLACING_ENVS:
             assert not render_images
             success = False
