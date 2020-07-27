@@ -191,7 +191,8 @@ def main(args):
     end_at_neutral_num_successes = 0 # used if args.end_at_neutral == True.
 
     for j in tqdm(range(args.num_trajectories)):
-        if args.env in V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV:
+        if args.env in (V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV +
+            V6_GRASPING_V0_DOUBLE_DRAWER_PICK_PLACE_OPEN_ENVS):
             success = False
             result = scripted_grasping_V6_drawer_closed_placing_V0(
                 env, railrl_pool, railrl_success_pool, noise=args.noise_std)
