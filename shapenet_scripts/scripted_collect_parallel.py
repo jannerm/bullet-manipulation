@@ -68,6 +68,7 @@ if __name__ == "__main__":
                         action="store_true", default=False)
     parser.add_argument("--suboptimal", dest="suboptimal",
                         action="store_true", default=False)
+    parser.add_argument("--success-only", action="store_true", default=False)
     args = parser.parse_args()
 
     assert args.semisparse != args.sparse
@@ -118,11 +119,14 @@ if __name__ == "__main__":
     #                  'shapenet_scripts/combine_trajectories.py',
     #                  '-d{}'.format(save_directory)]
     #                 )
-    subprocess.call(['python',
+    merge_command = ['python',
                      'shapenet_scripts/combine_railrl_pools.py',
                      '-d{}'.format(save_directory),
                      '-o{}'.format(args.observation_mode),
                      '-e{}'.format(args.env)]
-                    )
+    if args.success_only:
+        merge_command.append('--success-only')
+
+    subprocess.call(merge_command)
 
     print(exit_codes)

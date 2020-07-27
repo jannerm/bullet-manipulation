@@ -1159,7 +1159,12 @@ def scripted_grasping_V6_place_then_open_V0(env, pool, success_pool, allow_grasp
             ee_pos = observation[:3]
 
         box_pos = env.get_box_pos()
-        handle_pos = env.get_handle_pos()
+        if "DoubleDrawer" in env._env_name:
+            handle_pos = env.get_bottom_drawer_handle_pos()
+            drawer_opened = env.is_drawer_opened("bottom", widely=drawer_never_opened)
+        else:
+            handle_pos = env.get_handle_pos()
+            drawer_opened = env.is_drawer_opened(widely=drawer_never_opened)
         object_lifted_with_margin = object_pos[2] > (
             env._reward_height_thresh + margin)
 
@@ -1209,14 +1214,14 @@ def scripted_grasping_V6_place_then_open_V0(env, pool, success_pool, allow_grasp
             action = np.concatenate(
                 (action, np.asarray([0., 0.7, 0.])))
         elif (gripper_handle_dist > dist_thresh
-            and not env.is_drawer_opened(widely=drawer_never_opened)):
+            and not drawer_opened):
             # print('approaching handle')
             action = (handle_pos - ee_pos) * 7.0
             xy_diff = np.linalg.norm(action[:2]/7.0)
             if xy_diff > 0.75 * dist_thresh:
                 action[2] = 0.0 # force upward action to avoid upper box
             action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
-        elif not env.is_drawer_opened(widely=drawer_never_opened):
+        elif not drawer_opened:
             # print("opening drawer")
             action = np.array([0, -1.0, 0])
             # action = np.asarray([0., 0., 0.7])
