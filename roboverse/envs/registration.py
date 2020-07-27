@@ -687,9 +687,25 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'reward_height_threshold': -.275,}
     },
     {
-        'id': 'Widow200GraspV6DoubleDrawerV0GraspThenPlace-v0',
+        'id': 'Widow200GraspV6DoubleDrawerV0CloseOpenGraspPlace-v0',
         'entry_point': (
-            'roboverse.envs.widow200_grasp_v6_double_drawer_v0:Widow200GraspV6DoubleDrawerV0GraspThenPlaceEnv'),
+            'roboverse.envs.widow200_grasp_v6_double_drawer_v0:Widow200GraspV6DoubleDrawerV0CloseOpenGraspPlaceEnv'),
+        'kwargs': {'max_force': 10,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.275, }
+    },
+    {
+        'id': 'Widow200GraspV6DoubleDrawerV0OpenGraspPlace-v0',
+        'entry_point': (
+            'roboverse.envs.widow200_grasp_v6_double_drawer_v0:Widow200GraspV6DoubleDrawerV0OpenGraspPlaceEnv'),
+        'kwargs': {'max_force': 10,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.275, }
+    },
+    {
+        'id': 'Widow200GraspV6DoubleDrawerV0GraspPlace-v0',
+        'entry_point': (
+            'roboverse.envs.widow200_grasp_v6_double_drawer_v0:Widow200GraspV6DoubleDrawerV0GraspPlaceEnv'),
         'kwargs': {'max_force': 10,
                    'action_scale': 0.05,
                    'reward_height_threshold': -.275, }
