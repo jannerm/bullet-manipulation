@@ -1,7 +1,10 @@
 from roboverse.envs.widow200_grasp_v6_drawer_open_v0 import (
     Widow200GraspV6DrawerOpenV0Env)
 from roboverse.envs.rand_obj import RandObjEnv
+from roboverse.utils.shapenet_utils import load_shapenet_object, \
+    import_shapenet_metadata
 import roboverse.bullet as bullet
+from roboverse.bullet.objects import lifted_long_box_open_top_center_pos
 import roboverse.utils as utils
 import numpy as np
 import time
@@ -9,23 +12,45 @@ import roboverse
 from PIL import Image
 import skimage.io as skii
 import skimage.transform as skit
+import itertools
 
+obj_path_map, path_scaling_map = import_shapenet_metadata()
 
 class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
     """Task is to open drawer, then grasp object inside it."""
     def __init__(self,
                  *args,
-                 object_names=('ball',),
-                 scaling_local_list=[0.5],
+                 object_name_scaling=("ball", 0.5),
+                 blocking_object_name_scaling=("gatorade", 0.4),
                  success_dist_threshold=0.04,
                  noisily_open_drawer=False,
+                 randomize_blocking_obj_quat=False,
                  task="CloseOpenGrasp",
                  **kwargs):
         self.noisily_open_drawer = noisily_open_drawer
+        self.randomize_blocking_obj_quat = randomize_blocking_obj_quat
+        self.object_name = object_name_scaling[0]
+        self.blocking_object_name = blocking_object_name_scaling[0]
+
+        assert self.object_name != self.blocking_object_name
+        object_names = (self.object_name, self.blocking_object_name)
+        scaling_local_list = [
+            object_name_scaling[1], blocking_object_name_scaling[1]]
+        num_objects = 2
 
         assert task in ["CloseOpenGrasp", "Close", "OpenGrasp",
             "CloseOpen", "Grasp", "Open"]
         self.task = task
+
+        # Blocking Object pos:
+        self.box_high = lifted_long_box_open_top_center_pos + np.array([0.0525, 0.04, 0.035])
+        self.box_low = lifted_long_box_open_top_center_pos + np.array([-0.0525, -0.04, -0.01])
+        margin = np.array([0.03, 0.03, 0])
+        drop_height = self.box_high[2]
+        self._blocking_object_position_high = list(self.box_high[:2]) + [drop_height]
+        self._blocking_object_position_high -= margin
+        self._blocking_object_position_low = list(self.box_low[:2]) + [drop_height]
+        self._blocking_object_position_low += margin
 
         super().__init__(*args,
             object_names=object_names,
@@ -46,6 +71,20 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
         }
         self.scripted_traj_len = self.task_to_traj_len_map[self.task]
 
+    def get_random_quat(self):
+        quat_possible_vals = [-1, 0, 1]
+        vals = [quat_possible_vals] * 4
+        possible_quats = list(itertools.product(*vals))
+        possible_quats.remove((0, 0, 0, 0))
+        random_idx = np.random.random_integers(0, len(possible_quats) - 1)
+        random_quat = possible_quats[random_idx]
+        return random_quat
+
+    def load_object(self, name, pos, quat=[1, -1, 0, 0]):
+        self._objects[name] = load_shapenet_object(
+            obj_path_map[name], self.scaling,
+            pos, scale_local=self._scaling_local[name], quat=quat)
+
     def _load_meshes(self):
         self._robot_id = bullet.objects.widowx_200()
         self._table = bullet.objects.table()
@@ -57,8 +96,14 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
         self._objects = {}
         self._bottom_drawer = bullet.objects.drawer_bottom()
         bullet.open_drawer(self._bottom_drawer)
-        object_positions = self._generate_object_positions()
-        self._load_objects(object_positions)
+        object_position = np.random.uniform(
+            self._object_position_low, self._object_position_high)
+        blocking_object_position = np.random.uniform(
+            self._blocking_object_position_low,
+            self._blocking_object_position_high)
+        object_positions = np.concatenate(
+            (object_position, blocking_object_position), axis=0)
+        self.load_object(self.object_name, object_position)
 
         if not self.task == "Grasp":
             # Grasp assumes the bottom drawer is opened
@@ -73,6 +118,12 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
                 self._top_drawer, noisy_open=self.noisily_open_drawer, half_open=True)
 
         self.drawers = {"top": self._top_drawer, "bottom": self._bottom_drawer}
+
+        # Load blocking object and box
+        self.blocking_obj_quat = self.get_random_quat()
+        self.load_object(
+            self.blocking_object_name, blocking_object_position, quat=self.blocking_obj_quat)
+        self._box = bullet.objects.lifted_long_box_open_top()
 
     def get_drawer_bottom_pos(self, drawer_name):
         drawer = self.drawers[drawer_name]

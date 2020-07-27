@@ -242,11 +242,7 @@ if __name__ == "__main__":
     reward_type = "sparse"
     obs_mode = "pixels_debug"
     if mode == "PlaceThenOpen":
-        env = roboverse.make("Widow200GraspV6DoubleDrawerPlaceThenOpenV0-v0",
-                             gui=gui,
-                             reward_type=reward_type,
-                             observation_mode=obs_mode)
-        drawer_place_then_open_policy(EPSILON, noise, margin, save_video, env)
+        raise NotImplementedError
     elif mode == "PickPlaceOnly":
         raise NotImplementedError
     elif mode == "PickPlace40Only":
