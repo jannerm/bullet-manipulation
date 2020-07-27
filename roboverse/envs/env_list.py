@@ -48,7 +48,6 @@ V6_GRASPING_V0_DRAWER_GRASPING_ONLY_ENVS = ['Widow200GraspV6DrawerGraspOnlyV0-v0
                                             'Widow200GraspV6DoubleDrawerV0Grasp-v0',
                                             'Widow200GraspV6DrawerPlaceThenOpenV0GraspOnly-v0',
                                             'Widow200GraspV6DoubleDrawerPlaceThenOpenV0Grasp-v0']
-V6_GRASPING_V0_DOUBLE_DRAWER_GRASP_PLACE_ENVS = ['Widow200GraspV6DoubleDrawerV0GraspPlace-v0']
 V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV = ['Widow200GraspV6DrawerPlaceThenOpenV0PlaceOnlyRandQuat-v0',
                                             'Widow200GraspV6DrawerPlaceThenOpenV0PickPlaceOnly-v0']
 V6_GRASPING_V0_DRAWER_CLOSED_PLACING_40_ENV = ['Widow200GraspV6DrawerPlaceThenOpenV0PickPlace40Only-v0']
@@ -61,6 +60,9 @@ V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_ENVS = ['Widow200GraspV6DoubleDrawerV0Close
 V6_GRASPING_V0_DOUBLE_DRAWER_OPENING_ENVS = ['Widow200GraspV6DoubleDrawerV0OpenGrasp-v0']
 V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_OPENING_ENVS = ['Widow200GraspV6DoubleDrawerV0CloseOpen-v0'] # basically, no grasping.
 V6_GRASPING_V0_DOUBLE_DRAWER_PICK_PLACE_OPEN_ENVS = ['Widow200GraspV6DoubleDrawerPlaceThenOpenV0PickPlaceOpen-v0']
+V6_GRASPING_V0_DOUBLE_DRAWER_CLOSE_OPEN_GRASP_PLACE_ENVS = ['Widow200GraspV6DoubleDrawerV0CloseOpenGraspPlace-v0']
+V6_GRASPING_V0_DOUBLE_DRAWER_OPEN_GRASP_PLACE_ENVS = ['Widow200GraspV6DoubleDrawerV0OpenGraspPlace-v0']
+V6_GRASPING_V0_DOUBLE_DRAWER_GRASP_PLACE_ENVS = ['Widow200GraspV6DoubleDrawerV0GraspPlace-v0']
 V7_GRASPING_ENVS = ['Widow200GraspV7-v0',
                     'Widow200GraspV7BoxV0-v0',
                     'Widow200GraspV7BoxV0TenSameTrainTestRandObj-v0',
