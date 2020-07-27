@@ -233,10 +233,12 @@ class Widow200GraspV6DoubleDrawerV0GraspThenPlaceEnv(Widow200GraspV6DoubleDrawer
     def __init__(self, *args, **kwargs):
         super().__init__(*args, task="GraspThenPlace", **kwargs)
 
-    # def get_reward(self, info):
-    #     reward = float(info['object_in_box_success'])
-    #     reward = self.adjust_rew_if_use_positive(reward)
-    #     return reward
+    def get_reward(self, info):
+        if not info:
+            info = self.get_info()
+        reward = float(info['object_in_box_success'])
+        reward = self.adjust_rew_if_use_positive(reward)
+        return reward
 
 def close_open_grasp_policy(EPSILON, noise, margin, save_video, env):
     object_ind = 0

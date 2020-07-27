@@ -521,25 +521,16 @@ def scripted_grasping_then_placing_V6(env, pool, success_pool, noise=0.2):
                     action[2] = 0.0
             action = np.concatenate(
                 (action, np.asarray([theta_action, 0., 0.])))
-        elif env._gripper_open:
+        elif env._gripper_open and not info['object_in_box_success']:
             # print('gripper closing')
             action = (object_pos - ee_pos) * 7.0
             action = np.concatenate(
                 (action, np.asarray([0., -0.7, 0.])))
-        elif not object_lifted_with_margin:
+        elif not object_lifted_with_margin and not info['object_in_box_success']:
             # print('raise object upward')
             action = np.asarray([0., 0., 0.7])
             action = np.concatenate(
                 (action, np.asarray([0., 0., 0.])))
-    #     else:
-      #       import IPython; IPython.embed()
-            # Move above tray's xy-center.
-            # tray_info = roboverse.bullet.get_body_info(
-            #     env._tray, quat_to_deg=False)
-            # tray_center = np.asarray(tray_info['pos'])
-            # action = (tray_center - ee_pos)[:2]
-            # action = np.concatenate(
-            #     (action, np.asarray([0., 0., 0., 0.])))
         elif blocking_object_box_dist > box_dist_thresh and \
                 not info['object_in_box_success']:
             action = (box_pos - object_pos)*7.0
