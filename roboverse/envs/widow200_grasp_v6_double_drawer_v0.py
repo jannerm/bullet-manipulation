@@ -68,7 +68,7 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
             'Grasp': 25,
             'CloseOpen': 60,
             'CloseOpenGrasp': 80,
-            'GraspThenPlace': 30,
+            'GraspThenPlace': 40,
         }
         self.scripted_traj_len = self.task_to_traj_len_map[self.task]
 
