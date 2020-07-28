@@ -212,6 +212,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         info = {}
 
         num_obj_success = 0
+        num_bowl_obj_success = 0
         for obj_id in range(self.num_obj):
             obj_name = self.get_obj_name(obj_id)
             cube_pos = achieved_goal_info[obj_name]
@@ -225,8 +226,11 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
 
             obj_bowl_dist = np.abs(achieved_goal_info['bowl_pos'] - cube_pos[0])
             info['bowl_{}_dist'.format(obj_name)] = obj_bowl_dist
-            info['bowl_{}_success'.format(obj_name)] = float(obj_bowl_dist <= 0.10)
+            bowl_obj_success = float(obj_bowl_dist <= 0.10)
+            info['bowl_{}_success'.format(obj_name)] = bowl_obj_success
+            num_bowl_obj_success += bowl_obj_success
         info['num_obj_success'] = num_obj_success
+        info['num_bowl_obj_success'] = num_bowl_obj_success
 
         info['hand_dist'] = bullet.l2_dist(achieved_goal_info['hand_pos'], desired_goal_info['hand_pos'])
         info['bowl_dist'] = np.abs(achieved_goal_info['bowl_pos'] - desired_goal_info['bowl_pos'])
