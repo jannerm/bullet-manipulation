@@ -283,6 +283,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             'obj_in_bowl',
             '50p_ground__50p_obj_in_bowl',
             'first_obj_in_bowl_oracle',
+            'ground_away_from_curr_state',
         ]
 
         if goal_sampling_mode == '50p_ground__50p_obj_in_bowl':
@@ -346,6 +347,26 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
                 high=high_ground,
                 size=(batch_size * self.num_obj, len(low))
             ).reshape((batch_size, -1))
+        elif goal_sampling_mode == 'ground_away_from_curr_state':
+            high_ground = high.copy()
+            high_ground[1] = low[1] + 0.03
+            curr_state = self.get_achieved_goal()
+            obj_goal = []
+            for obj_id in range(self.num_obj):
+                obj_xpos = curr_state[2+obj_id*2]
+                obj_xrange = [obj_xpos - self.obj_success_threshold, obj_xpos + self.obj_success_threshold]
+                while True:
+                    sampled_pos = np.random.uniform(
+                        low=low,
+                        high=high_ground)
+                    if sampled_pos[0] <= obj_xrange[0] or sampled_pos[0] >= obj_xrange[1]:
+                        break
+                obj_goal += list(sampled_pos)
+
+            obj_goals = np.tile(
+                np.array(obj_goal).reshape((1, -1)),
+                (batch_size, 1)
+            )
         elif goal_sampling_mode == 'obj_in_bowl':
             obj_goals = np.tile(
                 np.c_[
