@@ -89,7 +89,7 @@ env_kwargs={
     'goal_sampling_mode': 'obj_in_bowl', #'ground'
     'bowl_bounds': [-0.40, 0.40],
     'random_init_bowl_pos': False,
-    'bowl_type': 'light',
+    'bowl_type': 'fixed',
 
     'hand_reward': True,
     'gripper_reward': True,
@@ -100,6 +100,10 @@ env_kwargs={
     'soft_clip': True,
     'obj_urdf': 'spam',
     'max_joint_velocity': None,
+
+    'num_obj': 4,
+
+    'reset_objs_outside_bowl': True,
 }
 env = SawyerLiftEnvGC(**env_kwargs)
 

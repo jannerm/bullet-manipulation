@@ -23,6 +23,9 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             hand_reward=True,
             gripper_reward=True,
             bowl_reward=True,
+            reward_type=None,
+            reset_objs_outside_bowl=False,
+            obj_success_threshold=0.10,
             **kwargs
     ):
         self.reset_obj_in_hand_rate = reset_obj_in_hand_rate
@@ -33,6 +36,9 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         self.hand_reward = hand_reward
         self.gripper_reward = gripper_reward
         self.bowl_reward = bowl_reward
+        self.reward_type = reward_type
+        self.reset_objs_outside_bowl = reset_objs_outside_bowl
+        self.obj_success_threshold = obj_success_threshold
         super().__init__(*args, env='SawyerLiftMulti-v0', **kwargs)
         self.record_args(locals())
 
@@ -61,9 +67,19 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             obj_id_to_put_in_hand = np.random.choice(self.num_obj)
 
         for obj_id in range(self.num_obj):
-            cube_reset_pos = np.random.uniform(
-                low=self._pos_low,
-                high=self._pos_high)
+            if self.reset_objs_outside_bowl:
+                bowl_xpos = self._bowl_pos[1]
+                bowl_xrange = [bowl_xpos - 0.15, bowl_xpos + 0.15]
+                while True:
+                    cube_reset_pos = np.random.uniform(
+                        low=self._pos_low,
+                        high=self._pos_high)
+                    if cube_reset_pos[1] <= bowl_xrange[0] or cube_reset_pos[1] >= bowl_xrange[1]:
+                        break
+            else:
+                cube_reset_pos = np.random.uniform(
+                    low=self._pos_low,
+                    high=self._pos_high)
             # By default, reset cube pos on ground.
             cube_reset_pos[-1] = SawyerLiftEnvGC.GROUND_Y
             if obj_id == obj_id_to_put_in_hand:
@@ -153,7 +169,18 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         return self.compute_rewards(actions, observations)[0]
 
     def compute_rewards(self, actions, observations):
-        # Current computes reward based off only cube goal. Hand goal is ignored
+        assert self.reward_type in ['bowl_cube0_dist', None]
+        if self.reward_type == 'bowl_cube0_dist':
+            states = observations['state_achieved_goal']
+            state_dim = states.shape[1]
+            x_dist_sq = (states[:, 2] - states[:,state_dim - 2]) ** 2
+            y_dist_sq = (states[:, 3] - (-0.35)) ** 2
+            dist = np.sqrt(x_dist_sq + y_dist_sq)
+
+            reward = -dist
+            return reward
+
+
         achieved_goal = observations['state_achieved_goal']
         desired_goal = observations['state_desired_goal']
 
@@ -184,19 +211,24 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
 
         info = {}
 
-        info['hand_dist'] = bullet.l2_dist(achieved_goal_info['hand_pos'], desired_goal_info['hand_pos'])
+        num_obj_success = 0
         for obj_id in range(self.num_obj):
-            cube_pos = achieved_goal_info[self.get_obj_name(obj_id)]
-            cube_goal = desired_goal_info[self.get_obj_name(obj_id)]
+            obj_name = self.get_obj_name(obj_id)
+            cube_pos = achieved_goal_info[obj_name]
+            cube_goal = desired_goal_info[obj_name]
 
             obj_goal_dist = bullet.l2_dist(cube_pos, cube_goal)
-            info['{}_dist'.format(self.get_obj_name(obj_id))] = obj_goal_dist
-            info['{}_success'.format(self.get_obj_name(obj_id))] = \
-                float(np.abs(cube_pos[0] - self._bowl_pos[1]) <= 0.09)
+            info['{}_dist'.format(obj_name)] = obj_goal_dist
+            obj_success = float(obj_goal_dist <= self.obj_success_threshold) # 0.09
+            info['{}_success'.format(obj_name)] = obj_success
+            num_obj_success += obj_success
 
-            info['bowl_{}_dist'.format(self.get_obj_name(obj_id))] = np.abs(
-                achieved_goal_info['bowl_pos'] - cube_pos[0]
-            )
+            obj_bowl_dist = np.abs(achieved_goal_info['bowl_pos'] - cube_pos[0])
+            info['bowl_{}_dist'.format(obj_name)] = obj_bowl_dist
+            info['bowl_{}_success'.format(obj_name)] = float(obj_bowl_dist <= 0.10)
+        info['num_obj_success'] = num_obj_success
+
+        info['hand_dist'] = bullet.l2_dist(achieved_goal_info['hand_pos'], desired_goal_info['hand_pos'])
         info['bowl_dist'] = np.abs(achieved_goal_info['bowl_pos'] - desired_goal_info['bowl_pos'])
         info['gripper_dist'] = np.abs(achieved_goal_info['gripper_size'] - desired_goal_info['gripper_size'])
 
