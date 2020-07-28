@@ -18,7 +18,7 @@ from roboverse.envs.env_list import *
 
 NFS_PATH = '/nfs/kun1/users/avi/batch_rl_datasets/'
 EPSILON = 0.05
-
+ending_target_pos = np.array([0.73822169, -0.03909928, -0.25635483])
 
 def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise=0.2):
     observation = env.reset()
@@ -289,8 +289,11 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
     drawer_never_opened = True
     reset_never_taken = True
 
-    handle_offset = np.concatenate(
-            (np.random.uniform(-0.2, 0.2, (2,)), np.zeros((1,))))
+    l, h = 0.05, 0.2
+    x_rand = np.random.choice([np.random.uniform(-h, -l), np.random.uniform(l, h)])
+    y_rand = np.random.choice([np.random.uniform(-h, -l), np.random.uniform(l, h)])
+
+    handle_offset = np.array([x_rand, y_rand, 0])
 
     for _ in range(env.scripted_traj_len):
 
