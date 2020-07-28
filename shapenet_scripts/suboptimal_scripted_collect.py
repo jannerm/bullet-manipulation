@@ -37,7 +37,7 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
     box_pos = np.random.uniform(
         low=(0.6925, - 0.25, - 0.345), high=(0.9, -0.05, - 0.345))
 
-    for t_ind in range(args.num_timesteps):
+    for t_ind in range(env.scripted_traj_len):
 
         if isinstance(observation, dict):
             blocking_object_pos = observation[env.object_obs_key][
@@ -309,7 +309,7 @@ def main(args):
     obs_keys = (env.cnn_input_key, env.fc_input_key)
     assert 'pixels' in args.observation_mode
 
-    pool_size = args.num_trajectories * args.num_timesteps + 1
+    pool_size = args.num_trajectories * env.scripted_traj_len + 1
     railrl_pool = ObsDictReplayBuffer(pool_size, env,
                                           observation_keys=obs_keys)
     railrl_success_pool = ObsDictReplayBuffer(pool_size, env,
@@ -347,7 +347,6 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--data-save-directory", type=str)
     parser.add_argument("-n", "--num-trajectories", type=int, default=2000)
     parser.add_argument("-p", "--num-parallel-threads", type=int, default=1)
-    parser.add_argument("--num-timesteps", type=int, default=50)
     parser.add_argument("--noise-std", type=float, default=0.2)
     parser.add_argument("--video_save_frequency", type=int,
                         default=0, help="Set to zero for no video saving")
