@@ -24,7 +24,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             gripper_reward=True,
             bowl_reward=True,
             reward_type=None,
-            reset_objs_outside_bowl=False,
+            objs_to_reset_outside_bowl=[],
             obj_success_threshold=0.10,
             **kwargs
     ):
@@ -37,7 +37,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         self.gripper_reward = gripper_reward
         self.bowl_reward = bowl_reward
         self.reward_type = reward_type
-        self.reset_objs_outside_bowl = reset_objs_outside_bowl
+        self.objs_to_reset_outside_bowl = objs_to_reset_outside_bowl
         self.obj_success_threshold = obj_success_threshold
         super().__init__(*args, env='SawyerLiftMulti-v0', **kwargs)
         self.record_args(locals())
@@ -67,7 +67,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             obj_id_to_put_in_hand = np.random.choice(self.num_obj)
 
         for obj_id in range(self.num_obj):
-            if self.reset_objs_outside_bowl:
+            if obj_id in self.objs_to_reset_outside_bowl:
                 bowl_xpos = self._bowl_pos[1]
                 bowl_xrange = [bowl_xpos - 0.15, bowl_xpos + 0.15]
                 while True:
