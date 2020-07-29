@@ -14,9 +14,45 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
         'entry_point': ('roboverse.envs.sawyer_grasp_random_multi_object:SawyerGraspOneEnv'),
         'kwargs': {'max_force': 100, 'action_scale': 0.05}
     },
+
     {
         'id': 'SawyerGraspOneV2-v0',
-        'entry_point': ('roboverse.envs.sawyer_grasp_v2:SawyerGraspV2Env'),
+        'entry_point': ('roboverse.envs.sawyer_grasp_v2_small:SawyerGraspV2Env'),
+        'kwargs': {'max_force': 100,
+                   'action_scale': 0.05,
+                   'pos_init': [0.7, 0.2, -0.2],
+                   'pos_low': [.5, -.05, -.38],
+                   'pos_high': [.9, .30, -.15],
+                   'object_position_low': (.65, .10, -.20),
+                   'object_position_high': (.80, .25, -.20),
+                   'num_objects': 3,
+                   'object_ids': [1]
+                   }
+    },
+
+    {
+        'id': 'SawyerGraspOneV2Large-v0',
+        'entry_point': ('roboverse.envs.sawyer_grasp_v2_large:SawyerGraspV2Env'),
+        'kwargs': {'max_force': 100,
+                   'action_scale': 0.05,
+                   'pos_init': [0.7, -.2, -0.05],
+                   #'pos_init': [0.7, 0.2, -0.2],
+                   'pos_low': [.4, -.6, -.38],
+                   'pos_high': [1, .4, 0],
+                   #'pos_low': [.5, -.05, -.38],
+                   #'pos_high': [.9, .30, -.15],
+                   'object_position_low': (.40, -.5, -.20),
+                   'object_position_high': (.95, .35, -.20),
+                   #'object_position_low': (.65, .10, -.20),
+                   #'object_position_high': (.80, .25, -.20),
+                   'num_objects': 3,
+                   'object_ids': [1]
+                   }
+    },
+
+    {
+        'id': 'SawyerGraspOneV2Trimodal-v0',
+        'entry_point': ('roboverse.envs.sawyer_grasp_v2_trimodal:SawyerGraspV2EnvTrimodal'),
         'kwargs': {'max_force': 100,
                    'action_scale': 0.05,
                    'pos_init': [0.7, 0.2, -0.2],
@@ -28,6 +64,36 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'object_ids': [1]
                    }
     },
+    
+    {
+        'id': 'SawyerGraspV2Reaching-v0',
+        'entry_point': ('roboverse.envs.sawyer_grasp_v2_reaching:SawyerGraspV2ReachingEnv'),
+        'kwargs': {'max_force': 100,
+                   'action_scale': 0.05,
+                   'pos_init': [0.7, 0.2, -0.2],
+                   'pos_low': [.5, -.05, -.38],
+                   'pos_high': [.9, .30, -.15],
+                   'object_position_low': (.65, .10, -.20),
+                   'object_position_high': (.80, .25, -.20),
+                   'num_objects': 3,
+                   'object_ids': [0,1,2]
+                   }
+    },
+    {
+        'id': 'SawyerGraspV2Reaching9C3-v0',
+        'entry_point': ('roboverse.envs.sawyer_grasp_v2_reaching_9C3:SawyerGraspV2Reaching9C3Env'),
+        'kwargs': {'max_force': 100,
+                   'action_scale': 0.05,
+                   'pos_init': [0.7, 0.2, -0.2],
+                   'pos_low': [.5, -.05, -.38],
+                   'pos_high': [.9, .30, -.15],
+                   'object_position_low': (.65, .10, -.20),
+                   'object_position_high': (.80, .25, -.20),
+                   'num_objects': 3,
+                   'object_ids': [0, 1, 2]
+                   }
+    },
+
     {
         'id': 'SawyerGraspV2-v0',
         'entry_point': ('roboverse.envs.sawyer_grasp_v2:SawyerGraspV2Env'),
