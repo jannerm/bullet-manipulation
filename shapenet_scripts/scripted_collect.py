@@ -2611,13 +2611,13 @@ def main(args):
             assert not render_images
             success = False
             scripted_grasping_V4(env, railrl_pool, railrl_success_pool)
-        elif args.env in V5_GRASPING_ENVS:
-            assert not render_images
-            success = False
-            scripted_grasping_V5(env, railrl_pool, railrl_success_pool,
-                                 noise=args.noise_std)
+        # elif args.env in V5_GRASPING_ENVS:
+        #     assert not render_images
+        #     success = False
+        #     scripted_grasping_V5(env, railrl_pool, railrl_success_pool,
+        #                          noise=args.noise_std)
         elif args.env in (V6_GRASPING_ENVS +
-            V6_GRASPING_V0_DRAWER_GRASPING_ONLY_ENVS):
+            V6_GRASPING_V0_DRAWER_GRASPING_ONLY_ENVS + V5_GRASPING_ENVS):
             assert not render_images
             success = False
             scripted_grasping_V6(env, railrl_pool, railrl_success_pool,
@@ -2831,7 +2831,7 @@ if __name__ == "__main__":
     if args.env in V2_GRASPING_ENVS:
         args.num_timesteps = 20
         assert args.observation_mode != 'pixels'
-    elif args.env in (V4_GRASPING_ENVS + V6_GRASPING_ENVS + V7_GRASPING_ENVS +
+    elif args.env in (V4_GRASPING_ENVS + V5_GRASPING_ENVS + V6_GRASPING_ENVS + V7_GRASPING_ENVS +
         V6_GRASPING_V0_DRAWER_GRASPING_ONLY_ENVS):
         args.num_timesteps = 25
         assert args.observation_mode != 'pixels'

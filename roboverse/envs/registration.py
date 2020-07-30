@@ -131,6 +131,16 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'action_scale': 0.05,
                    'reward_height_threshold': -.275}
     },
+{
+        'id': 'Widow200GraspThreeV5-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v5:Widow200GraspV5Env'),
+        'kwargs': {'max_force': 100,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.26,
+                   'num_objects': 3,
+                   'object_names': ('gatorade', 'jar', 'beer_bottle')
+                   }
+    },
     {
         'id': 'Widow200GraspFiveV5-v0',
         'entry_point': ('roboverse.envs.widow200_grasp_v5:Widow200GraspV5Env'),
