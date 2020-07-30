@@ -25,7 +25,7 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
         self.scripted_traj_len = 25
 
     def get_info(self):
-        assert self._num_objects == 1
+        # assert self._num_objects == 1
         object_name = list(self._objects.keys())[0]
         object_info = bullet.get_body_info(self._objects[object_name],
                                            quat_to_deg=False)
