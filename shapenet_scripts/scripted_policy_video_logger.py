@@ -12,6 +12,7 @@ env_to_policy_map = {
     frozenset(V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_OPENING_GRASPING_ENVS):scripted_grasping_V6_close_open_grasp_V0,
     frozenset(V6_GRASPING_V0_DOUBLE_DRAWER_OPENING_ENVS):scripted_grasping_V6_double_drawer_open_grasp_V0,
     frozenset(V6_GRASPING_V0_DRAWER_GRASPING_ONLY_ENVS):scripted_grasping_V6,
+    frozenset(V6_GRASPING_V0_PLACING_ENVS):scripted_grasping_V6_placing_V0,
 }
 
 class BulletVideoLogger:
@@ -86,7 +87,11 @@ class BulletVideoLogger:
                 self.image_size, self.image_size,
                 self.view_matrix, self.projection_matrix)
             images.append(img)
-            obs, rew, done, info = self.env.step(actions[t])
+            obs, rew, done, info, imgs = self.env.step_slow(
+                actions[t], self.image_size,
+                self.view_matrix, self.projection_matrix)
+            if len(imgs) > 0:
+                images.extend(imgs)
 
         save_path = "{}/scripted_{}.mp4".format(self.video_save_dir, path_idx)
         skvideo.io.vwrite(save_path, images)
