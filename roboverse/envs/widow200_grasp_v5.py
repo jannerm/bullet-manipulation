@@ -280,7 +280,7 @@ class Widow200GraspV5RandObjEnv(Widow200GraspV5Env):
 if __name__ == "__main__":
     import roboverse
     import time
-    env = roboverse.make("Widow200GraspV5-v0",
+    env = roboverse.make("Widow200GraspThreeV5-v0",
                          gui=True,
                          observation_mode='pixels_debug',)
 
