@@ -1,4 +1,6 @@
 import gym
+import numpy as np
+
 from roboverse.envs.env_object_list import (
     POSSIBLE_TRAIN_OBJECTS, POSSIBLE_TRAIN_SCALINGS,
     POSSIBLE_TEST_OBJECTS, POSSIBLE_TEST_SCALINGS)
@@ -140,6 +142,39 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'num_objects': 3,
                    'object_names': ('gatorade', 'jar', 'beer_bottle'),
                    'scaling_local_list': [0.5, 0.5, 0.5]
+                   }
+    },
+{
+        'id': 'Widow200GraspThreeFixedPositionV6-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v6:Widow200GraspV6Env'),
+        'kwargs': {'max_force': 100,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.26,
+                   'num_objects': 3,
+                   'object_names': ('gatorade', 'jar', 'beer_bottle'),
+                   'scaling_local_list': [0.5, 0.5, 0.5],
+                   'randomize': False,
+                   'object_positions': np.asarray([
+                       [.76, +.075, -.20],
+                       [.80, -.025, -.20],
+                       [.84, -.125, -.20],
+                   ])
+                   }
+    },
+{
+        'id': 'Widow200GraspTwoFixedPositionV6-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v6:Widow200GraspV6Env'),
+        'kwargs': {'max_force': 100,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.26,
+                   'num_objects': 2,
+                   'object_names': ('gatorade', 'beer_bottle'),
+                   'scaling_local_list': [0.5, 0.5],
+                   'randomize': False,
+                   'object_positions': np.asarray([
+                       [.80, +.025, -.30],
+                       [.82, -.100, -.30],
+                   ])
                    }
     },
     {

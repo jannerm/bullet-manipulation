@@ -26,7 +26,8 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                  object_names=('beer_bottle',),
                  scaling_local_list=[0.5]*10,
                  reward_type=False,  # Not actually used in grasping envs
-                 randomize=True,  # Not actually used
+                 randomize=True,
+                 object_positions=None,
                  **kwargs):
 
         self._object_position_high = (.82, .075, -.20)
@@ -38,6 +39,11 @@ class Widow200GraspV2Env(Widow200GraspEnv):
         self._observation_mode = observation_mode
         self._transpose_image = transpose_image
         self._reward_type = reward_type
+        self.randomize = randomize
+        self.object_positions = object_positions
+
+        if not self.randomize:
+            assert self.object_positions is not None
 
         super().__init__(*args, **kwargs)
 
@@ -108,7 +114,11 @@ class Widow200GraspV2Env(Widow200GraspEnv):
             xyz_min=self._pos_low, xyz_max=self._pos_high,
             visualize=False, rgba=[0,1,0,.1])
 
-        object_positions = self._generate_object_positions()
+        if self.randomize:
+            object_positions = self._generate_object_positions()
+        else:
+            object_positions = self.object_positions
+
         self._load_objects(object_positions)
 
         if "Drawer" in self._env_name:
