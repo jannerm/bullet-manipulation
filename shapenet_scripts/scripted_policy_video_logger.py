@@ -97,7 +97,7 @@ class BulletVideoLogger:
 
         save_path = "{}/{}_scripted_reward_{}_{}.mp4".format(
             self.video_save_dir, self.env_name, rew, path_idx)
-        inputdict = {'-r': str(8)}
+        inputdict = {'-r': str(12)}
         outputdict = {'-vcodec': 'libx264', '-pix_fmt': 'yuv420p'}
         writer = skvideo.io.FFmpegWriter(
             save_path, inputdict=inputdict, outputdict=outputdict)
