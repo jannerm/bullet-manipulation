@@ -374,7 +374,7 @@ def scripted_grasping_V5(env, pool, success_pool, noise=0.2):
     if rewards[-1] > 0:
         success_pool.add_path(path)
 
-def scripted_grasping_V6(env, pool, success_pool, noise=0.2):
+def scripted_grasping_V6(env, env_name, pool, success_pool, noise=0.2):
     observation = env.reset()
     object_ind = 0
     margin = 0.025
@@ -554,7 +554,7 @@ def scripted_grasping_V7(env, pool, success_pool, noise=0.2):
     if rewards[-1] > 0:
         success_pool.add_path(path)
 
-def scripted_grasping_V6_placing_V0(env, pool, success_pool, noise=0.2):
+def scripted_grasping_V6_placing_V0(env, env_name, pool, success_pool, noise=0.2):
     observation = env.reset()
     object_ind = 0
     actions, observations, next_observations, rewards, terminals, infos = \
@@ -1017,7 +1017,10 @@ def scripted_grasping_V6_opening_V0(env, pool, success_pool, noise=0.2):
     if rewards[-1] > 0:
         success_pool.add_path(path)
 
-def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
+def scripted_grasping_V6_opening_only_V0(
+        env, env_name, pool, success_pool, noise=0.2, one_reset_per_traj=True,
+        joint_norm_thresh=0.05, end_at_neutral=True):
+
     observation = env.reset()
     object_ind = np.random.randint(0, env._num_objects)
     margin = 0.025
@@ -1042,7 +1045,7 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
 
         handle_offset = np.array([0, -0.01, 0])
 
-        if "DoubleDrawer" in args.env:
+        if "DoubleDrawer" in env_name:
             handle_pos = env.get_bottom_drawer_handle_pos() + handle_offset
             drawer_opened = env.is_drawer_opened("bottom", widely=drawer_never_opened)
         else:
@@ -1059,8 +1062,8 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
         currJointStates = bullet.get_joint_positions(
             env._robot_id)[1][:len(env.RESET_JOINTS)]
         joint_norm_dev_from_neutral = np.linalg.norm(currJointStates - env.RESET_JOINTS)
-        eligible_for_reset = ((args.one_reset_per_traj and reset_never_taken) or
-            (not args.one_reset_per_traj))
+        eligible_for_reset = ((one_reset_per_traj and reset_never_taken) or
+            (not one_reset_per_traj))
 
         if (gripper_handle_dist > dist_thresh
             and not drawer_opened):
@@ -1082,7 +1085,7 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
             action = np.array([0, 0, 0.7]) # force upward action to avoid upper box
             action = np.concatenate(
                 (action, np.asarray([theta_action, 0., 0.])))
-        elif ((joint_norm_dev_from_neutral > args.joint_norm_thresh) and
+        elif ((joint_norm_dev_from_neutral > joint_norm_thresh) and
             eligible_for_reset):
             # print("Move toward neutral")
             action = np.asarray([0., 0., 0., 0., 0., 0.7])
@@ -1109,7 +1112,7 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
         if done:
             break
 
-        if not reset_never_taken and args.end_at_neutral:
+        if not reset_never_taken and end_at_neutral:
             break
 
     path = dict(
@@ -1129,10 +1132,10 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
     pool.add_path(path)
     if rewards[-1] > 0:
         success_pool.add_path(path)
-        if args.end_at_neutral:
+        if end_at_neutral:
             return 1
 
-def scripted_grasping_V6_place_then_open_V0(env, pool, success_pool, allow_grasp_retries=False, noise=0.2):
+def scripted_grasping_V6_place_then_open_V0(env, env_name, pool, success_pool, allow_grasp_retries=False, noise=0.2):
     observation = env.reset()
     margin = 0.025
     object_ind = 0
@@ -1314,7 +1317,7 @@ def scripted_grasping_V6_place_then_open_V0(env, pool, success_pool, allow_grasp
     if rewards[-1] > 0:
         success_pool.add_path(path)
 
-def scripted_grasping_V6_close_open_grasp_V0(env, pool, success_pool, allow_grasp_retries=False, noise=0.2):
+def scripted_grasping_V6_close_open_grasp_V0(env, env_name, pool, success_pool, allow_grasp_retries=False, noise=0.2):
     observation = env.reset()
     object_ind = 0
     margin = 0.025
@@ -1463,7 +1466,8 @@ def scripted_grasping_V6_close_open_grasp_V0(env, pool, success_pool, allow_gras
     if rewards[-1] > 0:
         success_pool.add_path(path)
 
-def scripted_grasping_V6_double_drawer_open_grasp_V0(env, pool, success_pool, allow_grasp_retries=False, noise=0.2):
+def scripted_grasping_V6_double_drawer_open_grasp_V0(
+        env, env_name, pool, success_pool, allow_grasp_retries=False, noise=0.2):
     observation = env.reset()
     object_ind = 0
     margin = 0.025
@@ -2620,7 +2624,7 @@ def main(args):
             V6_GRASPING_V0_DRAWER_GRASPING_ONLY_ENVS + V5_GRASPING_ENVS):
             assert not render_images
             success = False
-            scripted_grasping_V6(env, railrl_pool, railrl_success_pool,
+            scripted_grasping_V6(env, args.env, railrl_pool, railrl_success_pool,
                                  noise=args.noise_std)
         elif args.env in (V6_GRASPING_V0_PLACING_ENVS +
             V6_GRASPING_V0_PLACING_ONLY_ENVS +
@@ -2629,7 +2633,7 @@ def main(args):
             assert not render_images
             success = False
             scripted_grasping_V6_placing_V0(
-                env, railrl_pool, railrl_success_pool, noise=args.noise_std)
+                env, args.env, railrl_pool, railrl_success_pool, noise=args.noise_std)
         elif args.env in (V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV +
             V6_GRASPING_V0_DRAWER_CLOSED_PLACING_40_ENV):
             assert not render_images
@@ -2646,13 +2650,15 @@ def main(args):
             assert not render_images
             success = False
             result = scripted_grasping_V6_opening_only_V0(
-                env, railrl_pool, railrl_success_pool, noise=args.noise_std)
+                env, args.env, railrl_pool, railrl_success_pool, noise=args.noise_std,
+                one_reset_per_traj=args.one_reset_per_traj, joint_norm_thresh=args.joint_norm_thresh,
+                end_at_neutral=args.end_at_neutral)
             end_at_neutral_num_successes += (result == 1)
         elif args.env in V6_GRASPING_V0_DRAWER_PLACING_OPENING_ENVS:
             assert not render_images
             success = False
             scripted_grasping_V6_place_then_open_V0(
-                env, railrl_pool, railrl_success_pool,
+                env, args.env, railrl_pool, railrl_success_pool,
                 allow_grasp_retries=args.allow_grasp_retries, noise=args.noise_std)
         elif args.env in V6_GRASPING_V0_DOUBLE_DRAWER_PICK_PLACE_OPEN_ENVS:
             assert not render_images
@@ -2664,7 +2670,7 @@ def main(args):
             assert not render_images
             success = False
             scripted_grasping_V6_close_open_grasp_V0(
-                env, railrl_pool, railrl_success_pool,
+                env, args.env, railrl_pool, railrl_success_pool,
                 allow_grasp_retries=args.allow_grasp_retries, noise=args.noise_std)
         elif args.env in V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_ENVS:
             assert not render_images
@@ -2682,7 +2688,7 @@ def main(args):
             assert not render_images
             success = False
             scripted_grasping_V6_double_drawer_open_grasp_V0(
-                env, railrl_pool, railrl_success_pool,
+                env, args.env, railrl_pool, railrl_success_pool,
                 allow_grasp_retries=args.allow_grasp_retries, noise=args.noise_std)
         elif args.env in V6_GRASPING_V0_DOUBLE_DRAWER_CLOSE_OPEN_GRASP_PLACE_ENVS:
             assert not render_images
