@@ -89,8 +89,13 @@ class BulletVideoLogger:
             obs, rew, done, info = self.env.step(actions[t])
 
         save_path = "{}/scripted_{}.mp4".format(self.video_save_dir, path_idx)
-        skvideo.io.vwrite(save_path, images)
-
+        inputdict = {'-r': str(8)}
+        outputdict = {'-vcodec': 'libx264', '-pix_fmt': 'yuv420p'}
+        writer = skvideo.io.FFmpegWriter(
+            save_path, inputdict=inputdict, outputdict=outputdict)
+        for i in range(len(images)):
+            writer.writeFrame(images[i])
+        writer.close()
 
 
     def save_videos(self, num_videos):
