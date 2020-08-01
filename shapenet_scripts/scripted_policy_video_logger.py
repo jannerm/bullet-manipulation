@@ -93,7 +93,8 @@ class BulletVideoLogger:
             if len(imgs) > 0:
                 images.extend(imgs)
 
-        save_path = "{}/scripted_{}.mp4".format(self.video_save_dir, path_idx)
+        save_path = "{}/{}_scripted_reward_{}_{}.mp4".format(
+            self.video_save_dir, self.env_name, rew, path_idx)
         inputdict = {'-r': str(8)}
         outputdict = {'-vcodec': 'libx264', '-pix_fmt': 'yuv420p'}
         writer = skvideo.io.FFmpegWriter(
