@@ -71,6 +71,44 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
 
         return observation, reward, done, info
 
+    def step_slow(self, action, image_size, view_matrix, projection_matrix):
+        action = np.asarray(action)
+        # In Grasp V6, the 6th action dim corresponds to a binary
+        # move to reset command.
+        images = []
+
+        if action[5] > 0.5:
+            # currently nothing happens for large negative action[5] commands.
+            bullet.move_to_neutral(self.RESET_JOINTS, self._robot_id)
+        else:
+            pos = list(bullet.get_link_state(self._robot_id, self._end_effector, 'pos'))
+            delta_pos = action[:3]
+            pos += delta_pos * self._action_scale
+            pos = np.clip(pos, self._pos_low, self._pos_high)
+
+            theta = list(bullet.get_link_state(self._robot_id, self._end_effector,
+                                               'theta'))
+            target_theta = theta
+            delta_theta = action[3]
+            target_theta = np.clip(target_theta, [0, 85, 137], [180, 85, 137])
+            target_theta = bullet.deg_to_quat(target_theta)
+
+            gripper_action = action[4]
+            images = self._gripper_simulate_slow(
+                pos, target_theta, delta_theta, gripper_action,
+                image_size, view_matrix, projection_matrix)
+
+        reward = self.get_reward({})
+        info = self.get_info()
+        info['grasp_success'] = float(self.is_object_grasped())
+
+        observation = self.get_observation()
+        self._prev_pos = bullet.get_link_state(self._robot_id, self._end_effector,
+                                               'pos')
+        done = False
+
+        return observation, reward, done, info, images
+
 class Widow200GraspV6RandObjEnv(RandObjEnv, Widow200GraspV6Env):
     """Grasping Env but with a random object each time."""
 

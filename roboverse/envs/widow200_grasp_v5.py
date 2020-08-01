@@ -165,6 +165,51 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
         else:
             raise NotImplementedError
 
+    def _gripper_simulate_slow(self, pos, target_theta, delta_theta, gripper_action,
+        image_size, view_matrix, projection_matrix):
+        # is_gripper_open = self._is_gripper_open()
+        images = []
+        is_gripper_open = self._gripper_open
+        if gripper_action > 0.5 and is_gripper_open:
+            # keep it open
+            gripper = -0.8
+            self._simulate(pos, target_theta, gripper, delta_theta=delta_theta)
+        elif gripper_action > 0.5 and not is_gripper_open:
+            # gripper is currently closed and we want to open it
+            gripper = -0.8
+            for _ in range(5):
+                self._simulate(pos, target_theta, gripper, delta_theta=0)
+            self._gripper_open = True
+        elif gripper_action < -0.5 and not is_gripper_open:
+            # keep it closed
+            gripper = 0.8
+            self._simulate(pos, target_theta, gripper, delta_theta=delta_theta)
+        elif gripper_action < -0.5 and is_gripper_open:
+            # gripper is open and we want to close it
+            gripper = +0.8
+            for _ in range(5):
+                self._simulate(pos, target_theta, gripper, delta_theta=0)
+            # we will also lift the object up a little
+            for _ in range(5):
+                pos = list(self.gripper_goal_location)
+                self._simulate(pos, target_theta, gripper, delta_theta=0)
+                img, _, _ = bullet.render(image_size, image_size,
+                    view_matrix, projection_matrix)
+                images.append(img)
+
+            self._gripper_open = False
+        elif gripper_action <= 0.5 and gripper_action >= -0.5:
+            # maintain current status
+            if is_gripper_open:
+                gripper = -0.8
+            else:
+                gripper = 0.8
+            self._simulate(pos, target_theta, gripper, delta_theta=delta_theta)
+            pass
+        else:
+            raise NotImplementedError
+        return images[:-1]
+
     def step(self, action):
         action = np.asarray(action)
         pos = list(bullet.get_link_state(self._robot_id, self._end_effector, 'pos'))
