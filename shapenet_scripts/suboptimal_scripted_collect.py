@@ -20,7 +20,7 @@ NFS_PATH = '/nfs/kun1/users/avi/batch_rl_datasets/'
 EPSILON = 0.05
 ending_target_pos = np.array([0.73822169, -0.03909928, -0.25635483])
 
-def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise=0.2):
+def suboptimal_scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise=0.2):
     observation = env.reset()
     blocking_object_ind = 1
     actions, observations, next_observations, rewards, terminals, infos = \
@@ -150,7 +150,7 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
         if args.end_at_neutral:
             return 1 # Only return 1 if end_at_neutral == True and last timestep was success.
 
-def scripted_grasping_V6_double_drawer_close_open_V0(env, pool, success_pool, noise=0.2):
+def suboptimal_scripted_grasping_V6_double_drawer_close_open_V0(env, pool, success_pool, noise=0.2):
     observation = env.reset()
     object_ind = 0
     margin = 0.025
@@ -277,7 +277,7 @@ def scripted_grasping_V6_double_drawer_close_open_V0(env, pool, success_pool, no
         if args.end_at_neutral:
             return 1
 
-def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
+def suboptimal_scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
     observation = env.reset()
     object_ind = np.random.randint(0, env._num_objects)
     margin = 0.025
@@ -439,17 +439,17 @@ def main(args):
         if args.env in (V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV +
             V6_GRASPING_V0_DOUBLE_DRAWER_PICK_PLACE_OPEN_ENVS):
             success = False
-            result = scripted_grasping_V6_drawer_closed_placing_V0(
+            result = suboptimal_scripted_grasping_V6_drawer_closed_placing_V0(
                 env, railrl_pool, railrl_success_pool, noise=args.noise_std)
             end_at_neutral_num_successes += (result == 1)
         elif args.env in V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_OPENING_ENVS:
             success = False
-            result = scripted_grasping_V6_double_drawer_close_open_V0(
+            result = suboptimal_scripted_grasping_V6_double_drawer_close_open_V0(
                 env, railrl_pool, railrl_success_pool, noise=args.noise_std)
             end_at_neutral_num_successes += (result == 1)
         elif args.env in V6_GRASPING_V0_DRAWER_OPENING_ONLY_ENVS:
             success = False
-            result = scripted_grasping_V6_opening_only_V0(
+            result = suboptimal_scripted_grasping_V6_opening_only_V0(
                 env, railrl_pool, railrl_success_pool, noise=args.noise_std)
             end_at_neutral_num_successes += (result == 1)
         else:
