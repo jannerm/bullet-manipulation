@@ -222,7 +222,6 @@ def move_to_neutral_slow(RESET_JOINTS, robot_id, image_size, view_matrix, projec
         p.setJointMotorControl2(robot_id, i, p.POSITION_CONTROL, RESET_JOINTS[i])
     joint_norm_dev_from_neutral = 1.0
     max_iters = 100
-    max_images = 4
     iters = 0
     while joint_norm_dev_from_neutral > 0.01 and iters < max_iters:
         iters += 1
@@ -232,7 +231,7 @@ def move_to_neutral_slow(RESET_JOINTS, robot_id, image_size, view_matrix, projec
         images.append(img)
         currJointStates = get_joint_positions(robot_id)[1][:len(RESET_JOINTS)]
         joint_norm_dev_from_neutral = np.linalg.norm(currJointStates - RESET_JOINTS)
-    return images[:max_images]
+    return images[:-1]
 
 #################
 ####  drawer  ###
