@@ -232,7 +232,8 @@ def move_to_neutral_slow(RESET_JOINTS, robot_id, image_size, view_matrix, projec
         images.append(img)
         currJointStates = get_joint_positions(robot_id)[1][:len(RESET_JOINTS)]
         joint_norm_dev_from_neutral = np.linalg.norm(currJointStates - RESET_JOINTS)
-    return images[::len(images) // (max_images - 1)]
+    images_step_size = max(1, len(images) // (max_images - 1))
+    return images[::images_step_size]
 
 #################
 ####  drawer  ###
