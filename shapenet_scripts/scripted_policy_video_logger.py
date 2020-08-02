@@ -22,6 +22,7 @@ env_to_policy_map = {
 env_to_suboptimal_policy_map = {
     frozenset(V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_OPENING_ENVS): suboptimal_scripted_grasping_V6_double_drawer_close_open_V0,
     frozenset(V6_GRASPING_V0_DRAWER_OPENING_ONLY_ENVS): suboptimal_scripted_grasping_V6_opening_only_V0,
+    frozenset(V6_GRASPING_V0_DOUBLE_DRAWER_PICK_PLACE_OPEN_ENVS): suboptimal_scripted_grasping_V6_drawer_closed_placing_V0,
 }
 
 class BulletVideoLogger:
@@ -57,12 +58,13 @@ class BulletVideoLogger:
 
     def get_scripted_policy_func(self, env_name):
         if self.suboptimal_policy:
+            print("using suboptimal policy")
             env_policy_map = env_to_suboptimal_policy_map
         else:
             env_policy_map = env_to_policy_map
         for env_group in env_policy_map.keys():
             if env_name in env_group:
-                return env_to_policy_map[env_group]
+                return env_policy_map[env_group]
         raise NotImplementedError
 
     def get_single_path_pool_and_success(self):
@@ -108,8 +110,8 @@ class BulletVideoLogger:
             if len(imgs) > 0:
                 images.extend(imgs)
 
-        save_path = "{}/{}_scripted_reward_{}_{}.mp4".format(
-            self.video_save_dir, self.env_name, rew, path_idx)
+        save_path = "{}/{}_scripted_{}_reward_{}.mp4".format(
+            self.video_save_dir, self.env_name, path_idx, int(rew))
         inputdict = {'-r': str(12)}
         outputdict = {'-vcodec': 'libx264', '-pix_fmt': 'yuv420p'}
         writer = skvideo.io.FFmpegWriter(
