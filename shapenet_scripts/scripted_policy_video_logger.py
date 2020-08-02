@@ -7,6 +7,7 @@ from railrl.data_management.obs_dict_replay_buffer import \
 from roboverse.envs.env_list import *
 from scripted_collect import *
 from suboptimal_scripted_collect import *
+import cv2
 
 env_to_policy_map = {
     frozenset(V6_GRASPING_V0_DRAWER_PLACING_OPENING_ENVS): scripted_grasping_V6_place_then_open_V0,
@@ -25,14 +26,20 @@ env_to_suboptimal_policy_map = {
     frozenset(V6_GRASPING_V0_DOUBLE_DRAWER_PICK_PLACE_OPEN_ENVS): suboptimal_scripted_grasping_V6_drawer_closed_placing_V0,
 }
 
+ROBOT_VIEW_HEIGHT = 100
+ROBOT_VIEW_WIDTH = 100
+ROBOT_VIEW_CROP_X = 30
+
 class BulletVideoLogger:
-    def __init__(self, env_name, video_save_dir, success_only, suboptimal_policy, noise=0.2):
+    def __init__(self, env_name, video_save_dir, success_only, suboptimal_policy,
+                 add_robot_view, noise=0.2):
         self.env_name = env_name
         self.noise = noise
         self.video_save_dir = video_save_dir
         self.success_only = success_only
         self.suboptimal_policy = suboptimal_policy
         self.image_size = 512
+        self.add_robot_view = add_robot_view
 
         if not os.path.exists(self.video_save_dir):
             os.makedirs(self.video_save_dir)
@@ -92,6 +99,25 @@ class BulletVideoLogger:
             railrl_pool, _ = self.get_single_path_pool_and_success()
         return railrl_pool
 
+    def add_robot_view_to_video(self, images):
+        image_x, image_y, image_c = images[0].shape
+        font = cv2.FONT_HERSHEY_TRIPLEX
+
+        for i in range(len(images)):
+            robot_view = cv2.resize(images[i],
+                                    (ROBOT_VIEW_HEIGHT, ROBOT_VIEW_WIDTH))
+            robot_view = robot_view[ROBOT_VIEW_CROP_X:, :, :]
+            image_new = np.copy(images[i])
+            x_offset = ROBOT_VIEW_HEIGHT-ROBOT_VIEW_CROP_X
+            y_offset = image_y - ROBOT_VIEW_WIDTH
+            image_new[:x_offset, y_offset:, :] = \
+                robot_view
+            image_new = cv2.putText(image_new, 'Robot view', (y_offset, x_offset + 12),
+                                    font, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+            images[i] = image_new
+
+        return images
+
     def save_video_from_path(self, single_path_pool, path_idx):
         actions = single_path_pool._actions
         assert self.env.scripted_traj_len < actions.shape[0]
@@ -116,6 +142,9 @@ class BulletVideoLogger:
         outputdict = {'-vcodec': 'libx264', '-pix_fmt': 'yuv420p'}
         writer = skvideo.io.FFmpegWriter(
             save_path, inputdict=inputdict, outputdict=outputdict)
+
+        if self.add_robot_view:
+            self.add_robot_view_to_video(images)
         for i in range(len(images)):
             writer.writeFrame(images[i])
         writer.close()
@@ -131,6 +160,7 @@ if __name__ == "__main__":
     parser.add_argument("--env", type=str)
     parser.add_argument("--video-save-dir", type=str, default="scripted_rollouts")
     parser.add_argument("--num-videos", type=int, default=1)
+    parser.add_argument("--add-robot-view", action="store_true", default=False)
     parser.add_argument("--success-only", action="store_true", default=False)
     parser.add_argument("--use-suboptimal-policy", action="store_true", default=False)
     # Currently, success-only collects only successful trajectories,
@@ -138,5 +168,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     vid_log = BulletVideoLogger(
-        args.env, args.video_save_dir, args.success_only, args.use_suboptimal_policy)
+        args.env, args.video_save_dir, args.success_only,
+        args.use_suboptimal_policy, args.add_robot_view)
     vid_log.save_videos(args.num_videos)
