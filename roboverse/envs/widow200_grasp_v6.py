@@ -79,7 +79,8 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
 
         if action[5] > 0.5:
             # currently nothing happens for large negative action[5] commands.
-            bullet.move_to_neutral(self.RESET_JOINTS, self._robot_id)
+            images = bullet.move_to_neutral_slow(self.RESET_JOINTS, self._robot_id,
+                image_size, view_matrix, projection_matrix)
         else:
             pos = list(bullet.get_link_state(self._robot_id, self._end_effector, 'pos'))
             delta_pos = action[:3]
