@@ -14,6 +14,9 @@ env_to_policy_map = {
     frozenset(V6_GRASPING_V0_DOUBLE_DRAWER_OPENING_ENVS):scripted_grasping_V6_double_drawer_open_grasp_V0,
     frozenset(V6_GRASPING_V0_DRAWER_GRASPING_ONLY_ENVS):scripted_grasping_V6,
     frozenset(V6_GRASPING_V0_PLACING_ENVS):scripted_grasping_V6_placing_V0,
+    frozenset(V6_GRASPING_V0_DRAWER_OPENING_ONLY_ENVS):scripted_grasping_V6_opening_only_V0,
+    frozenset(V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_OPENING_ENVS): scripted_grasping_V6_double_drawer_close_open_V0,
+    frozenset(V6_GRASPING_V0_DOUBLE_DRAWER_PICK_PLACE_OPEN_ENVS): scripted_grasping_V6_double_drawer_pick_place_open_V0,
 }
 
 env_to_suboptimal_policy_map = {
@@ -60,6 +63,7 @@ class BulletVideoLogger:
         for env_group in env_policy_map.keys():
             if env_name in env_group:
                 return env_to_policy_map[env_group]
+        raise NotImplementedError
 
     def get_single_path_pool_and_success(self):
         self.trajectories_collected += 1
@@ -71,7 +75,7 @@ class BulletVideoLogger:
         railrl_success_pool = ObsDictReplayBuffer(pool_size, self.env,
             observation_keys=obs_keys)
         self.scripted_policy_func(
-            self.env, railrl_pool, railrl_success_pool, noise=self.noise)
+            self.env, args.env, railrl_pool, railrl_success_pool, noise=self.noise)
         success = railrl_pool._rewards[self.env.scripted_traj_len - 1]
         print(railrl_pool._rewards.T)
         return railrl_pool, success
