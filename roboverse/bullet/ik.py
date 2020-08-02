@@ -227,7 +227,7 @@ def move_to_neutral_slow(RESET_JOINTS, robot_id, image_size, view_matrix, projec
     while joint_norm_dev_from_neutral > 0.01 and iters < max_iters:
         iters += 1
         p.stepSimulation()
-        img, _, _ = bullet.render(image_size, image_size,
+        img, _, _ = roboverse.bullet.render(image_size, image_size,
                     view_matrix, projection_matrix)
         images.append(img)
         currJointStates = get_joint_positions(robot_id)[1][:len(RESET_JOINTS)]
