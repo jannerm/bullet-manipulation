@@ -8,7 +8,7 @@ import pickle
 import random
 
 REWARD_NEGATIVE = -1.0
-REWARD_POSITIVE = 10.0
+REWARD_POSITIVE = 30.0
 SHAPENET_ASSET_PATH = osp.join(
     osp.dirname(osp.abspath(__file__)), 'assets/ShapeNetCore')
 
@@ -69,7 +69,6 @@ class SawyerGraspV2Env(SawyerBaseEnv):
         self._height_threshold = height_threshold
         self._reward_height_thresh = reward_height_thresh
         self.randomize = randomize
-        print("self.randomize: ", self.randomize)
         self._object_position_low = object_position_low
         self._object_position_high = object_position_high
 
@@ -270,6 +269,16 @@ class SawyerGraspV2Env(SawyerBaseEnv):
             end_effector_pos = np.asarray(self.get_end_effector_pos())
             object_gripper_distance = np.linalg.norm(object_pos - end_effector_pos)
 
+        object_list = self._objects.keys()
+        all_object_gripper_distance = []
+        for object_name in object_list:
+            object_info = bullet.get_body_info(self._objects[object_name],
+                                               quat_to_deg=False)
+            object_pos = np.asarray(object_info['pos'])
+            end_effector_pos = np.asarray(self.get_end_effector_pos())
+            object_gripper_distance = np.linalg.norm(object_pos - end_effector_pos)
+            all_object_gripper_distance.append(object_gripper_distance)
+
         if pos[2] < self._height_threshold:
             gripper = 0.8
             for i in range(10):
@@ -284,15 +293,15 @@ class SawyerGraspV2Env(SawyerBaseEnv):
             done = True
             reward = self.get_reward({})
             if reward > 0:
-                info = {'grasp_success': 1.0}
+                info = {'grasp_success': 1.0, 'all_object_gripper_distance': all_object_gripper_distance}
             else:
-                info = {'grasp_success': 0.0}
+                info = {'grasp_success': 0.0, 'all_object_gripper_distance': all_object_gripper_distance}
         else:
             done = False
             reward = REWARD_NEGATIVE
             if self.reward_type == "dense":
                 reward = reward - object_gripper_distance
-            info = {'grasp_success': 0.0}
+            info = {'grasp_success': 0.0, 'all_object_gripper_distance': all_object_gripper_distance}
 
         observation = self.get_observation()
         self._prev_pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
