@@ -177,6 +177,20 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    ])
                    }
     },
+{
+        'id': 'Widow200GraspOneFixedPositionV6-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v6:Widow200GraspV6Env'),
+        'kwargs': {'max_force': 100,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.26,
+                   'num_objects': 1,
+                   'object_names': ('gatorade',),
+                   'scaling_local_list': [0.5, 0.5],
+                   'randomize': False,
+                   'object_positions': np.asarray([
+                       [.80, +.025, -.30],])
+                   }
+    },
     {
         'id': 'Widow200GraspFiveV5-v0',
         'entry_point': ('roboverse.envs.widow200_grasp_v5:Widow200GraspV5Env'),
