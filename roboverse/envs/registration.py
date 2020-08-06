@@ -184,8 +184,8 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'action_scale': 0.05,
                    'reward_height_threshold': -.26,
                    'num_objects': 1,
-                   'object_names': ('gatorade',),
-                   'scaling_local_list': [0.5, 0.5],
+                   'object_names': ('shed',),
+                   'scaling_local_list': [0.4,],
                    'randomize': False,
                    'object_positions': np.asarray([
                        [.80, +.025, -.30],])
