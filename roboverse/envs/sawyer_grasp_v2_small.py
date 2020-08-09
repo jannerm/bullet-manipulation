@@ -197,9 +197,10 @@ class SawyerGraspV2Env(SawyerBaseEnv):
                                                quat_to_deg=False)
             object_pos = object_info['pos']
             object_positions_after_landing.append(object_pos)
-        print("object_positions_after_landing: ")
-        print(object_positions_after_landing)
-        self._trimodal_positions = object_positions_after_landing
+        self.object_positions_after_landing = object_positions_after_landing
+        #print("object_positions_after_landing: ")
+        #print(object_positions_after_landing)
+        #self._trimodal_positions = object_positions_after_landing
 
     def get_reward(self, info):
         object_list = self._objects.keys()
