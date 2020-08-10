@@ -3,7 +3,7 @@ import argparse
 import roboverse
 import os
 import os.path as osp
-
+import numpy as np
 from railrl.data_management.env_replay_buffer import EnvReplayBuffer
 from railrl.data_management.obs_dict_replay_buffer import \
     ObsDictReplayBuffer
@@ -19,6 +19,7 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--data-directory", type=str, required=True)
     parser.add_argument("-o", "--observation-mode", type=str, default='state',
                         choices=('state', 'pixels', 'pixels_debug'))
+    parser.add_argument('--downwards', action='store_true',default=False)
     args = parser.parse_args()
 
     if osp.exists(NFS_PATH):
@@ -49,7 +50,12 @@ if __name__ == "__main__":
         original_pool_size += pool._top
     pool_size = original_pool_size + EXTRA_POOL_SPACE
 
-    env = roboverse.make(args.env,
+    if args.downwards:
+        env = roboverse.make(args.env,
+                         observation_mode=args.observation_mode,
+                         transpose_image=True, downwards = True)
+    else:     
+        env = roboverse.make(args.env,
                          observation_mode=args.observation_mode,
                          transpose_image=True)
     if args.observation_mode == 'state':
@@ -90,13 +96,16 @@ if __name__ == "__main__":
             for i in range(pool._top):
                 path['rewards'].append(pool._rewards[i])
                 path['actions'].append(pool._actions[i])
-                path['terminals'].append(pool._terminals[i])
+                # path['terminals'].append(pool._terminals[i])
+                path['terminals'].append(np.zeros_like(pool._rewards[i]))
                 path['observations'].append(dict(image=pool._obs[obs_key][i]))
                 path['next_observations'].append(dict(image=pool._next_obs[obs_key][i]))
 
-                path_done = ((env.terminates and pool._terminals[i]) or
-                             (not env.terminates and
-                              (i + 1) % env.scripted_traj_len == 0))
+                # path_done = ((env.terminates and pool._terminals[i]) or
+                #              (not env.terminates and
+                #               (i + 1) % env.scripted_traj_len == 0))
+                path_done = True
+
                 if path_done:
                     consolidated_pool.add_path(path)
                     path = dict(
@@ -107,8 +116,8 @@ if __name__ == "__main__":
                         next_observations=[],
                     )
 
-            if len(path['rewards']) > 0:
-                consolidated_pool.add_path(path)
+            # if len(path['rewards']) > 0:
+                # consolidated_pool.add_path(path)
 
     else:
         raise NotImplementedError

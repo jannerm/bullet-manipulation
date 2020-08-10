@@ -48,6 +48,9 @@ if __name__ == "__main__":
     parser.add_argument("--random_actions", dest="random_actions",
                         action="store_true", default=False)
     parser.add_argument("-o", "--observation-mode", type=str, default='pixels')
+    parser.add_argument('--rand_reaching', action='store_true',default=False)
+    parser.add_argument('--downwards', action='store_true',default=False)
+    parser.add_argument('--theta', action='store_true',default=False)
     args = parser.parse_args()
 
     num_trajectories_per_thread = int(
@@ -71,6 +74,12 @@ if __name__ == "__main__":
         command.append('--randomize')
     if args.random_actions:
         command.append('--random_actions')
+    if args.rand_reaching:
+        command.append('--rand_reaching')
+    if args.downwards:
+        command.append('--downwards')
+    if args.theta:
+        command.append('--theta')
 
     subprocesses = []
     for i in range(args.num_parallel_threads):
@@ -87,7 +96,8 @@ if __name__ == "__main__":
                      'shapenet_scripts/combine_railrl_pools.py',
                      '-d{}'.format(save_directory),
                      '-o{}'.format(args.observation_mode),
-                     '-e{}'.format(args.env)]
+                     '-e{}'.format(args.env),
+                     '--downwards{}'.format(args.downwards)]
                     )
 
     print(exit_codes)

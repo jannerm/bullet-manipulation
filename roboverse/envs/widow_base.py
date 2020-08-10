@@ -60,6 +60,7 @@ class WidowBaseEnv(gym.Env, Serializable):
 
         view_matrix_args = dict(target_pos=[.95, -0.05, -0.2], distance=0.10,
                                 yaw=90, pitch=-40, roll=0, up_axis_index=2)
+                                
         self._view_matrix = bullet.get_view_matrix(
             **view_matrix_args)
         self._projection_matrix = bullet.get_projection_matrix(

@@ -1,17 +1,16 @@
-import os
+dimport os
 import argparse
 import numpy as np
 import roboverse as rv
 import pdb
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--env', type=str, default='Widow200GraspV6-v0')
-parser.add_argument('--savepath', type=str, default='test/')
+parser.add_argument('--env', type=str, default='SawyerLift2d-v0')
+parser.add_argument('--savepath', type=str, default='mult4-scale1-rep10-step1/')
 parser.add_argument('--gui', type=rv.utils.str2bool, default=None)
-parser.add_argument('--render', action='store_true')
+parser.add_argument('--render', type=rv.utils.str2bool, default=None)
 parser.add_argument('--horizon', type=int, default=200)
-parser.add_argument('--num_episodes', type=int, default=1000)
-parser.add_argument('--reaching_policy', action='store_true')
+parser.add_argument('--num_episodes', type=int, default=100)
 args = parser.parse_args()
 
 args.savepath = os.path.join('data', args.env, args.savepath)
@@ -26,9 +25,6 @@ if 'SawyerLift' in args.env:
 elif 'SawyerLid' in args.env:
 	env = rv.make(args.env, action_scale=.1, action_repeat=10, timestep=1./120, gui=args.gui)
 	policy = rv.policies.LidGraspingPolicy(env, env.get_body('sawyer'), env.get_body('lid'))
-elif args.reaching_policy:
-	env = rv.make(args.env, action_scale=.1, action_repeat=1, timestep=1./120, gui=args.gui)
-	policy = rv.policies.RandPolicy()
 else:
 	raise RuntimeError('Unrecognized environment: {}'.format(args.env))
 
@@ -42,7 +38,7 @@ for ep in range(args.num_episodes):
 	images = []
 	for i in range(args.horizon):
 		act = policy.get_action(obs)
-		if not args.reaching_policy and act[-1] > 0 and min_grasp_step is None:
+		if act[-1] > 0 and min_grasp_step is None:
 			min_grasp_step = i
 			print('min_grasp_step: ', min_grasp_step)
 		next_obs, rew, term, info = env.step(act)
