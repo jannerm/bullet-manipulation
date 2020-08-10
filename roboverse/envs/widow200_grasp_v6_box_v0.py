@@ -1,4 +1,8 @@
 from roboverse.envs.widow200_grasp_v6 import Widow200GraspV6Env
+from roboverse.envs.rand_obj import RandObjEnv
+from roboverse.envs.env_object_list import (
+    POSSIBLE_TRAIN_OBJECTS, POSSIBLE_TRAIN_SCALINGS,
+    POSSIBLE_TEST_OBJECTS, POSSIBLE_TEST_SCALINGS)
 import roboverse.bullet as bullet
 import roboverse.utils as utils
 import numpy as np
@@ -13,8 +17,8 @@ class Widow200GraspV6BoxV0Env(Widow200GraspV6Env):
 
     def __init__(self,
                  *args,
-                 object_names=('jar',),
-                 scaling_local_list=[0.3],
+                 object_names=('gatorade',),
+                 scaling_local_list=[0.5],
                  success_dist_threshold=0.04,
                  **kwargs):
         super().__init__(*args,
@@ -24,47 +28,18 @@ class Widow200GraspV6BoxV0Env(Widow200GraspV6Env):
         self._object_position_high = (.82, -.07, -.20)
         self._object_position_low = (.78, -.125, -.20)
         self._success_dist_threshold = success_dist_threshold
-        self.box_high = np.array([0.83, .05, -.32])
-        self.box_low = np.array([0.77, -.03, -.345])
 
     def _load_meshes(self):
         super()._load_meshes()
-        self._box = bullet.objects.box_open_top()
+        if not "Drawer" in self._env_name:
+            # Drawer Env loads its own box.
+            self._box = bullet.objects.long_box_open_top()
 
-class Widow200GraspV6BoxV0RandObjEnv(Widow200GraspV6BoxV0Env):
+class Widow200GraspV6BoxV0RandObjEnv(RandObjEnv, Widow200GraspV6BoxV0Env):
     """
     Generalization env. Randomly samples one of the following objects
-    every time the env resets.
+    every time the env resets for the V6Box task.
     """
-    def __init__(self,
-                 *args,
-                 success_dist_threshold=0.04,
-                 scaling_local_list=[0.3]*10,
-                 **kwargs):
-        self.possible_objects = [
-            'smushed_dumbbell',
-            'jar',
-            'beer_bottle',
-            'mug',
-            'square_prism_bin',
-            'conic_bin',
-            'ball',
-            'shed',
-            'sack_vase',
-            'conic_cup'
-        ]
-        # chosen_object = np.random.choice(self.possible_objects)
-        super().__init__(*args,
-            object_names=self.possible_objects,
-            success_dist_threshold=success_dist_threshold,
-            scaling_local_list=scaling_local_list,
-            **kwargs)
-
-    def reset(self):
-        """Currently only implemented for selecting 1 object at random"""
-        self.object_names = list([np.random.choice(self.possible_objects)])
-        print("self.object_names", self.object_names)
-        return super().reset()
 
 
 if __name__ == "__main__":
@@ -74,7 +49,7 @@ if __name__ == "__main__":
     env = roboverse.make("Widow200GraspV6BoxV0RandObj-v0",
                          gui=True,
                          reward_type='sparse',
-                         observation_mode='state',)
+                         observation_mode='pixels_debug',)
 
     EPSILON = 0.05
     object_ind = 0
@@ -90,8 +65,12 @@ if __name__ == "__main__":
         rewards = []
 
         for _ in range(env.scripted_traj_len):
-            ee_pos = obs[:3]
-            object_pos = obs[object_ind * 7 + 8: object_ind * 7 + 8 + 3]
+            if isinstance(obs, dict):
+                state_obs = obs[env.fc_input_key]
+                obj_obs = obs[env.object_obs_key]
+
+            ee_pos = state_obs[:3]
+            object_pos = obj_obs[object_ind * 7 : object_ind * 7 + 3]
 
             object_lifted = object_pos[2] > env._reward_height_thresh
             object_lifted_with_margin = object_pos[2] > (env._reward_height_thresh + margin)

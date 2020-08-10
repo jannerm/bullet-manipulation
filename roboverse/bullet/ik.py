@@ -1,7 +1,9 @@
 import numpy as np
 import pybullet as p
 import pdb
+import time
 
+import roboverse
 from roboverse.bullet.queries import (
     get_joint_info,
     get_joint_state,
@@ -25,7 +27,7 @@ def ik(body, link, pos, theta, damping):
         n_dof = p.getNumJoints(body)
         damping = [damping for _ in range(n_dof)]
     ik_solution = p.calculateInverseKinematics(body, link, pos,
-                                               targetOrientation=theta,
+                                               # targetOrientation=theta,
                                                jointDamping=damping)
     return np.array(ik_solution)
 
@@ -198,6 +200,95 @@ def _get_continuous_gripper_state(gripper, gripper_bounds, l_limits, r_limits):
     r_state = r_limits['low'] + percent_closed * (r_limits['high'] - r_limits['low'])
     return [l_state, r_state]
 
+
+def restore_state(filename):
+    p.restoreState(fileName=filename)
+
+def move_to_neutral(RESET_JOINTS, robot_id):
+    for i in range(len(RESET_JOINTS)):
+        p.setJointMotorControl2(robot_id, i, p.POSITION_CONTROL, RESET_JOINTS[i])
+    joint_norm_dev_from_neutral = 1.0
+    max_iters = 100
+    iters = 0
+    while joint_norm_dev_from_neutral > 0.01 and iters < max_iters:
+        iters += 1
+        p.stepSimulation()
+        currJointStates = get_joint_positions(robot_id)[1][:len(RESET_JOINTS)]
+        joint_norm_dev_from_neutral = np.linalg.norm(currJointStates - RESET_JOINTS)
+
+def move_to_neutral_slow(RESET_JOINTS, robot_id, image_size, view_matrix, projection_matrix):
+    images = []
+    for i in range(len(RESET_JOINTS)):
+        p.setJointMotorControl2(robot_id, i, p.POSITION_CONTROL, RESET_JOINTS[i])
+    joint_norm_dev_from_neutral = 1.0
+    max_iters = 100
+    max_images = 10
+    iters = 0
+    while joint_norm_dev_from_neutral > 0.01 and iters < max_iters:
+        iters += 1
+        p.stepSimulation()
+        img, _, _ = roboverse.bullet.render(image_size, image_size,
+                    view_matrix, projection_matrix)
+        images.append(img)
+        currJointStates = get_joint_positions(robot_id)[1][:len(RESET_JOINTS)]
+        joint_norm_dev_from_neutral = np.linalg.norm(currJointStates - RESET_JOINTS)
+    images_step_size = max(1, len(images) // (max_images - 1))
+    return images[::images_step_size]
+
+#################
+####  drawer  ###
+#################
+
+def open_drawer(drawer, noisy_open=False, half_open=False):
+    slide_drawer(drawer, -1, noisy_open, half_open)
+
+def close_drawer(drawer):
+    slide_drawer(drawer, 1)
+
+def slide_drawer(drawer, direction, noisy_open=False, half_open=False):
+    assert direction in [-1, 1]
+    # -1 = open; 1 = close
+    joint_names = [get_joint_info(drawer, j, 'joint_name') for j in range(p.getNumJoints(drawer))]
+    drawer_frame_joint_idx = joint_names.index('base_frame_joint')
+
+    num_ts = 10 if direction == -1 else 20
+
+    command = np.clip(10 * direction,
+            -10 * np.abs(direction), np.abs(direction))
+    # enable fast opening; slow closing
+
+    if noisy_open and direction == -1:
+        rand = np.random.uniform(0.12, 0.2)
+        command *= rand
+
+    if half_open:
+        command *= 0.06
+
+    # Wait a little before closing
+    wait_ts = 0 if direction == -1 else 20
+    for i in range(wait_ts):
+        time.sleep(0.01)
+        roboverse.bullet.step()
+
+    p.setJointMotorControl2(
+        drawer,
+        drawer_frame_joint_idx,
+        controlMode=p.VELOCITY_CONTROL,
+        targetVelocity=command,
+        force=10
+    )
+
+    for i in range(num_ts):
+        time.sleep(0.01)
+        roboverse.bullet.step()
+
+    p.setJointMotorControl2(
+        drawer,
+        drawer_frame_joint_idx,
+        controlMode=p.VELOCITY_CONTROL,
+        targetVelocity=0,
+        force=10
+    )
 
 #################
 #### pointmass###

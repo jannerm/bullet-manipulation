@@ -10,7 +10,7 @@ import importlib.util
 PATH = '/media/avi/data/Work/github/jannerm/bullet-manipulation/roboverse/envs/assets/ShapeNetCore'
 SHAPENET_ASSET_PATH = osp.join(
     osp.dirname(osp.abspath(__file__)), '../envs/assets/bullet-objects/ShapeNetCore')
-
+# SHAPENET_ASSET_PATH = '/home/albert/dev/bullet-objects/ShapeNetCore'
 
 def import_shapenet_metadata():
     metadata_spec = importlib.util.spec_from_file_location(
@@ -20,7 +20,7 @@ def import_shapenet_metadata():
     return shapenet_metadata.obj_path_map, shapenet_metadata.path_scaling_map
 
 
-def load_shapenet_object(object_path, scaling, object_position, scale_local=0.5):
+def load_shapenet_object(object_path, scaling, object_position, scale_local=0.5, quat=[1, -1, 0, 0]):
     path = object_path.split('/')
     dir_name = path[-2]
     object_name = path[-1]
@@ -30,7 +30,7 @@ def load_shapenet_object(object_path, scaling, object_position, scale_local=0.5)
         SHAPENET_ASSET_PATH + '/ShapeNetCore.v2/{0}/{1}/models/model_normalized.obj'.format(
             dir_name, object_name),
         object_position,
-        [1, -1, 0, 0], # this rotates objects 90 degrees. Originally: [0, 0, 1, 0]
+        quat, # this rotates objects 90 degrees. Originally: [0, 0, 1, 0]
         scale=scale_local*scaling[
             '{0}/{1}'.format(dir_name, object_name)])
     return obj

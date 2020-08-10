@@ -1,16 +1,25 @@
 from roboverse.envs.widow200_grasp_v5_and_place_v0 import Widow200GraspV5AndPlaceV0Env
+from roboverse.envs.rand_obj import RandObjEnv
+from roboverse.envs.env_object_list import (
+    POSSIBLE_TRAIN_OBJECTS, POSSIBLE_TRAIN_SCALINGS,
+    POSSIBLE_TEST_OBJECTS, POSSIBLE_TEST_SCALINGS)
 import roboverse.bullet as bullet
 import roboverse.utils as utils
 import numpy as np
+import os.path as osp
+
+OBJECT_IN_GRIPPER_PATH = osp.join(osp.dirname(osp.realpath(__file__)),
+                'assets/bullet-objects/bullet_saved_states/objects_in_gripper/')
 
 
-class Widow200GraspV5BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
+class Widow200GraspV6BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
 
     def __init__(self,
                  *args,
-                 object_names=('jar',),
-                 scaling_local_list=[0.3],
+                 object_names=('gatorade',),
+                 scaling_local_list=[0.5],
                  success_dist_threshold=0.04,
+                 place_only=False,
                  **kwargs):
         super().__init__(*args,
             object_names=object_names,
@@ -23,23 +32,48 @@ class Widow200GraspV5BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
         # self.set_scaling_dicts()
         self.set_box_pos_as_goal_pos()
         # self.obs_img_dim = 228
-        self.box_high = np.array([0.83, .05, -.32])
-        self.box_low = np.array([0.77, -.03, -.345])
+        self.box_high = np.array([0.875, .05, -.31])
+        self.box_low = np.array([0.77, -.03, -.355])
 
         # Params used for combine_railrl_pools.py
         self.terminates = False
-        self.scripted_traj_len = 30
+        self.place_only = place_only
+
+        if self.place_only:
+            self.scripted_traj_len = 10
+        else:
+            self.scripted_traj_len = 30
+
+    def reset(self):
+        obs = super().reset()
+        if self.place_only:
+            bullet.restore_state(osp.join(OBJECT_IN_GRIPPER_PATH, 'gatorade.bullet'))
+            self._gripper_open = False
+            action = np.zeros((6,))
+            action[:4] += np.random.normal(scale=0.1, size=(4,))
+            obs, _, _, _ = self.step(action)
+        return obs
 
     def _load_meshes(self):
         super()._load_meshes()
-        self._box = bullet.objects.box_open_top()
-        # self._test_box = bullet.objects.test_box()
+        if not "Drawer" in self._env_name:
+            # Drawer Env loads its own box.
+            self._box = bullet.objects.long_box_open_top()
 
     def get_reward(self, info):
         if self._reward_type in ['dense', 'shaped']:
             reward = -1.0*info['object_goal_dist']
+        elif self._reward_type == 'semisparse':
+            if info['object_in_box_success']:
+                reward = 1.0
+            elif info['object_grasped']:
+                reward = 0.5
+            else:
+                reward = 0.0
+            reward = self.adjust_rew_if_use_positive(reward)
         elif self._reward_type == 'sparse':
             reward = float(info['object_in_box_success'])
+            reward = self.adjust_rew_if_use_positive(reward)
         else:
             print(self._reward_type)
             raise NotImplementedError
@@ -60,6 +94,8 @@ class Widow200GraspV5BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
         object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
         object_gripper_success = int(
             object_gripper_dist < self._success_dist_threshold)
+        object_grasped = int(object_gripper_success and
+            object_pos[2] > self._reward_height_thresh)
 
         object_goal_dist = np.linalg.norm(object_pos - self._goal_position)
         object_dist_success = int(object_goal_dist < self._success_dist_threshold)
@@ -77,43 +113,16 @@ class Widow200GraspV5BoxPlaceV0Env(Widow200GraspV5AndPlaceV0Env):
             object_in_box_success=object_in_box_success,
             object_above_box_success=object_above_box_sucess,
             object_gripper_dist=object_gripper_dist,
-            object_gripper_success=object_gripper_success)
+            object_gripper_success=object_gripper_success,
+            object_grasped=object_grasped)
         return info
 
-class Widow200GraspV5BoxPlaceV0RandObjEnv(Widow200GraspV5BoxPlaceV0Env):
+
+class Widow200GraspV6BoxPlaceV0RandObjEnv(RandObjEnv, Widow200GraspV6BoxPlaceV0Env):
     """
     Generalization env. Randomly samples one of the following objects
-    every time the env resets.
+    every time the env resets for the V6BoxPlace task.
     """
-    def __init__(self,
-                 *args,
-                 success_dist_threshold=0.04,
-                 scaling_local_list=[0.3]*10,
-                 **kwargs):
-        self.possible_objects = [
-            'smushed_dumbbell',
-            'jar',
-            'beer_bottle',
-            'mug',
-            'square_prism_bin',
-            'conic_bin',
-            'ball',
-            'shed',
-            'sack_vase',
-            'conic_cup'
-        ]
-        # chosen_object = np.random.choice(self.possible_objects)
-        super().__init__(*args,
-            object_names=self.possible_objects,
-            success_dist_threshold=success_dist_threshold,
-            scaling_local_list=scaling_local_list,
-            **kwargs)
-
-    def reset(self):
-        """Currently only implemented for selecting 1 object at random"""
-        self.object_names = list([np.random.choice(self.possible_objects)])
-        print("self.object_names", self.object_names)
-        return super().reset()
 
 
 if __name__ == "__main__":
@@ -123,12 +132,13 @@ if __name__ == "__main__":
     EPSILON = 0.05
     save_video = True
 
-    env = roboverse.make("Widow200GraspV5BoxPlaceV0RandObj-v0",
+    env = roboverse.make("Widow200GraspV6BoxPlaceV0-v0",
                          gui=True,
-                         reward_type='sparse',
-                         observation_mode='pixels_debug',)
-
+                         reward_type='semisparse',
+                         observation_mode='pixels_debug',
+                         )
     object_ind = 0
+
     for i in range(50):
         obs = env.reset()
         # object_pos[2] = -0.30
@@ -139,10 +149,11 @@ if __name__ == "__main__":
 
         for _ in range(env.scripted_traj_len):
             if isinstance(obs, dict):
-                obs = obs['state']
+                state_obs = obs[env.fc_input_key]
+                obj_obs = obs[env.object_obs_key]
 
-            ee_pos = obs[:3]
-            object_pos = obs[object_ind * 7 + 8: object_ind * 7 + 8 + 3]
+            ee_pos = state_obs[:3]
+            object_pos = obj_obs[object_ind * 7 : object_ind * 7 + 3]
             # object_pos += np.random.normal(scale=0.02, size=(3,))
 
             object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
@@ -183,6 +194,7 @@ if __name__ == "__main__":
             action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
             # print(action)
             obs, rew, done, info = env.step(action)
+            print("rew", rew)
 
             img = env.render_obs()
             if save_video:

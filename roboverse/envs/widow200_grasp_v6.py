@@ -1,4 +1,5 @@
 from roboverse.envs.widow200_grasp_v5 import Widow200GraspV5Env
+from roboverse.envs.rand_obj import RandObjEnv
 import roboverse.bullet as bullet
 import numpy as np
 import gym
@@ -11,10 +12,13 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
 
     def __init__(self,
                  *args,
+                 object_names=('beer_bottle',),
                  scaling_local_list=[0.5],
                  **kwargs):
+        self.object_names = object_names
         self.reward_height_threshold = -0.275
         super().__init__(*args,
+            object_names=self.object_names,
             scaling_local_list=scaling_local_list,
             **kwargs)
         self.terminates = False
@@ -35,38 +39,86 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
 
     def step(self, action):
         action = np.asarray(action)
-        pos = list(bullet.get_link_state(self._robot_id, self._end_effector, 'pos'))
-        delta_pos = action[:3]
-        pos += delta_pos * self._action_scale
-        pos = np.clip(pos, self._pos_low, self._pos_high)
+        # In Grasp V6, the 6th action dim corresponds to a binary
+        # move to reset command.
+        if action[5] > 0.5:
+            # currently nothing happens for large negative action[5] commands.
+            bullet.move_to_neutral(self.RESET_JOINTS, self._robot_id)
+        else:
+            pos = list(bullet.get_link_state(self._robot_id, self._end_effector, 'pos'))
+            delta_pos = action[:3]
+            pos += delta_pos * self._action_scale
+            pos = np.clip(pos, self._pos_low, self._pos_high)
 
-        theta = list(bullet.get_link_state(self._robot_id, self._end_effector,
-                                           'theta'))
-        target_theta = theta
-        delta_theta = action[3]
-        target_theta = np.clip(target_theta, [0, 85, 137], [180, 85, 137])
-        target_theta = bullet.deg_to_quat(target_theta)
+            theta = list(bullet.get_link_state(self._robot_id, self._end_effector,
+                                               'theta'))
+            target_theta = theta
+            delta_theta = action[3]
+            target_theta = np.clip(target_theta, [0, 85, 137], [180, 85, 137])
+            target_theta = bullet.deg_to_quat(target_theta)
 
-        gripper_action = action[4]
-        self._gripper_simulate(pos, target_theta, delta_theta, gripper_action)
+            gripper_action = action[4]
+            self._gripper_simulate(pos, target_theta, delta_theta, gripper_action)
 
         reward = self.get_reward({})
         info = self.get_info()
-        info['grasp_success'] = 1.0 if reward > 0 else 0.0
+        info['grasp_success'] = float(self.is_object_grasped())
 
         observation = self.get_observation()
         self._prev_pos = bullet.get_link_state(self._robot_id, self._end_effector,
                                                'pos')
         done = False
+
         return observation, reward, done, info
 
+    def step_slow(self, action, image_size, view_matrix, projection_matrix):
+        action = np.asarray(action)
+        # In Grasp V6, the 6th action dim corresponds to a binary
+        # move to reset command.
+        images = []
+
+        if action[5] > 0.5:
+            # currently nothing happens for large negative action[5] commands.
+            images = bullet.move_to_neutral_slow(self.RESET_JOINTS, self._robot_id,
+                image_size, view_matrix, projection_matrix)
+        else:
+            pos = list(bullet.get_link_state(self._robot_id, self._end_effector, 'pos'))
+            delta_pos = action[:3]
+            pos += delta_pos * self._action_scale
+            pos = np.clip(pos, self._pos_low, self._pos_high)
+
+            theta = list(bullet.get_link_state(self._robot_id, self._end_effector,
+                                               'theta'))
+            target_theta = theta
+            delta_theta = action[3]
+            target_theta = np.clip(target_theta, [0, 85, 137], [180, 85, 137])
+            target_theta = bullet.deg_to_quat(target_theta)
+
+            gripper_action = action[4]
+            images = self._gripper_simulate_slow(
+                pos, target_theta, delta_theta, gripper_action,
+                image_size, view_matrix, projection_matrix)
+
+        reward = self.get_reward({})
+        info = self.get_info()
+        info['grasp_success'] = float(self.is_object_grasped())
+
+        observation = self.get_observation()
+        self._prev_pos = bullet.get_link_state(self._robot_id, self._end_effector,
+                                               'pos')
+        done = False
+
+        return observation, reward, done, info, images
+
+class Widow200GraspV6RandObjEnv(RandObjEnv, Widow200GraspV6Env):
+    """Grasping Env but with a random object each time."""
 
 if __name__ == "__main__":
     import roboverse
     import time
-    env = roboverse.make("Widow200GraspV6-v0",
+    env = roboverse.make("Widow200GraspV6RandObj-v0",
                          gui=True,
-                         observation_mode='state',)
+                         observation_mode='pixels_debug',)
 
     object_ind = 0
     EPSILON = 0.05
@@ -83,8 +135,12 @@ if __name__ == "__main__":
         rewards = []
 
         for _ in range(env.scripted_traj_len):
-            ee_pos = obs[:3]
-            object_pos = obs[object_ind * 7 + 8: object_ind * 7 + 8 + 3]
+            if isinstance(obs, dict):
+                state_obs = obs[env.fc_input_key]
+                obj_obs = obs[env.object_obs_key]
+
+            ee_pos = state_obs[:3]
+            object_pos = obj_obs[object_ind * 7 : object_ind * 7 + 3]
 
             object_lifted = object_pos[2] > env._reward_height_thresh
             object_lifted_with_margin = object_pos[2] > (env._reward_height_thresh + margin)
@@ -124,7 +180,7 @@ if __name__ == "__main__":
             obs, rew, done, info = env.step(action)
             time.sleep(0.05)
 
-            # print('reward: {}'.format(rew))
+            print("info", info)
             rewards.append(rew)
 
         # print("="*10)

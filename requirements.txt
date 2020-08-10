@@ -1,7 +1,9 @@
 gym==0.12.1
-pybullet==2.5.5
+pybullet==2.7.9
+numpy==1.18.4
 pygame==1.9.6
 opencv-python
 matplotlib
 tqdm
 scikit-video
+pandas

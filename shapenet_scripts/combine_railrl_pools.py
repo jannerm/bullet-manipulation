@@ -7,6 +7,7 @@ import numpy as np
 from railrl.data_management.env_replay_buffer import EnvReplayBuffer
 from railrl.data_management.obs_dict_replay_buffer import \
     ObsDictReplayBuffer
+from roboverse.envs.env_list import PROXY_ENVS_MAP
 
 EXTRA_POOL_SPACE = int(1e5)
 REWARD_NEGATIVE = -10
@@ -20,6 +21,8 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--observation-mode", type=str, default='state',
                         choices=('state', 'pixels', 'pixels_debug'))
     parser.add_argument('--downwards', action='store_true',default=False)
+    parser.add_argument("--success-only", dest="success_only", action="store_true", default=False)
+    parser.add_argument('--output', type=str, default='railrl_consolidated.pkl')
     args = parser.parse_args()
 
     if osp.exists(NFS_PATH):
@@ -32,32 +35,34 @@ if __name__ == "__main__":
     timestamp = roboverse.utils.timestamp()
 
     pools = []
-    success_pools = []
 
     for root, dirs, files in os.walk(data_directory):
         for f in files:
-            if "pool" in f:
+            merge_f = ("pool" in f) and (("success_only" in f) == args.success_only)
+            if merge_f:
                 with open(os.path.join(root, f), 'rb') as fp:
                     print("f", f)
                     pool = pickle.load(fp)
-                if 'success_only' in f:
-                    success_pools.append(pool)
-                else:
-                    pools.append(pool)
+                pools.append(pool)
 
     original_pool_size = 0
     for pool in pools:
         original_pool_size += pool._top
     pool_size = original_pool_size + EXTRA_POOL_SPACE
 
+    if args.env in PROXY_ENVS_MAP:
+        roboverse_env_name = PROXY_ENVS_MAP[args.env]
+    else:
+        roboverse_env_name = args.env
+        
     if args.downwards:
-        env = roboverse.make(args.env,
+        env = roboverse.make(roboverse_env_name,
                          observation_mode=args.observation_mode,
                          transpose_image=True, downwards = True)
     else:     
-        env = roboverse.make(args.env,
-                         observation_mode=args.observation_mode,
-                         transpose_image=True)
+        env = roboverse.make(roboverse_env_name,
+                            observation_mode=args.observation_mode,
+                            transpose_image=True)
     if args.observation_mode == 'state':
         consolidated_pool = EnvReplayBuffer(pool_size, env)
         for pool in pools:
@@ -81,11 +86,13 @@ if __name__ == "__main__":
                 )
 
     elif args.observation_mode in ['pixels', 'pixels_debug']:
-        obs_key = 'image'
+        image_obs_key, state_obs_key = env.cnn_input_key, env.fc_input_key
+        obs_keys = (image_obs_key, state_obs_key)
         consolidated_pool = ObsDictReplayBuffer(pool_size, env,
-                                                observation_key=obs_key)
+                                                observation_keys=obs_keys)
         for pool in pools:
             # import IPython; IPython.embed()
+            import ipdb; ipdb.set_trace()
             path = dict(
                 rewards=[],
                 actions=[],
@@ -96,10 +103,15 @@ if __name__ == "__main__":
             for i in range(pool._top):
                 path['rewards'].append(pool._rewards[i])
                 path['actions'].append(pool._actions[i])
-                # path['terminals'].append(pool._terminals[i])
-                path['terminals'].append(np.zeros_like(pool._rewards[i]))
-                path['observations'].append(dict(image=pool._obs[obs_key][i]))
-                path['next_observations'].append(dict(image=pool._next_obs[obs_key][i]))
+                path['terminals'].append(pool._terminals[i])
+                path['observations'].append(
+                    {image_obs_key: pool._obs[image_obs_key][i],
+                         state_obs_key: pool._obs[state_obs_key][i]}
+                )
+                path['next_observations'].append(
+                    {image_obs_key: pool._next_obs[image_obs_key][i],
+                         state_obs_key: pool._next_obs[state_obs_key][i]}
+                )
 
                 # path_done = ((env.terminates and pool._terminals[i]) or
                 #              (not env.terminates and
@@ -122,5 +134,10 @@ if __name__ == "__main__":
     else:
         raise NotImplementedError
 
-    path = osp.join(data_directory, 'railrl_consolidated.pkl')
+    if not args.success_only:
+        path = osp.join(data_directory, 'railrl_consolidated.pkl')
+    else:
+        path = osp.join(data_directory, 'railrl_consolidated_success.pkl')
+
+    path = args.output
     pickle.dump(consolidated_pool, open(path, 'wb'), protocol=4)
