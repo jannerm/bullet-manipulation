@@ -50,6 +50,7 @@ class SawyerGraspV2Env(SawyerBaseEnv):
                  single_obj_reward=-1,
                  trimodal_positions_choice=0,
                  all_random=True,
+                 trimodal_positions_two=None,
                  *args,
                  **kwargs
                  ):
@@ -79,9 +80,7 @@ class SawyerGraspV2Env(SawyerBaseEnv):
         self._single_obj_reward = single_obj_reward
         self.trimodal_positions_choice = trimodal_positions_choice
         self.all_random = all_random
-
-        #self.two_positions_layout = [trimodal_positions1, trimodal_positions2]
-        #self._trimodal_positions = self.two_positions_layout[self.trimodal_positions_choice]
+        self.trimodal_positions_two = trimodal_positions_two
 
         # TODO(avi) optimize the view matrix
         self._view_matrix_obs = bullet.get_view_matrix(
@@ -151,7 +150,6 @@ class SawyerGraspV2Env(SawyerBaseEnv):
         if self.trimodal:
             min_distance_threshold = 0.08
             if self.randomize:
-
                 if self.all_random:
                     object_positions = []
 
@@ -165,8 +163,9 @@ class SawyerGraspV2Env(SawyerBaseEnv):
                         if okay:
                             object_positions.append(new_pos)
                 else:
-                    choice = np.random.randint(2)
-                    object_positions = self.two_positions_layout[choice]
+                    choice = random.randint(0, 1)
+                    object_positions = self.trimodal_positions_two[choice]
+                    self._trimodal_positions = object_positions
 
             else:
                 object_positions = self._trimodal_positions
@@ -245,6 +244,7 @@ class SawyerGraspV2Env(SawyerBaseEnv):
 
     def step(self, action):
         action = np.asarray(action)
+        action = action * 10
         pos = list(bullet.get_link_state(self._sawyer, self._end_effector, 'pos'))
         delta_pos = action[:3]
         pos += delta_pos * self._action_scale
