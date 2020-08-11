@@ -63,6 +63,7 @@ class SawyerGraspV2Env(SawyerBaseEnv):
 
         self._object_position_low = object_position_low
         self._object_position_high = object_position_high
+        self.scripted_traj_len = 20
 
         # TODO(avi) optimize the view matrix
         self._view_matrix_obs = bullet.get_view_matrix(

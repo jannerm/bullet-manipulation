@@ -25,6 +25,8 @@ if __name__ == "__main__":
     parser.add_argument('--output', type=str, default='railrl_consolidated.pkl')
     args = parser.parse_args()
 
+    # if args.env == 
+
     if osp.exists(NFS_PATH):
         data_directory = osp.join(NFS_PATH, args.data_directory)
     else:
@@ -86,13 +88,16 @@ if __name__ == "__main__":
                 )
 
     elif args.observation_mode in ['pixels', 'pixels_debug']:
-        image_obs_key, state_obs_key = env.cnn_input_key, env.fc_input_key
+        try:
+            image_obs_key, state_obs_key = env.cnn_input_key, env.fc_input_key
+        except:
+            image_obs_key, state_obs_key = ('image','state',)
         obs_keys = (image_obs_key, state_obs_key)
         consolidated_pool = ObsDictReplayBuffer(pool_size, env,
                                                 observation_keys=obs_keys)
         for pool in pools:
             # import IPython; IPython.embed()
-            import ipdb; ipdb.set_trace()
+            # import ipdb; ipdb.set_trace() 
             path = dict(
                 rewards=[],
                 actions=[],
@@ -139,5 +144,5 @@ if __name__ == "__main__":
     else:
         path = osp.join(data_directory, 'railrl_consolidated_success.pkl')
 
-    path = args.output
+    # path = osp.join(data_directory, args.output)
     pickle.dump(consolidated_pool, open(path, 'wb'), protocol=4)

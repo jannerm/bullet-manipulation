@@ -134,8 +134,8 @@ if __name__ == "__main__":
                      '-o{}'.format(args.observation_mode),
                      '-e{}'.format(args.env),
                      '-e{}'.format(args.env)]
-                     
-    if args.downards: merge_command.append('--downwards') 
+
+    if args.downwards: merge_command.append('--downwards') 
     subprocess.call(merge_command)
 
     if args.save_success_pool:

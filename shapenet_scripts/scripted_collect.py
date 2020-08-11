@@ -688,119 +688,23 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
 
         box_pos = env.get_box_pos()
 
-def random_reaching(env, pool, render_images):
-    observation = env.reset()
-    images = []
+        blocking_object_gripper_dist = np.linalg.norm(
+            blocking_object_pos - ee_pos)
+        blocking_object_box_dist = np.linalg.norm(
+            blocking_object_pos[:2] - box_pos[:2])
+        theta_action = 0.
 
-    for i in range(args.num_timesteps):
-        ee_pos = env.get_end_effector_pos()
-        xyz_diff = target_pos - ee_pos
-        xy_diff = xyz_diff[:2]
+        blocking_object_pos_offset = np.array([0.01, -0.01, 0])
 
-        std = [0.035, 0.035, 0.05, np.pi / 8]
-        mean = np.zeros_like(std)
-        action = np.random.normal(mean, std)
-        action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
+        info = env.get_info()
+        z_diff = abs(blocking_object_pos[2] + blocking_object_pos_offset[2] - ee_pos[2])
 
-        if render_images:
-            img = observation['image']
-            images.append(img)
+        currJointStates = bullet.get_joint_positions(
+            env._robot_id)[1][:len(env.RESET_JOINTS)]
+        joint_norm_dev_from_neutral = np.linalg.norm(currJointStates - env.RESET_JOINTS)
 
-        observation = env.get_observation()
-        next_state, reward, done, info = env.step(action)
-        pool.add_sample(observation, action, next_state, reward, done)
-        # time.sleep(0.2)
-        observation = next_state
-
-    success = info['object_gripper_distance'] < 0.03
-    return success, images
-
-def random_reaching_railrl(env, pool, success_pool, with_theta=False):
-    """
-
-    :param env:
-    :param pool:
-    :param success_pool:
-    :param random_actions: When set to True, executes random actions instead
-    of following the object(s).
-    :return:
-    """
-
-    observation = env.reset()
-    actions, observations, next_observations, rewards, terminals, infos = \
-        [], [], [], [], [], []
-
-    for _ in range(args.num_timesteps):
-        std = [0.35, 0.35, 0.25, np.pi / 8]
-        mean = np.zeros_like(std)
-        action = np.random.normal(mean, std)
-        
-        if with_theta:
-            theta_action = np.random.normal(scale=0.1, size=(3,))
-            action = np.concatenate((action[:3], theta_action))
-        
-        action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
-        
-        next_observation, reward, done, info = env.step(action)
-
-        actions.append(action)
-        observations.append(observation)
-        rewards.append(reward)
-        terminals.append(done)
-        infos.append(info)
-        next_observations.append(next_observation)
-
-        observation = next_observation
-
-    path = dict(
-        actions=actions,
-        rewards=np.asarray(rewards).reshape((-1, 1)),
-        terminals=np.asarray(terminals).reshape((-1, 1)),
-        infos=infos,
-        observations=observations,
-        next_observations=next_observations,
-    )
-
-    if not isinstance(observation, dict):
-        path_length = len(rewards)
-        path['agent_infos'] = np.asarray([{} for i in range(path_length)])
-        path['env_infos'] = np.asarray([{} for i in range(path_length)])
-
-    pool.add_path(path)
-    success_pool.add_path(path)
-
-def main(args):
-    timestamp = roboverse.utils.timestamp()
-    if osp.exists(NFS_PATH):
-        data_save_path = osp.join(NFS_PATH, args.data_save_directory, timestamp)
-    else:
-        data_save_path = osp.join(os.path.dirname(__file__), "..", 'data',
-                                  args.data_save_directory,  timestamp)
-    data_save_path = os.path.abspath(data_save_path)
-    video_save_path = os.path.join(data_save_path, "videos")
-    if not os.path.exists(data_save_path):
-        os.makedirs(data_save_path)
-    if not os.path.exists(video_save_path) and args.video_save_frequency > 0:
-        os.makedirs(video_save_path)
-
-    reward_type = 'sparse' if args.sparse else 'shaped'
-    if args.env in (V2_GRASPING_ENVS +
-        V4_GRASPING_ENVS + V5_GRASPING_ENVS +
-        V5_GRASPING_V0_PLACING_ENVS + V6_GRASPING_ENVS):
-        tranpose_image = True
-    else:
-        transpose_image = False
-        assert False # are you sure you want to do this
-    if args.downwards:
-        env = roboverse.make(args.env, reward_type=reward_type,
-                         gui=args.gui, randomize=args.randomize,
-                         observation_mode=args.observation_mode,
-                         transpose_image=tranpose_image, downwards = True)
-    else:
-        env = roboverse.make(args.env, reward_type=reward_type,
-                         gui=args.gui, randomize=args.randomize,
-                         observation_mode=args.observation_mode,
-                         transpose_image=tranpose_image)
+        eligible_for_reset = ((args.one_reset_per_traj and reset_never_taken) or
+            (not args.one_reset_per_traj))
 
         if (blocking_object_gripper_dist > dist_thresh ) and \
                 env._gripper_open and not info['blocking_object_in_box_success']:
@@ -846,45 +750,21 @@ def main(args):
         action += np.random.normal(scale=noise_scalings)
         action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
 
-        if args.rand_reaching:
-            try:
-                success = False
-                random_reaching_railrl(env, railrl_pool, railrl_success_pool, with_theta=args.theta)
-            except NameError:
-                success, images = random_reaching(env, pool, render_images)
-        elif args.env == 'SawyerGraspOne-v0':
-            if args.non_markovian:
-                success, images = scripted_non_markovian_grasping(env, pool, render_images)
-            else:
-                success, images = scripted_markovian_grasping(env, pool, render_images)
-        elif args.env == 'SawyerReach-v0':
-            success, images = scripted_markovian_reaching(env, pool, render_images)
-        elif args.env in V2_GRASPING_ENVS:
-            assert not render_images
-            success = False
-            scripted_grasping_V2(env, railrl_pool, railrl_success_pool,
-                                 random_actions=args.random_actions)
-        elif args.env in V4_GRASPING_ENVS:
-            assert not render_images
-            success = False
-            scripted_grasping_V4(env, railrl_pool, railrl_success_pool)
-        elif args.env in V5_GRASPING_ENVS:
-            assert not render_images
-            success = False
-            scripted_grasping_V5(env, railrl_pool, railrl_success_pool)
-        elif args.env in V6_GRASPING_ENVS:
-            assert not render_images
-            success = False
-            scripted_grasping_V6(env, railrl_pool, railrl_success_pool)
-        elif args.env in V5_GRASPING_V0_PLACING_ENVS:
-            assert not render_images
-            success = False
-            scripted_grasping_V5_placing_V0(
-                env, railrl_pool, railrl_success_pool)
-        else:
-            raise NotImplementedError
+        next_observation, reward, done, info = env.step(action)
+        actions.append(action)
+        observations.append(observation)
+        rewards.append(reward)
+        terminals.append(done)
+        infos.append(info)
+        next_observations.append(next_observation)
 
         observation = next_observation
+
+        if done:
+            break
+
+        if not reset_never_taken and args.end_at_neutral:
+            break
 
 
     path = dict(
@@ -2625,6 +2505,87 @@ def scripted_markovian_reaching(env, pool, render_images):
     return success, images
 
 
+def random_reaching(env, pool, render_images):
+    observation = env.reset()
+    images = []
+
+    for i in range(args.num_timesteps):
+        ee_pos = env.get_end_effector_pos()
+        xyz_diff = target_pos - ee_pos
+        xy_diff = xyz_diff[:2]
+
+        std = [0.035, 0.035, 0.05, np.pi / 8]
+        mean = np.zeros_like(std)
+        action = np.random.normal(mean, std)
+        action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
+
+        if render_images:
+            img = observation['image']
+            images.append(img)
+
+        observation = env.get_observation()
+        next_state, reward, done, info = env.step(action)
+        pool.add_sample(observation, action, next_state, reward, done)
+        # time.sleep(0.2)
+        observation = next_state
+
+    success = info['object_gripper_distance'] < 0.03
+    return success, images
+
+def random_reaching_railrl(env, pool, success_pool, with_theta=False):
+    """
+
+    :param env:
+    :param pool:
+    :param success_pool:
+    :param random_actions: When set to True, executes random actions instead
+    of following the object(s).
+    :return:
+    """
+
+    observation = env.reset()
+    actions, observations, next_observations, rewards, terminals, infos = \
+        [], [], [], [], [], []
+
+    for _ in range(args.num_timesteps):
+        std = [0.35, 0.35, 0.25, np.pi / 8]
+        mean = np.zeros_like(std)
+        action = np.random.normal(mean, std)
+        
+        if with_theta:
+            theta_action = np.random.normal(scale=0.1, size=(3,))
+            action = np.concatenate((action[:3], theta_action))
+        
+        action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
+        
+        next_observation, reward, done, info = env.step(action)
+
+        actions.append(action)
+        observations.append(observation)
+        rewards.append(reward)
+        terminals.append(done)
+        infos.append(info)
+        next_observations.append(next_observation)
+
+        observation = next_observation
+
+    path = dict(
+        actions=actions,
+        rewards=np.asarray(rewards).reshape((-1, 1)),
+        terminals=np.asarray(terminals).reshape((-1, 1)),
+        infos=infos,
+        observations=observations,
+        next_observations=next_observations,
+    )
+
+    if not isinstance(observation, dict):
+        path_length = len(rewards)
+        path['agent_infos'] = np.asarray([{} for i in range(path_length)])
+        path['env_infos'] = np.asarray([{} for i in range(path_length)])
+
+    pool.add_path(path)
+    success_pool.add_path(path)
+
 def main(args):
 
     timestamp = roboverse.utils.timestamp()
@@ -2687,8 +2648,13 @@ def main(args):
         roboverse_env_name = PROXY_ENVS_MAP[args.env]
     else:
         roboverse_env_name = args.env
-
-    env = roboverse.make(roboverse_env_name, reward_type=reward_type,
+    if args.downwards:
+        env = roboverse.make(roboverse_env_name, reward_type=reward_type,
+                         gui=args.gui, randomize=args.randomize,
+                         observation_mode=args.observation_mode,
+                         transpose_image=True, downwards=True)
+    else:        
+        env = roboverse.make(roboverse_env_name, reward_type=reward_type,
                          gui=args.gui, randomize=args.randomize,
                          observation_mode=args.observation_mode,
                          transpose_image=True)
@@ -2704,7 +2670,7 @@ def main(args):
         success_pool = roboverse.utils.DemoPool()
     else:
         if args.env in (V2_GRASPING_ENVS + V4_GRASPING_ENVS):
-            observation_keys = ('image',)
+            obs_keys = ('state', 'image')
         else:
             # grasp_v5 env or newer.
             obs_keys = (env.cnn_input_key, env.fc_input_key)
@@ -2722,8 +2688,13 @@ def main(args):
     for j in tqdm(range(args.num_trajectories)):
         render_images = args.video_save_frequency > 0 and \
                         j % args.video_save_frequency == 0
-
-        if args.env == 'SawyerGraspOne-v0':
+        if args.rand_reaching:
+            try:
+                success = False
+                random_reaching_railrl(env, railrl_pool, railrl_success_pool, with_theta=args.theta)
+            except NameError:
+                success, images = random_reaching(env, pool, render_images)
+        elif args.env == 'SawyerGraspOne-v0':
             if args.non_markovian:
                 success, images = scripted_non_markovian_grasping(env, pool, render_images)
             else:
@@ -2957,9 +2928,6 @@ if __name__ == "__main__":
                         action="store_true", default=False)
     parser.add_argument("-o", "--observation-mode", type=str, default='pixels',
                         choices=('state', 'pixels', 'pixels_debug'))
-    parser.add_argument('--rand_reaching', action='store_true',default=False)
-    parser.add_argument('--downwards', action='store_true',default=False)
-    parser.add_argument('--theta', action='store_true',default=False)
     parser.add_argument("--allow-grasp-retries", dest="allow_grasp_retries",
                         action="store_true", default=False)
     parser.add_argument("-j", "--joint-norm-thresh", type=float, default=0.05)
@@ -2967,6 +2935,10 @@ if __name__ == "__main__":
                         action="store_true", default=False)
     parser.add_argument("--end-at-neutral", dest="end_at_neutral",
                         action="store_true", default=False)
+
+    parser.add_argument('--rand_reaching',  action='store_true')
+    parser.add_argument('--downwards',  action='store_true')
+    parser.add_argument('--theta',  action='store_true')
 
     args = parser.parse_args()
 
