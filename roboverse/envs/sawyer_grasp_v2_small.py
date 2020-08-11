@@ -81,6 +81,7 @@ class SawyerGraspV2Env(SawyerBaseEnv):
         self.trimodal_positions_choice = trimodal_positions_choice
         self.all_random = all_random
         self.trimodal_positions_two = trimodal_positions_two
+        self.cnn_input_key = 'image'
 
         # TODO(avi) optimize the view matrix
         self._view_matrix_obs = bullet.get_view_matrix(

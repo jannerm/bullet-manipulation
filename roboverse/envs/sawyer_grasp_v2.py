@@ -73,6 +73,8 @@ class SawyerGraspV2Env(SawyerBaseEnv):
         self._single_obj_reward = single_obj_reward
         self.trimodal = trimodal
 
+        self.cnn_input_key = 'image'
+
         # TODO(avi) optimize the view matrix
         self._view_matrix_obs = bullet.get_view_matrix(
             target_pos=[.75, +.15, -0.2], distance=0.3,
