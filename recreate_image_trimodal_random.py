@@ -24,22 +24,25 @@ fig = plt.figure()
 
 data = np.load(sys.argv[1], allow_pickle=True)
 
-for i in range(len(data)):
+success = []
+failed_id = []
+
+reward_type = "shaped"
+env = roboverse.make('SawyerGraspOneV2-v0', reward_type=reward_type,
+                     observation_mode="pixels_debug",
+                     num_objects=3,
+                     obs_img_dim=48,
+                     randomize=False,
+                     trimodal=True)
+
+for i in tqdm(range(2)):
     ax = plt.axes(projection='3d')
     traj = data[i]
     observations = np.array([traj["observations"][j]["state"] for j in range(len(traj["observations"]))])
-    ax.plot3D(observations[:, 0], observations[:, 1], observations[:, 2], label="original trajs" if i == 0 else "", color="red")
+    ax.plot3D(observations[:, 0], observations[:, 1], observations[:, 2], label="original trajs", color="red")
         
     actions = traj["actions"]
     first_observation = traj["observations"][0]
-
-    reward_type = "shaped"
-
-    env = roboverse.make('SawyerGraspOneV2-v0', reward_type=reward_type,
-                     observation_mode="pixels_debug", 
-                     num_objects=3,
-                     randomize=False, 
-                     trimodal=True)
 
     all_obj_pos = []
     for j in range(env._num_objects):
@@ -47,27 +50,32 @@ for i in range(len(data)):
         all_obj_pos.append([obj_pos[0], obj_pos[1], obj_pos[2]])
 
     env._trimodal_positions = all_obj_pos
-
     env.reset()
-
     images = []
     
     replay_obs_list = []
+    obs = env.get_observation()
+    replay_obs_list.append(obs["state"])
     for index in range(len(actions)):
-        data[i]["observations"][index]["image"] = env.render_obs()
+        data[i]["observations"][index] = obs
         a = actions[index]
-        env.step(a)
-        obs = env.get_observation()["state"]
-        replay_obs_list.append(obs)
-        #image = env.render_obs()
-        #print(image)
+        obs, rew, done, info = env.step(a)
+        obs = env.get_observation()
+        replay_obs_list.append(obs["state"])
         images.append(Image.fromarray(env.render_obs()))
+    print(info["grasp_success"])
+    success.append(info["grasp_success"])
+
+    if not info["grasp_success"]:
+        failed_id.append(i)
 
     replay_obs_list = np.array(replay_obs_list)
-    ax.plot3D(replay_obs_list[:, 0], replay_obs_list[:, 1], replay_obs_list[:, 2], label="replay" if i == 0 else "", color="blue")
+    ax.plot3D(replay_obs_list[:, 0], replay_obs_list[:, 1], replay_obs_list[:, 2], label="replay", color="blue")
     
     all_obj_pos = np.array(all_obj_pos)
-    ax.scatter3D(all_obj_pos[:,0], all_obj_pos[:,1], all_obj_pos[:,2])
+    ax.scatter3D(all_obj_pos[:,0], all_obj_pos[:,1], all_obj_pos[:,2], label="actual position")
+    replay_pos = np.array(env._trimodal_positions)
+    ax.scatter3D(replay_pos[:,0], replay_pos[:,1], replay_pos[:,2], label="replayed position")
 
     if not os.path.exists('replay_videos_trimodal_random'):
         os.mkdir('replay_videos_trimodal_random')
@@ -80,8 +88,13 @@ for i in range(len(data)):
     fig.savefig('{}/{}.png'.format("replay_videos_trimodal_random", i))
     fig.clf()
     
-
+success = np.array(success)
+print("mean: ", success.mean())
+print("std: ", success.std())
+print("all success: ", (success == 1).all())
+print("failed id: ")
+print(failed_id)
 #plt.show()
 
-#path = os.path.join(__file__, "..", "{}_white".format(sys.argv[1][:-4]))
-#np.save(path, data)
+path = "{}_replayed.npy".format(sys.argv[1][:-4])
+np.save(path, data)
