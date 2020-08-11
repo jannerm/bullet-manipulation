@@ -5,9 +5,10 @@ import gym
 from roboverse.bullet.misc import load_obj
 import os.path as osp
 import pickle
+import random
 
 REWARD_NEGATIVE = -1.0
-REWARD_POSITIVE = 10.0
+REWARD_POSITIVE = 30.0
 SHAPENET_ASSET_PATH = osp.join(
     osp.dirname(osp.abspath(__file__)), 'assets/ShapeNetCore')
 
@@ -49,6 +50,7 @@ class SawyerGraspV2Env(SawyerBaseEnv):
                  single_obj_reward=-1,
                  trimodal_positions_choice=0,
                  all_random=True,
+                 trimodal_positions_two=None,
                  *args,
                  **kwargs
                  ):
@@ -68,7 +70,6 @@ class SawyerGraspV2Env(SawyerBaseEnv):
         self._height_threshold = height_threshold
         self._reward_height_thresh = reward_height_thresh
         self.randomize = randomize
-        print("self.randomize: ", self.randomize)
         self._object_position_low = object_position_low
         self._object_position_high = object_position_high
 
@@ -79,9 +80,7 @@ class SawyerGraspV2Env(SawyerBaseEnv):
         self._single_obj_reward = single_obj_reward
         self.trimodal_positions_choice = trimodal_positions_choice
         self.all_random = all_random
-
-        #self.two_positions_layout = [trimodal_positions1, trimodal_positions2]
-        #self._trimodal_positions = self.two_positions_layout[self.trimodal_positions_choice]
+        self.trimodal_positions_two = trimodal_positions_two
 
         # TODO(avi) optimize the view matrix
         self._view_matrix_obs = bullet.get_view_matrix(
@@ -150,29 +149,26 @@ class SawyerGraspV2Env(SawyerBaseEnv):
             self._sawyer, 'link_name', 'gripper_site')
         if self.trimodal:
             min_distance_threshold = 0.08
-            print("self.randomize: ", self.randomize)
             if self.randomize:
-
                 if self.all_random:
                     object_positions = []
 
                     while len(object_positions) < self._num_objects:
-                        new_pos = np.random.uniform(low=self._object_position_low, high=self._object_position_high)
+                        l, h = self._object_position_low, self._object_position_high
+                        new_pos = np.array([random.uniform(l[0], h[0]), random.uniform(l[1], h[1]), random.uniform(l[2], h[2])])
                         okay = True
                         for pos in object_positions:
-                            print(np.linalg.norm(pos - new_pos))
                             if np.linalg.norm(pos - new_pos) < min_distance_threshold:
                                 okay = False
                         if okay:
                             object_positions.append(new_pos)
                 else:
-                    choice = np.random.randint(2)
-                    object_positions = self.two_positions_layout[choice]
-                    print("choice: ", choice)
+                    choice = random.randint(0, 1)
+                    object_positions = self.trimodal_positions_two[choice]
+                    self._trimodal_positions = object_positions
 
             else:
                 object_positions = self._trimodal_positions
-                print("object_positions: ", object_positions)
 
             self._objects = {
                 0: bullet.objects.cube(pos=object_positions[0], rgba=[1, 0, 0, 1], scale=0.033),
@@ -185,7 +181,6 @@ class SawyerGraspV2Env(SawyerBaseEnv):
                 object_position = np.random.uniform(
                     low=self._object_position_low, high=self._object_position_high)
             else:
-                print(self._fix_obj_position)
                 object_position = self._fix_obj_position
 
             self._objects = {
@@ -201,16 +196,15 @@ class SawyerGraspV2Env(SawyerBaseEnv):
                                                quat_to_deg=False)
             object_pos = object_info['pos']
             object_positions_after_landing.append(object_pos)
-        print("object_positions_after_landing: ")
-        print(object_positions_after_landing)
-        self._trimodal_positions = object_positions_after_landing
+        self.object_positions_after_landing = object_positions_after_landing
+        #print("object_positions_after_landing: ")
+        #print(object_positions_after_landing)
+        #self._trimodal_positions = object_positions_after_landing
 
     def get_reward(self, info):
         object_list = self._objects.keys()
-        print("object_list: ", object_list)
         reward = REWARD_NEGATIVE
         if self._single_obj_reward > -1:
-            print("object choice: ", self._single_obj_reward)
             object_info = bullet.get_body_info(self._objects[self._single_obj_reward],
                                                quat_to_deg=False)
             object_pos = np.asarray(object_info['pos'])
@@ -250,6 +244,7 @@ class SawyerGraspV2Env(SawyerBaseEnv):
 
     def step(self, action):
         action = np.asarray(action)
+        action = action * 10
         pos = list(bullet.get_link_state(self._sawyer, self._end_effector, 'pos'))
         delta_pos = action[:3]
         pos += delta_pos * self._action_scale
@@ -268,12 +263,22 @@ class SawyerGraspV2Env(SawyerBaseEnv):
         pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
 
         # Get object gripper distance before lifting
-        if self._single_obj_reward > 0:
+        if self._single_obj_reward > -1:
             object_info = bullet.get_body_info(self._objects[self._single_obj_reward],
                                                quat_to_deg=False)
             object_pos = np.asarray(object_info['pos'])
             end_effector_pos = np.asarray(self.get_end_effector_pos())
             object_gripper_distance = np.linalg.norm(object_pos - end_effector_pos)
+
+        object_list = self._objects.keys()
+        all_object_gripper_distance = []
+        for object_name in object_list:
+            object_info = bullet.get_body_info(self._objects[object_name],
+                                               quat_to_deg=False)
+            object_pos = np.asarray(object_info['pos'])
+            end_effector_pos = np.asarray(self.get_end_effector_pos())
+            object_gripper_distance = np.linalg.norm(object_pos - end_effector_pos)
+            all_object_gripper_distance.append(object_gripper_distance)
 
         if pos[2] < self._height_threshold:
             gripper = 0.8
@@ -289,16 +294,15 @@ class SawyerGraspV2Env(SawyerBaseEnv):
             done = True
             reward = self.get_reward({})
             if reward > 0:
-                info = {'grasp_success': 1.0}
+                info = {'grasp_success': 1.0, 'all_object_gripper_distance': all_object_gripper_distance}
             else:
-                info = {'grasp_success': 0.0}
+                info = {'grasp_success': 0.0, 'all_object_gripper_distance': all_object_gripper_distance}
         else:
             done = False
             reward = REWARD_NEGATIVE
             if self.reward_type == "dense":
                 reward = reward - object_gripper_distance
-                print("dense reward: ", reward)
-            info = {'grasp_success': 0.0}
+            info = {'grasp_success': 0.0, 'all_object_gripper_distance': all_object_gripper_distance}
 
         observation = self.get_observation()
         self._prev_pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
