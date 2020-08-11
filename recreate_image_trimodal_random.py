@@ -35,7 +35,7 @@ env = roboverse.make('SawyerGraspOneV2-v0', reward_type=reward_type,
                      randomize=False,
                      trimodal=True)
 
-for i in tqdm(range(2)):
+for i in tqdm(range(len(data))):
     ax = plt.axes(projection='3d')
     traj = data[i]
     observations = np.array([traj["observations"][j]["state"] for j in range(len(traj["observations"]))])
