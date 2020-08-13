@@ -314,7 +314,8 @@ class SawyerGraspV2Env(SawyerBaseEnv):
                     reward = reward - min(all_object_gripper_distance)
             info = {'grasp_success': 0.0,
                     'grasp_attempt': done,
-                    'all_object_gripper_distance': all_object_gripper_distance}
+                    'all_object_gripper_distance': all_object_gripper_distance,
+                    'all_object_gripper_distance_min': min(all_object_gripper_distance)}
 
         observation = self.get_observation()
         self._prev_pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
