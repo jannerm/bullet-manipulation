@@ -60,6 +60,7 @@ class SawyerGraspV2Env(SawyerBaseEnv):
         :param transpose_image:
         :param invisible_robot:
         """
+        assert observation_mode != 'pixels', "Do not use pixels mode"
         self.reward_type = reward_type
         self._observation_mode = observation_mode
         self._num_objects = num_objects
@@ -135,8 +136,8 @@ class SawyerGraspV2Env(SawyerBaseEnv):
         if self._invisible_robot:
             self._sawyer = bullet.objects.sawyer_invisible()
         else:
-            self._sawyer = bullet.objects.sawyer() #_finger_visual_only()
-            #self._sawyer = bullet.objects.sawyer()
+            self._sawyer = bullet.objects.sawyer()
+
         self._table = bullet.objects.table()
         self._tray = bullet.objects.tray()
 
@@ -149,6 +150,7 @@ class SawyerGraspV2Env(SawyerBaseEnv):
         self._end_effector = bullet.get_index_by_attribute(
             self._sawyer, 'link_name', 'gripper_site')
         if self.trimodal:
+            self._num_objects = 3
             min_distance_threshold = 0.08
             if self.randomize:
                 if self.all_random:
@@ -166,7 +168,7 @@ class SawyerGraspV2Env(SawyerBaseEnv):
                 else:
                     choice = random.randint(0, 1)
                     object_positions = self.trimodal_positions_two[choice]
-                    self._trimodal_positions = object_positions
+                self._trimodal_positions = object_positions
 
             else:
                 object_positions = self._trimodal_positions
@@ -178,9 +180,11 @@ class SawyerGraspV2Env(SawyerBaseEnv):
             }
 
         else: #single
+            self._num_objects = 1
             if self.randomize:
                 object_position = np.random.uniform(
                     low=self._object_position_low, high=self._object_position_high)
+                self._fix_obj_position = object_position
             else:
                 object_position = self._fix_obj_position
 
@@ -197,10 +201,6 @@ class SawyerGraspV2Env(SawyerBaseEnv):
                                                quat_to_deg=False)
             object_pos = object_info['pos']
             object_positions_after_landing.append(object_pos)
-        self.object_positions_after_landing = object_positions_after_landing
-        #print("object_positions_after_landing: ")
-        #print(object_positions_after_landing)
-        #self._trimodal_positions = object_positions_after_landing
 
     def get_reward(self, info):
         object_list = self._objects.keys()
@@ -269,7 +269,7 @@ class SawyerGraspV2Env(SawyerBaseEnv):
                                                quat_to_deg=False)
             object_pos = np.asarray(object_info['pos'])
             end_effector_pos = np.asarray(self.get_end_effector_pos())
-            object_gripper_distance = np.linalg.norm(object_pos - end_effector_pos)
+            object_gripper_distance_goal = np.linalg.norm(object_pos - end_effector_pos)
 
         object_list = self._objects.keys()
         all_object_gripper_distance = []
@@ -295,15 +295,26 @@ class SawyerGraspV2Env(SawyerBaseEnv):
             done = True
             reward = self.get_reward({})
             if reward > 0:
-                info = {'grasp_success': 1.0, 'all_object_gripper_distance': all_object_gripper_distance}
+                info = {'grasp_success': 1.0,
+                        'grasp_attempt': done,
+                        'all_object_gripper_distance': all_object_gripper_distance,
+                        'all_object_gripper_distance_min': min(all_object_gripper_distance)}
             else:
-                info = {'grasp_success': 0.0, 'all_object_gripper_distance': all_object_gripper_distance}
+                info = {'grasp_success': 0.0,
+                        'grasp_attempt': done,
+                        'all_object_gripper_distance': all_object_gripper_distance,
+                        'all_object_gripper_distance_min': min(all_object_gripper_distance)}
         else:
             done = False
             reward = REWARD_NEGATIVE
             if self.reward_type == "dense":
-                reward = reward - object_gripper_distance
-            info = {'grasp_success': 0.0, 'all_object_gripper_distance': all_object_gripper_distance}
+                if self._single_obj_reward > -1:
+                    reward = reward - object_gripper_distance_goal
+                else:
+                    reward = reward - min(all_object_gripper_distance)
+            info = {'grasp_success': 0.0,
+                    'grasp_attempt': done,
+                    'all_object_gripper_distance': all_object_gripper_distance}
 
         observation = self.get_observation()
         self._prev_pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
@@ -370,7 +381,6 @@ class SawyerGraspV2Env(SawyerBaseEnv):
             observation = {
                 'state': state_observation,
                 'image': image_observation,
-                "all_obj_pos": self._trimodal_positions
             }
         else:
             raise NotImplementedError
