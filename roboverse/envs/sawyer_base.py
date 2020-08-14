@@ -93,8 +93,10 @@ class SawyerBaseEnv(gym.Env, Serializable):
         self._prev_pos = np.array(self._pos_init)
         bullet.position_control(self._sawyer, self._end_effector, self._prev_pos, self.theta)
         # self._reset_hook(self)
-        for _ in range(3):
-            self.step([0.,0.,0.,-1])
+        if not self.state_as_action:
+            for _ in range(3):
+                self.step([0.,0.,0.,-1])
+
         return self.get_observation()
 
     # def set_reset_hook(self, fn=lambda env: None):

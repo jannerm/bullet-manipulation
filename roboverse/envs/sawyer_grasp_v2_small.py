@@ -51,6 +51,7 @@ class SawyerGraspV2Env(SawyerBaseEnv):
                  trimodal_positions_choice=0,
                  all_random=True,
                  trimodal_positions_two=None,
+                 state_as_action=False,
                  *args,
                  **kwargs
                  ):
@@ -83,6 +84,8 @@ class SawyerGraspV2Env(SawyerBaseEnv):
         self.all_random = all_random
         self.trimodal_positions_two = trimodal_positions_two
         self.cnn_input_key = 'image'
+
+        self.state_as_action = state_as_action
 
         # TODO(avi) optimize the view matrix
         self._view_matrix_obs = bullet.get_view_matrix(
@@ -244,24 +247,33 @@ class SawyerGraspV2Env(SawyerBaseEnv):
         return reward
 
     def step(self, action):
-        action = np.asarray(action)
-        action = action * 10
-        pos = list(bullet.get_link_state(self._sawyer, self._end_effector, 'pos'))
-        delta_pos = action[:3]
-        pos += delta_pos * self._action_scale
-        pos = np.clip(pos, self._pos_low, self._pos_high)
+        if not self.state_as_action:
+            action = np.asarray(action)
+            # action = action * 10
+            pos = list(bullet.get_link_state(self._sawyer, self._end_effector, 'pos'))
+            # print("original pos: ", pos)
+            delta_pos = action[:3]
+            pos += delta_pos * self._action_scale
+            pos = np.clip(pos, self._pos_low, self._pos_high)
 
-        theta = list(bullet.get_link_state(self._sawyer, self._end_effector, 'theta'))
-        delta_theta = action[3]
-        target_theta = theta + np.asarray([0., 0., delta_theta*20])
-        target_theta = np.clip(target_theta, [180, 0., 0.], [180, 0., 180.])
-        target_theta = bullet.deg_to_quat(target_theta)
-        gripper = -0.8
+            theta = list(bullet.get_link_state(self._sawyer, self._end_effector, 'theta'))
+            delta_theta = action[3]
+            target_theta = theta + np.asarray([0., 0., delta_theta*20])
+            target_theta = np.clip(target_theta, [180, 0., 0.], [180, 0., 180.])
+            target_theta = bullet.deg_to_quat(target_theta)
+            gripper = -0.8
+        else:
+            pos = action[:3]
+            target_theta = action[3: 7]
+            gripper = -0.8
 
+        # for i in range(5):
+        print("target pos: ", pos)
         self._simulate(pos, target_theta, gripper)
         # if self._visualize: self.visualize_targets(pos)
 
         pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
+        # print("actual pos: ", pos)
 
         # Get object gripper distance before lifting
         if self._single_obj_reward > -1:
