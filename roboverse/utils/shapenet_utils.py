@@ -13,7 +13,7 @@ SHAPENET_ASSET_PATH = osp.join(
 # SHAPENET_ASSET_PATH = '/home/albert/dev/bullet-objects/ShapeNetCore'
 SAPIEN_ASSET_PATH = osp.join(
     osp.dirname(osp.abspath(__file__)), "../envs/assets/bullet-objects/sapien")
-SAPIEN_ASSET_PATH = "/home/albert/dev/bullet-objects/sapien"
+# SAPIEN_ASSET_PATH = "/home/albert/dev/bullet-objects/sapien"
 
 def import_shapenet_metadata():
     return import_metadata(SHAPENET_ASSET_PATH)
