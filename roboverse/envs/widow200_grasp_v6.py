@@ -116,7 +116,7 @@ class Widow200GraspV6RandObjEnv(RandObjEnv, Widow200GraspV6Env):
 if __name__ == "__main__":
     import roboverse
     import time
-    env = roboverse.make("Widow200GraspV6RandObj-v0",
+    env = roboverse.make("Widow200GraspV6-v0",
                          gui=True,
                          observation_mode='pixels_debug',)
 

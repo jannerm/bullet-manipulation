@@ -4,16 +4,19 @@ import roboverse.utils as utils
 from roboverse.envs.widow200_grasp import Widow200GraspEnv
 import gym
 from roboverse.bullet.misc import load_obj
-from roboverse.utils.shapenet_utils import load_shapenet_object, \
-    import_shapenet_metadata
+from roboverse.utils.shapenet_utils import (
+    load_shapenet_object, import_shapenet_metadata,
+    load_sapien_object, import_sapien_metadata,
+)
 import os.path as osp
 
 REWARD_NEGATIVE = -1.0
 REWARD_POSITIVE = 10.0
 
-obj_path_map, path_scaling_map = import_shapenet_metadata()
-# obj_path_map = dict: object str names --> Shapenet Paths ({class_id}/{object_id})
-# path_scaling_map = dict: Shapenet Paths ({class_id}/{object_id}) --> scaling factor
+shapenet_obj_path_map, shapenet_path_scaling_map = import_shapenet_metadata()
+sapien_obj_path_map, sapien_path_scaling_map = import_sapien_metadata()
+# shapenet_obj_path_map = dict: object str names --> Shapenet Paths ({class_id}/{object_id})
+# shapenet_path_scaling_map = dict: Shapenet Paths ({class_id}/{object_id}) --> scaling factor
 
 
 class Widow200GraspV2Env(Widow200GraspEnv):
@@ -50,6 +53,10 @@ class Widow200GraspV2Env(Widow200GraspEnv):
     def set_scaling_dicts(self):
         assert isinstance(self._scaling_local_list, list), (
             "self._scaling_local_list not a list")
+        obj_path_map, path_scaling_map = dict(shapenet_obj_path_map), dict(shapenet_path_scaling_map)
+        obj_path_map.update(sapien_obj_path_map)
+        path_scaling_map.update(sapien_path_scaling_map)
+
         self.object_path_dict = dict(
             [(obj, path) for obj, path in obj_path_map.items() if obj in self.object_names])
         self.scaling = dict(
@@ -143,6 +150,20 @@ class Widow200GraspV2Env(Widow200GraspEnv):
 
         return object_positions
 
+    def _load_object(self, object_name, idx, object_positions):
+        if object_name in shapenet_obj_path_map:
+            obj = load_shapenet_object(
+                shapenet_obj_path_map[object_name], self.scaling,
+                object_positions[idx], scale_local=self._scaling_local[object_name])
+        elif object_name in sapien_obj_path_map:
+            obj = load_sapien_object(
+                sapien_obj_path_map[object_name], self.scaling,
+                object_positions[idx], scale_local=self._scaling_local[object_name])
+        else:
+            raise NotImplementedError("No such object: {}".format(object_name))
+        return obj
+
+
     def _load_objects(self, object_positions):
         assert len(self.object_names) >= self._num_objects
         import random
@@ -151,9 +172,8 @@ class Widow200GraspV2Env(Widow200GraspEnv):
 
         for idx in indexes:
             object_name = self.object_names[idx]
-            self._objects[object_name] = load_shapenet_object(
-                obj_path_map[object_name], self.scaling,
-                object_positions[idx], scale_local=self._scaling_local[object_name])
+            self._objects[object_name] = self._load_object(
+                object_name, idx, object_positions)
             for _ in range(10):
                 bullet.step()
 
