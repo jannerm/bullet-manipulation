@@ -54,25 +54,32 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
         else:
             raise NotImplementedError
 
-    def is_object_grasped(self):
+    def is_object_grasped(self, object_name):
         """Returns true if any object is above reward height thresh."""
-        object_list = self._objects.keys()
         is_grasped = False
-        for object_name in object_list:
-            object_info = bullet.get_body_info(self._objects[object_name],
-                                               quat_to_deg=False)
-            object_pos = np.asarray(object_info['pos'])
-            object_height = object_pos[2]
-            if object_height > self._reward_height_thresh:
-                end_effector_pos = np.asarray(self.get_end_effector_pos())
-                object_gripper_distance = np.linalg.norm(
-                    object_pos - end_effector_pos)
-                if object_gripper_distance < 0.1:
-                    is_grasped = True
+        object_info = bullet.get_body_info(self._objects[object_name],
+                                           quat_to_deg=False)
+        object_pos = np.asarray(object_info['pos'])
+        object_height = object_pos[2]
+        if object_height > self._reward_height_thresh:
+            end_effector_pos = np.asarray(self.get_end_effector_pos())
+            object_gripper_distance = np.linalg.norm(
+                object_pos - end_effector_pos)
+            if object_gripper_distance < 0.1:
+                is_grasped = True
         return is_grasped
 
     def get_reward(self, info):
-        reward = float(self.is_object_grasped())
+        reward = 0.0
+        if self.target_object is None:
+            object_list = self._objects.keys()
+            for object_name in object_list:
+                if self.is_object_grasped(object_name):
+                    reward = 1.0
+        else:
+            if self.is_object_grasped(self.target_object):
+                reward = 1.0
+
         reward = self.adjust_rew_if_use_positive(reward)
         return reward
 
