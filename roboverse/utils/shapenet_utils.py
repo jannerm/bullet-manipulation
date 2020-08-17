@@ -28,7 +28,7 @@ def import_metadata(asset_path):
     metadata_spec.loader.exec_module(metadata)
     return metadata.obj_path_map, metadata.path_scaling_map
 
-def load_sapien_object(object_path, scaling, object_position, scale_local=0.5, quat=[1, -1, 0, 0]):
+def load_sapien_object(object_path, scaling, object_position, scale_local=0.5, quat=[1, 0, 1, 0]):
     path = object_path.split('/')
     object_id = path[-1]
     obj = load_urdf(
