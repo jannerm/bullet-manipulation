@@ -32,6 +32,7 @@ env = roboverse.make('Widow200GraspTwoV6-v0', reward_type=reward_type,
                      randomize=True, observation_mode='pixels_debug')
 
 for i in tqdm(range(len(data))):
+
     ax = plt.axes(projection='3d')
     traj = data[i]
 
@@ -41,9 +42,6 @@ for i in tqdm(range(len(data))):
 
     observations = np.array([traj["observations"][j][env.fc_input_key] for j in range(len(traj["observations"]))])
     ax.plot3D(observations[:, 0], observations[:, 1], observations[:, 2], label="original trajs", color="red")
-
-    print("length of obs: ", len(traj["observations"]))
-    print("length of action: ", len(traj["actions"]))
 
     actions = traj["actions"]
     first_observation = traj["observations"][0]
@@ -65,15 +63,19 @@ for i in tqdm(range(len(data))):
     obs = env.get_observation()
 
     replay_obs_list.append(obs[env.fc_input_key])
-    data[i]["observations"][0] = obs
+    data[i]["observations"] = data[i]["observations"][1:]
+
+    print("length of obs: ", len(data[i]["observations"]))
+    print("length of action: ", len(data[i]["actions"]))
+
     for index in range(len(actions)):
-        data[i]["observations"][index + 1] = obs
+        data[i]["observations"][index] = obs
         a = actions[index]
         obs, rew, done, info = env.step(a)
-        obs = env.get_observation()
+        data[i]["next_observations"][index] = obs
         replay_obs_list.append(obs[env.fc_input_key])
         images.append(Image.fromarray(env.render_obs()))
-    print(data[i]["observations"])
+
     print(info["grasp_success"])
     success.append(info["grasp_success"])
 
@@ -83,12 +85,8 @@ for i in tqdm(range(len(data))):
     replay_obs_list = np.array(replay_obs_list)
     ax.plot3D(replay_obs_list[:, 0], replay_obs_list[:, 1], replay_obs_list[:, 2], label="replay", color="blue")
 
-    #replay_pos = np.array(env._trimodal_positions)
-    #ax.scatter3D(replay_pos[:,0], replay_pos[:,1], replay_pos[:,2], label="replayed position")
-
-    if not os.path.exists('../replay_videos_trimodal_random'):
-        os.mkdir('../replay_videos_trimodal_random')
-    #video_save_path = os.path.join(".", "videos")
+    if not os.path.exists('replay_videos_trimodal_random'):
+        os.mkdir('replay_videos_trimodal_random')
 
     images[0].save('{}/{}.gif'.format("replay_videos_trimodal_random", i),
                 format='GIF', append_images=images[1:],
@@ -103,7 +101,6 @@ print("std: ", success.std())
 print("all success: ", (success == 1).all())
 print("failed id: ")
 print(failed_id)
-#plt.show()
 
 path = "{}_replayed.npy".format(sys.argv[1][:-4])
 np.save(path, data)
