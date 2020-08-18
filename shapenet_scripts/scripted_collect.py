@@ -2849,36 +2849,11 @@ if __name__ == "__main__":
 
     assert args.semisparse != args.sparse
 
+    args.num_timesteps = get_max_path_len(args.env)
+
     if args.env in V2_GRASPING_ENVS:
-        args.num_timesteps = 20
         assert args.observation_mode != 'pixels'
     elif args.env in (V4_GRASPING_ENVS + V5_GRASPING_ENVS + V6_GRASPING_ENVS + V7_GRASPING_ENVS +
         V6_GRASPING_V0_DRAWER_GRASPING_ONLY_ENVS):
-        args.num_timesteps = 25
         assert args.observation_mode != 'pixels'
-    elif args.env in (V6_GRASPING_V0_PLACING_ENVS +
-        V6_GRASPING_V0_DRAWER_OPENING_ONLY_ENVS +
-        V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV +
-        V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_ENVS +
-        V6_GRASPING_V0_DRAWER_OPEN_PLACE_PLACING_ENVS +
-        V6_GRASPING_V0_DOUBLE_DRAWER_GRASP_PLACE_ENVS):
-        args.num_timesteps = 30
-    elif args.env in V6_GRASPING_V0_DRAWER_CLOSED_PLACING_40_ENV:
-        args.num_timesteps = 40
-    elif args.env in V6_GRASPING_V0_PLACING_ONLY_ENVS:
-        args.num_timesteps = 10
-    elif args.env in (V6_GRASPING_V0_DRAWER_PLACING_ENVS +
-        V6_GRASPING_V0_DRAWER_OPENING_ENVS +
-        V6_GRASPING_V0_DOUBLE_DRAWER_OPENING_ENVS):
-        args.num_timesteps = 50
-    elif args.env in (V6_GRASPING_V0_DRAWER_OPENING_PLACING_ENVS +
-        V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_OPENING_ENVS +
-        V6_GRASPING_V0_DOUBLE_DRAWER_PICK_PLACE_OPEN_ENVS +
-        V6_GRASPING_V0_DOUBLE_DRAWER_OPEN_GRASP_PLACE_ENVS):
-        args.num_timesteps = 60
-    elif args.env in (V6_GRASPING_V0_DRAWER_PLACING_OPENING_ENVS +
-        V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_OPENING_GRASPING_ENVS):
-        args.num_timesteps = 80
-    elif args.env in V6_GRASPING_V0_DOUBLE_DRAWER_CLOSE_OPEN_GRASP_PLACE_ENVS:
-        args.num_timesteps = 90
     main(args)

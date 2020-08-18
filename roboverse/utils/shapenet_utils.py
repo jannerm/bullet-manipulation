@@ -3,7 +3,7 @@ import json
 import math
 import random
 import roboverse.bullet as bullet
-from roboverse.bullet.misc import load_obj
+from roboverse.bullet.misc import load_obj, load_urdf
 import os.path as osp
 import importlib.util
 
@@ -11,14 +11,32 @@ PATH = '/media/avi/data/Work/github/jannerm/bullet-manipulation/roboverse/envs/a
 SHAPENET_ASSET_PATH = osp.join(
     osp.dirname(osp.abspath(__file__)), '../envs/assets/bullet-objects/ShapeNetCore')
 # SHAPENET_ASSET_PATH = '/home/albert/dev/bullet-objects/ShapeNetCore'
+SAPIEN_ASSET_PATH = osp.join(
+    osp.dirname(osp.abspath(__file__)), "../envs/assets/bullet-objects/sapien")
+# SAPIEN_ASSET_PATH = "/home/albert/dev/bullet-objects/sapien"
 
 def import_shapenet_metadata():
-    metadata_spec = importlib.util.spec_from_file_location(
-        "metadata", osp.join(SHAPENET_ASSET_PATH, "metadata.py"))
-    shapenet_metadata = importlib.util.module_from_spec(metadata_spec)
-    metadata_spec.loader.exec_module(shapenet_metadata)
-    return shapenet_metadata.obj_path_map, shapenet_metadata.path_scaling_map
+    return import_metadata(SHAPENET_ASSET_PATH)
 
+def import_sapien_metadata():
+    return import_metadata(SAPIEN_ASSET_PATH)
+
+def import_metadata(asset_path):
+    metadata_spec = importlib.util.spec_from_file_location(
+        "metadata", osp.join(asset_path, "metadata.py"))
+    metadata = importlib.util.module_from_spec(metadata_spec)
+    metadata_spec.loader.exec_module(metadata)
+    return metadata.obj_path_map, metadata.path_scaling_map
+
+def load_sapien_object(object_path, scaling, object_position, scale_local=0.5, quat=[1, 0, 1, 0]):
+    path = object_path.split('/')
+    object_id = path[-1]
+    obj = load_urdf(
+        os.path.join(SAPIEN_ASSET_PATH, '{}/mobility.urdf'.format(object_id)),
+        object_position,
+        quat,
+        scale=scale_local * scaling[object_id])
+    return obj
 
 def load_shapenet_object(object_path, scaling, object_position, scale_local=0.5, quat=[1, -1, 0, 0]):
     path = object_path.split('/')

@@ -101,19 +101,28 @@ class BulletVideoLogger:
 
     def add_robot_view_to_video(self, images):
         image_x, image_y, image_c = images[0].shape
-        font = cv2.FONT_HERSHEY_TRIPLEX
+        font = cv2.FONT_HERSHEY_SIMPLEX
 
         for i in range(len(images)):
+            robot_view_margin = 5
             robot_view = cv2.resize(images[i],
                                     (ROBOT_VIEW_HEIGHT, ROBOT_VIEW_WIDTH))
             robot_view = robot_view[ROBOT_VIEW_CROP_X:, :, :]
             image_new = np.copy(images[i])
             x_offset = ROBOT_VIEW_HEIGHT-ROBOT_VIEW_CROP_X
             y_offset = image_y - ROBOT_VIEW_WIDTH
-            image_new[:x_offset, y_offset:, :] = \
-                robot_view
-            image_new = cv2.putText(image_new, 'Robot view', (y_offset, x_offset + 12),
-                                    font, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+
+            # Draw a background black rectangle
+            image_new = cv2.rectangle(image_new, (self.image_size, 0),
+                (y_offset - 2 * robot_view_margin, x_offset + 25 + robot_view_margin),
+                (0, 0, 0), -1)
+
+            image_new[robot_view_margin:x_offset + robot_view_margin,
+                      y_offset - robot_view_margin:-robot_view_margin,
+                      :] = robot_view
+            image_new = cv2.putText(image_new, 'Robot View',
+                (y_offset - robot_view_margin, x_offset + 18 + robot_view_margin),
+                font, 0.55, (255, 255, 255), 1, cv2.LINE_AA)
             images[i] = image_new
 
         return images
@@ -136,8 +145,12 @@ class BulletVideoLogger:
             if len(imgs) > 0:
                 images.extend(imgs)
 
+        # Save Video
         save_path = "{}/{}_scripted_{}_reward_{}.mp4".format(
             self.video_save_dir, self.env_name, path_idx, int(rew))
+        if self.add_robot_view:
+            dot_idx = save_path.index(".")
+            save_path = save_path[:dot_idx] + "_with_robot_view" + save_path[dot_idx:]
         inputdict = {'-r': str(12)}
         outputdict = {'-vcodec': 'libx264', '-pix_fmt': 'yuv420p'}
         writer = skvideo.io.FFmpegWriter(
