@@ -82,7 +82,6 @@ def collect_one_trajectory(env, env2, pool, render_images):
 
         ee_theta = list(bullet.get_link_state(env._robot_id, env._end_effector, 'theta'))
 
-        #action = np.append(action, (cont_orient[2] - ee_theta[2]) / 20)
         action = np.append(action, 0)
         action = np.append(action, grip)
         action = np.append(action, 0)
