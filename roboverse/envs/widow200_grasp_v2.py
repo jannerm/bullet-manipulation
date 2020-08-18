@@ -28,6 +28,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                  reward_type=False,  # Not actually used in grasping envs
                  randomize=True,
                  object_positions=None,
+                 target_object=None,
                  **kwargs):
 
         self._object_position_high = (.82, .075, -.20)
@@ -41,6 +42,10 @@ class Widow200GraspV2Env(Widow200GraspEnv):
         self._reward_type = reward_type
         self.randomize = randomize
         self.object_positions = object_positions
+        self.target_object = target_object
+
+        if self.target_object is not None:
+            assert target_object in self.object_names
 
         if not self.randomize:
             assert self.object_positions is not None
@@ -310,7 +315,8 @@ class Widow200GraspV2Env(Widow200GraspEnv):
     def get_reward(self, info):
         object_list = self._objects.keys()
         reward = REWARD_NEGATIVE
-        for object_name in object_list:
+
+        def check_grasp(object_name):
             object_info = bullet.get_body_info(self._objects[object_name],
                                                quat_to_deg=False)
             object_pos = np.asarray(object_info['pos'])
@@ -320,7 +326,16 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                 object_gripper_distance = np.linalg.norm(
                     object_pos - end_effector_pos)
                 if object_gripper_distance < 0.1:
+                    return True
+            return False
+
+        if self.target_object is None:
+            for object_name in object_list:
+                if check_grasp(object_name):
                     reward = REWARD_POSITIVE
+        else:
+            if check_grasp(self.target_object):
+                reward = REWARD_POSITIVE
         return reward
 
 
