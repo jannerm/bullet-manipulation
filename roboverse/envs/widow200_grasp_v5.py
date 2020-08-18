@@ -100,7 +100,7 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
 
         elif self._observation_mode == 'pixels':
             image_observation = self.render_obs()
-            image_observation = np.float32(image_observation.flatten())/255.0
+            #image_observation = np.float32(image_observation.flatten())/255.0
             # image_observation = np.zeros((48, 48, 3), dtype=np.uint8)
             observation = {
                 self.fc_input_key: np.concatenate(
@@ -110,7 +110,7 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
         elif self._observation_mode == 'pixels_debug':
             # This mode passes in all the true state information + images
             image_observation = self.render_obs()
-            image_observation = np.float32(image_observation.flatten())/255.0
+            #image_observation = np.float32(image_observation.flatten())/255.0
             state_observation = np.concatenate(
                 (end_effector_pos, wrist_joint_angle, gripper_open))
 
