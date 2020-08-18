@@ -68,7 +68,7 @@ class Widow200GraspV6DoubleDrawerV0Env(Widow200GraspV6DrawerOpenV0Env):
             'Open': 30,
             'GraspPlace': 30,
             'Grasp': 25,
-            'CloseOpen': 60,
+            'CloseOpen': 50,
             'CloseOpenGrasp': 80,
             'OpenGraspPlace': 60,
             'CloseOpenGraspPlace': 90,
