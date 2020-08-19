@@ -29,7 +29,7 @@ class SawyerRigMultiobjV0(SawyerBaseEnv):
                  success_threshold=0.05,
                  transpose_image=False,
                  invisible_robot=False,
-                 object_subset='',
+                 object_subset='lego',
                  task='pickup',
                  DoF=4,
                  *args,
@@ -48,7 +48,7 @@ class SawyerRigMultiobjV0(SawyerBaseEnv):
         """
         assert DoF in [3, 4, 6]
         assert task in ['goal_reaching', 'pickup']
-        assert object_subset in ['test', 'train', 'easy', '']
+        assert object_subset in ['test', 'train', 'easy', '', 'lego']
         print("Task Type: " + task)
         self.goal_pos = np.asarray(goal_pos)
         self._reward_type = reward_type
@@ -150,6 +150,11 @@ class SawyerRigMultiobjV0(SawyerBaseEnv):
             obj = random.choice(easy_objects)
             self._objects = {
                 'obj': obj(pos=object_position, quat=quat, rgba=rgba)
+            }
+        elif self.object_subset == 'lego':
+            self.curr_object = object_name
+            self._objects = {
+                'obj': bullet.objects.lego(pos=object_position)
             }
         else:
             object_name, object_id = random.choice(list(self.object_dict.items()))
