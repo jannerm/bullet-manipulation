@@ -21,7 +21,9 @@ def connect():
 
     p.configureDebugVisualizer(p.COV_ENABLE_RENDERING, 0)
     p.configureDebugVisualizer(p.COV_ENABLE_RENDERING, 1)
-    p.resetDebugVisualizerCamera(0.8, 90, -20, [0.75, -.2, 0])
+
+    p.resetDebugVisualizerCamera(cameraDistance=0.75, cameraYaw=90, cameraPitch=-30, cameraTargetPosition=[.7, 0, -0.3])
+    #p.resetDebugVisualizerCamera(0.8, 90, -20, [0.75, -.2, 0])
     p.setAdditionalSearchPath(pdata.getDataPath())
     # p.setAdditionalSearchPath('roboverse/envs/assets/')
 
@@ -33,8 +35,9 @@ def connect_headless(gui=False):
     else:
         p.connect(p.DIRECT)
 
+    p.resetDebugVisualizerCamera(cameraDistance=0.75, cameraYaw=90, cameraPitch=-30, cameraTargetPosition=[.7, 0, -0.3])
     # p.resetDebugVisualizerCamera(0.8, 90, -20, [0.75, -.2, 0])
-    p.resetDebugVisualizerCamera(0.8, 90, -45, [0.75, -0.03, -0.1])
+    #p.resetDebugVisualizerCamera(0.8, 90, -45, [0.75, -0.03, -0.1])
     p.setAdditionalSearchPath(pdata.getDataPath())
 
 

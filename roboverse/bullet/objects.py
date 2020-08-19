@@ -60,7 +60,8 @@ lego = loader(PDATA_PATH, 'lego/lego.urdf',
 #               scale=0.25)
 bowl = loader(ASSET_PATH, 'objects/bowl/bowl.urdf',
               pos=[.75, 0, -.3],
-              scale=0.25)
+              scale=0.25,
+              rgba=[1, 1, 1, 1])
 
 lid = loader(ASSET_PATH, 'objects/bowl/lid.urdf',
               pos=[.75, 0, -.3],

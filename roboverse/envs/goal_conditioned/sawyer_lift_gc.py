@@ -17,9 +17,9 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             *args,
             reset_obj_in_hand_rate=0.5,
             goal_sampling_mode='obj_in_air',
-            random_init_bowl_pos=False,
+            random_init_bowl_pos=True,
             sample_valid_rollout_goals=True,
-            bowl_bounds=[-0.40, 0.40],
+            bowl_bounds=[-0.15, 0.15],
             hand_reward=True,
             gripper_reward=True,
             bowl_reward=True,
@@ -35,6 +35,20 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         self.bowl_reward = bowl_reward
         super().__init__(*args, env='SawyerLiftMulti-v0', **kwargs)
         self.record_args(locals())
+
+
+        self.obs_img_dim = 256 #+.15
+        self._view_matrix_obs = bullet.get_view_matrix(
+            target_pos=[.7, 0, -0.2], distance=0.7,
+            yaw=90, pitch=-30, roll=0)
+        self._projection_matrix_obs = bullet.get_projection_matrix(
+            self.obs_img_dim, self.obs_img_dim)
+
+    def render_obs(self):
+        img, depth, segmentation = bullet.render(
+            self.obs_img_dim, self.obs_img_dim, self._view_matrix_obs,
+            self._projection_matrix_obs, shadow=0, gaussian_width=0)
+        return img
 
     def reset(self):
         ## set the box position
