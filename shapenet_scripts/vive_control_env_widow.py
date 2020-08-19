@@ -38,6 +38,8 @@ data = []
 
 min_traj_length = 30
 
+EPSILON = 0.005
+
 def collect_one_trajectory(env, env2, pool, render_images):
     global min_traj_length
 
@@ -58,11 +60,7 @@ def collect_one_trajectory(env, env2, pool, render_images):
         if e[BUTTONS][33] & p.VR_BUTTON_IS_DOWN:
             trigger = -0.8
         else:
-            trigger = 0.8
-        #if e[BUTTONS][33] & p.VR_BUTTON_WAS_RELEASED:
-        #    trigger = -0.8
-        trigger += np.random.normal(scale=0.01)
-        print("trigger: ", trigger)
+            trigger = 0.0
 
         # pass controller position and orientation into the environment
         # currently orientation is not used yet
@@ -72,20 +70,23 @@ def collect_one_trajectory(env, env2, pool, render_images):
             cont_orient = e[ORIENTATION]
             cont_orient = bullet.quat_to_deg(list(cont_orient))
 
-
         action = [cont_pos[0] - ee_pos[0], cont_pos[1] - ee_pos[1], cont_pos[2] - ee_pos[2]]
-        #nonlocal prev_pos
-        #action = [cont_pos[0] - prev_pos[0], cont_pos[1] - prev_pos[1], cont_pos[2] - prev_pos[2]]
-        #prev_pos = list(cont_pos)
+        action = np.array(action)
+        action *= 3
 
         grip = trigger
 
         ee_theta = list(bullet.get_link_state(env._robot_id, env._end_effector, 'theta'))
 
-        action = np.append(action, 0)
+        action = np.append(action, np.random.normal(scale=0.01))
         action = np.append(action, grip)
-        action = np.append(action, 0)
-        #action = np.append(action, cont_orient)
+        action = np.append(action, np.random.normal(scale=0.1))
+
+        noise = 0.1
+        noise_scalings = [noise] * 3 + [0.1 * noise] + [noise] * 2
+        action += np.random.normal(scale=noise_scalings)
+        action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
+
         return action
 
     o = env.reset()
@@ -98,7 +99,7 @@ def collect_one_trajectory(env, env2, pool, render_images):
     print(env.original_object_positions)
 
     traj = dict(
-        observations=[o],
+        observations=[],
         actions=[],
         rewards=[],
         next_observations=[],
@@ -107,32 +108,21 @@ def collect_one_trajectory(env, env2, pool, render_images):
         env_infos=[],
         original_object_positions=env.original_object_positions
     )
-    #events = p.getVrREvents()
-    #e = events[0]
-    #prev_pos = e[POSITION]
-    #prev_pos = list(prev_pos)
+
     # Collect a fixed length of trajectory
     for i in range(args.num_timesteps):
 
         # for _ in range(3):
-        #     action += get_VR_output()
-        #     time.sleep(0.001)
-        
-        # for _ in range(3):
         action = get_VR_output()
-        #action *= 1.5
+        print("action: ", action)
 
         if True:
             img = env.render_obs()
-            #print(img)
             images.append(Image.fromarray(np.uint8(img)))
 
         observation = env.get_observation()
-        #print(env.render_obs())
         traj["observations"].append(observation)
         next_state, reward, done, info = env.step(action)
-        #print("ENV: observation of object position: ", next_state[-7:-4])
-        #print(next_state["image"])
         traj["next_observations"].append(next_state)
         traj["actions"].append(action)
         traj["rewards"].append(reward)
@@ -145,7 +135,10 @@ def collect_one_trajectory(env, env2, pool, render_images):
 
         if reward > 0:
             print("grasp success")
-            accept = "y" #input("Accept trajectory? [y/n]\n")
+            if not accept:
+                print("num steps before success: ", i)
+            accept = "y"
+
 
     return accept, images, traj
 
@@ -163,7 +156,7 @@ def main(args):
         os.makedirs(video_save_path)
 
     reward_type = 'sparse'
-    env = roboverse.make('Widow200GraspTwoV6-v0', reward_type=reward_type,
+    env = roboverse.make('Widow200GraspOneV6-v0', reward_type=reward_type,
                          randomize=True, observation_mode='pixels_debug')
     env.reset()
     print(env.render_obs())
@@ -217,7 +210,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--data-save-directory", type=str, default="vr_expert_demos")
-    parser.add_argument("-n", "--num-trajectories", type=int, default=500)
+    parser.add_argument("-n", "--num-trajectories", type=int, default=250)
     parser.add_argument("-p", "--num-parallel-threads", type=int, default=1)
     parser.add_argument("--num-timesteps", type=int, default=25)
     parser.add_argument("--noise-std", type=float, default=0.1)

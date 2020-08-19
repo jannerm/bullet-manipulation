@@ -178,7 +178,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
             self._objects[object_name] = load_shapenet_object(
                 obj_path_map[object_name], self.scaling,
                 object_positions[idx], scale_local=self._scaling_local[object_name])
-            for _ in range(80):
+            for _ in range(10):
                 bullet.step()
 
     def step(self, action):
