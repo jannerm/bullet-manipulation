@@ -5,7 +5,8 @@
         <color rgba="1 1 0.4 1"/>
     </material>
     <material name="teal">
-        <color rgba="0 .5 .5 1"/>
+        <!--<color rgba="0 .5 .5 1"/>-->
+        <color rgba="0.33 0.3 0.21 1"/>
     </material>
 
     <link name="world"/>

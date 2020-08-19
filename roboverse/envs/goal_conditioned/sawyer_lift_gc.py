@@ -12,6 +12,35 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
     # GROUND_Y = -0.355
     GROUND_Y = -0.325
 
+    FIXED_RESETS = np.array([
+        [-0.16957985, 0.24875416, -0.37096974, -0.35731687, 0.24811275, -0.35731687,
+         0.29827275, -0.35731687, -0.33307413, -0.35731687, 0., 0.21806809],
+        [0.02765786, 0.27960807, - 0.25268179, - 0.35731541, - 0.3577478, - 0.35731586,
+         - 0.28764777, - 0.35732177, - 0.32267834, - 0.35731526, 0., 0.21806779],
+        [0.04245039, -0.33785831, -0.37165548, -0.35731687, 0.15296931, -0.35731687,
+         -0.25250958, -0.35731687, -0.29736192, -0.35731687, 0., 0.21806733],
+        [-0.39741078, -0.28639124, 0.34795413, -0.35731637, 0.25091512, -0.35731687,
+         0.38293329, -0.35731748, -0.38925895, -0.35731699, 0., 0.21806724],
+        [0.38384166, 0.2783252, 0.26671272, -0.35731687, -0.31394127, -0.35731687,
+         -0.19626396, -0.35731889, -0.23131448, -0.35731544, 0., 0.21806734],
+        [-0.01984746, -0.00270375, 0.32755514, -0.35731636, -0.24440021, -0.35731687,
+         0.36253554, -0.35731749, -0.38334344, -0.35731687, 0., 0.2180674],
+    ])
+    FIXED_GOALS = np.array([
+        [0.15891022, 0.13089675, 0.05065965, -0.34464607, 0.01572647, -0.34465302,
+         - 0.01919514, -0.34464563, -0.05412156, -0.34464609, 0., 0.21806738],
+        [-0.19291088, 0.15761949, 0.05067306, - 0.34464568, 0.01574371, - 0.34465176,
+         - 0.01917709, - 0.34464779, - 0.05410311, - 0.34464577, 0., 0.21806813],
+        [-0.18474847, -0.1159059, 0.08599449, -0.34497761, 0.05643538, -0.34506815,
+         -0.05667331, -0.34508918, -0.08667878, -0.34502432, 0., 0.2180673],
+        [-0.31345858, -0.10400784, 0.05065961, -0.34464611, 0.01572643, -0.34465297,
+         -0.01919518, -0.34464558, -0.05412158, -0.34464614, 0., 0.21806714],
+        [0.37872404, 0.14089924, 0.08849926, -0.34509307, 0.07221833, -0.34516177,
+         -0.05013061, -0.34498886, -0.08630123, -0.34501304, 0., 0.21806754],
+        [-0.20631087, -0.18157384, 0.05067047, -0.34464547, 0.01574095, -0.34465184,
+         -0.01917969, -0.34464778, -0.05410564, -0.34464584, 0., 0.21806773],
+    ])
+
     def __init__(
             self,
             *args,
@@ -26,6 +55,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             reward_type=None,
             objs_to_reset_outside_bowl=[],
             obj_success_threshold=0.10,
+            fixed_reset_and_goal_mode=None,
             **kwargs
     ):
         self.reset_obj_in_hand_rate = reset_obj_in_hand_rate
@@ -39,6 +69,11 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         self.reward_type = reward_type
         self.objs_to_reset_outside_bowl = objs_to_reset_outside_bowl
         self.obj_success_threshold = obj_success_threshold
+
+        if fixed_reset_and_goal_mode is not None:
+            assert isinstance(fixed_reset_and_goal_mode, int)
+        self.fixed_reset_and_goal_mode = fixed_reset_and_goal_mode
+
         super().__init__(*args, env='SawyerLiftMulti-v0', **kwargs)
         self.record_args(locals())
 
@@ -56,6 +91,9 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         self._env._pos_init[:] = np.random.uniform(
             low=self._env._pos_low,
             high=self._env._pos_high)
+        if self.fixed_reset_and_goal_mode is not None:
+            reset_state = SawyerLiftEnvGC.FIXED_RESETS[self.fixed_reset_and_goal_mode]
+            self._env._pos_init[1:3] = reset_state[0:2]
         super().reset()
         if not self._lite_reset:
             self._env.open_gripper()
@@ -67,7 +105,11 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             obj_id_to_put_in_hand = np.random.choice(self.num_obj)
 
         for obj_id in range(self.num_obj):
-            if obj_id in self.objs_to_reset_outside_bowl:
+            if self.fixed_reset_and_goal_mode is not None:
+                reset_state = SawyerLiftEnvGC.FIXED_RESETS[self.fixed_reset_and_goal_mode]
+                start_idx = (obj_id + 1) * 2
+                cube_reset_pos = np.concatenate(([SawyerLiftEnvGC.X_POS], reset_state[start_idx:start_idx+2]))
+            elif obj_id in self.objs_to_reset_outside_bowl:
                 bowl_xpos = self._bowl_pos[1]
                 bowl_xrange = [bowl_xpos - 0.15, bowl_xpos + 0.15]
                 while True:
@@ -76,12 +118,12 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
                         high=self._pos_high)
                     if cube_reset_pos[1] <= bowl_xrange[0] or cube_reset_pos[1] >= bowl_xrange[1]:
                         break
+                cube_reset_pos[-1] = SawyerLiftEnvGC.GROUND_Y
             else:
                 cube_reset_pos = np.random.uniform(
                     low=self._pos_low,
                     high=self._pos_high)
-            # By default, reset cube pos on ground.
-            cube_reset_pos[-1] = SawyerLiftEnvGC.GROUND_Y
+                cube_reset_pos[-1] = SawyerLiftEnvGC.GROUND_Y
             if obj_id == obj_id_to_put_in_hand:
                 cube_reset_pos = ee_reset_pos
             bullet.set_body_state(self._objects[self.get_obj_name(obj_id)],
@@ -274,6 +316,14 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         self.set_env_state(goal['state_desired_goal'])
 
     def sample_goals(self, batch_size, goal_sampling_mode=None):
+        if self.fixed_reset_and_goal_mode is not None:
+            goal = np.array(SawyerLiftEnvGC.FIXED_GOALS[self.fixed_reset_and_goal_mode])
+            goals = np.tile(goal[None], (batch_size, 1))
+            return {
+                'state_desired_goal': goals,
+                'desired_goal': goals,
+            }
+
         if goal_sampling_mode is None:
             goal_sampling_mode = self.goal_sampling_mode
 
