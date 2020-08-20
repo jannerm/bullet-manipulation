@@ -49,7 +49,7 @@ class Widow200GraspEnv(WidowBaseEnv):
 
         for _ in range(5):
             pos = list(bullet.get_link_state(self._robot_id, self._end_effector,
-                                             'pos'))
+                                                               'pos'))
             theta = list(
                 bullet.get_link_state(self._robot_id, self._end_effector,
                                       'theta'))

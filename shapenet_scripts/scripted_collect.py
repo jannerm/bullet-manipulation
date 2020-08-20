@@ -2544,17 +2544,19 @@ def random_reaching_railrl(env, pool, success_pool, with_theta=False):
     """
 
     observation = env.reset()
+    # import ipdb; ipdb.set_trace()
+    
     actions, observations, next_observations, rewards, terminals, infos = \
         [], [], [], [], [], []
 
     for _ in range(args.num_timesteps):
-        std = [0.35, 0.35, 0.25, np.pi / 8]
+        std = [0.035, 0.035, 0.05, np.pi / 8]
         mean = np.zeros_like(std)
-        action = np.random.normal(mean, std)
+        action = np.random.normal(mean, std) * 7.0
         
         if with_theta:
-            theta_action = np.random.normal(scale=0.1, size=(3,))
-            action = np.concatenate((action[:3], theta_action))
+            theta_action = np.zeros((2,)) #gripper + reset
+            action = np.concatenate((action, theta_action))
         
         action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
         
@@ -2585,6 +2587,16 @@ def random_reaching_railrl(env, pool, success_pool, with_theta=False):
 
     pool.add_path(path)
     success_pool.add_path(path)
+# /*
+# f isinstance(observation, dict):
+#             object_pos = observation[env.object_obs_key][
+#                          object_ind * 7 : object_ind * 7 + 3]
+#             ee_pos = observation[env.fc_input_key][:3]
+#         else:
+#             object_pos = observation[
+#                          object_ind * 7 + 8: object_ind * 7 + 8 + 3]
+#             ee_pos = observation[:3]
+# */
 
 def main(args):
 
@@ -2652,12 +2664,15 @@ def main(args):
         env = roboverse.make(roboverse_env_name, reward_type=reward_type,
                          gui=args.gui, randomize=args.randomize,
                          observation_mode=args.observation_mode,
-                         transpose_image=True, downwards=True)
+                         transpose_image=True, downwards=True,
+                         pos_init=[0.5, 0.5, 0.5], pos_high=[1, 1, 1],
+                         pos_low=[0, 0, 0],)
     else:        
         env = roboverse.make(roboverse_env_name, reward_type=reward_type,
                          gui=args.gui, randomize=args.randomize,
                          observation_mode=args.observation_mode,
-                         transpose_image=True)
+                         transpose_image=True, pos_init=[0.5, 0.5, 0.5],
+                         pos_high=[1, 1, 1], pos_low=[0, 0, 0],)
 
     assert args.num_timesteps == env.scripted_traj_len, (
         "args.num_timesteps: {} != env.scripted_traj_len: {}".format(

@@ -21,8 +21,9 @@ def load_shapenet_object(object_path, scaling, object_position, scale_local=0.5)
             dir_name, object_name),
         SHAPENET_ASSET_PATH + '/ShapeNetCore.v2/{0}/{1}/models/model_normalized.obj'.format(
             dir_name, object_name),
-        object_position,
-        [0, 0, 1, 0],
+        mass = 0.05,
+        pos=object_position,
+        quat=[0, 0, 1, 0],
         scale=scale_local*scaling[
             '{0}/{1}'.format(dir_name, object_name)])
     return obj
@@ -63,7 +64,6 @@ class SawyerGraspV2Env(SawyerBaseEnv):
 
         self._object_position_low = object_position_low
         self._object_position_high = object_position_high
-        self.scripted_traj_len = 20
 
         # TODO(avi) optimize the view matrix
         self._view_matrix_obs = bullet.get_view_matrix(
@@ -82,6 +82,7 @@ class SawyerGraspV2Env(SawyerBaseEnv):
 
         super().__init__(*args, **kwargs)
         self.theta = bullet.deg_to_quat([180, 0, 90])
+        self._load_meshes()
 
     def _set_action_space(self):
         act_dim = 4
@@ -324,4 +325,3 @@ if __name__ == "__main__":
             i = 0
             print('Reward: {}'.format(rew))
         # print(obs)
-

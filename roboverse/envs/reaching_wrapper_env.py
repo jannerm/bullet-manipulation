@@ -3,18 +3,24 @@ import numpy as np
 import ipdb
 
 class ReachingWrapperEnv(gym.Env):
-    def __init__(self, env, goal):
+    def __init__(self, env, goal, eps = 0.1):
         self.env = env
         self.action_space = self.env.action_space
         self.goal = goal
+        self.eps = eps
 
     def step(self, act, *args, **kwargs):
         obs, _, term, info =  self.env.step(act, *args, **kwargs)
         return obs, self.get_reward(obs), term, info
 
+    def step_slow(self, act, *args, **kwargs):
+        obs, _, term, info, imgs =  self.env.step_slow(act, *args, **kwargs)
+        return obs, self.get_reward(obs), term, info, imgs
+
     def get_reward(self, obs):
         state = obs['state'] if 'state' in obs else obs['robot_state']
-        return -np.linalg.norm((state[:3]-self.goal[:3]))
+        dist = np.linalg.norm((state[:3]-self.goal[:3])) 
+        return -dist if dist > self.eps else 5
     
     def set_goal(self, goal):
         self.goal = goal

@@ -7,26 +7,29 @@ import gym
 REWARD_FAIL = 0.0
 REWARD_SUCCESS = 1.0
 
+from roboverse.utils.shapenet_utils import load_shapenet_object, import_shapenet_metadata
+obj_path_map, path_scaling_map = import_shapenet_metadata()
 
 class Widow200GraspV6Env(Widow200GraspV5Env):
 
     def __init__(self,
                  *args,
-                 object_names=('beer_bottle',),
-                 scaling_local_list=[0.5],
+                 object_names=('beer_bottle',"mug", "gatorade"),
+                 scaling_local_list=[0.5,0.5,0.4],
                  **kwargs):
         self.object_names = object_names
         self.reward_height_threshold = -0.275
+        self.goal_loc = [0.9, 0.9, 0.1]
         super().__init__(*args,
             object_names=self.object_names,
             scaling_local_list=scaling_local_list,
+            num_objects = len(scaling_local_list),
             **kwargs)
         self.terminates = False
         self.scripted_traj_len = 25
 
     def get_info(self):
-        assert self._num_objects == 1
-        object_name = list(self._objects.keys())[0]
+        object_name = list(self._objects.keys())[-1]
         object_info = bullet.get_body_info(self._objects[object_name],
                                            quat_to_deg=False)
         object_pos = np.asarray(object_info['pos'])
@@ -50,8 +53,7 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
             pos += delta_pos * self._action_scale
             pos = np.clip(pos, self._pos_low, self._pos_high)
 
-            theta = list(bullet.get_link_state(self._robot_id, self._end_effector,
-                                               'theta'))
+            theta = list(bullet.get_link_state(self._robot_id, self._end_effector, 'theta'))
             target_theta = theta
             delta_theta = action[3]
             target_theta = np.clip(target_theta, [0, 85, 137], [180, 85, 137])
@@ -109,6 +111,25 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
         done = False
 
         return observation, reward, done, info, images
+    """
+    def reset(self):
+        obs = super().reset()
+        pos = np.random.uniform(low = self._pos_low, high = self._pos_high, size = (3,))
+        theta = list(bullet.get_link_state(self._robot_id, self._end_effector, 'theta'))
+        self._simulate(pos, theta, 0, delta_theta=0)
+        import ipdb; ipdb.set_trace()
+        obs = self.get_observation()
+        return obs
+    """
+    def _load_meshes(self):
+        super()._load_meshes()
+        self.object_path_dict['ball'] = obj_path_map['ball']
+        self.scaling = dict([(path, path_scaling_map[path]) for _, path in self.object_path_dict.items()])
+        self._objects['ball'] = load_shapenet_object(
+                obj_path_map['ball'], self.scaling,
+                self.goal_loc, scale_local=0.5, mass=0)
+        for _ in range(10):
+                bullet.step()
 
 class Widow200GraspV6RandObjEnv(RandObjEnv, Widow200GraspV6Env):
     """Grasping Env but with a random object each time."""

@@ -37,12 +37,13 @@ if __name__ == "__main__":
     timestamp = roboverse.utils.timestamp()
 
     pools = []
-
+    
     for root, dirs, files in os.walk(data_directory):
         for f in files:
             merge_f = ("pool" in f) and (("success_only" in f) == args.success_only)
-            if merge_f:
-                with open(os.path.join(root, f), 'rb') as fp:
+            path = os.path.join(root, f)
+            if merge_f and os.path.getsize(path) > 0:
+                with open(path, 'rb') as fp:
                     print("f", f)
                     pool = pickle.load(fp)
                 pools.append(pool)
@@ -76,7 +77,6 @@ if __name__ == "__main__":
                 #     reward_corrected = REWARD_POSITIVE
                 # else:
                 #     raise ValueError
-
                 reward_corrected = pool._rewards[i]
                 consolidated_pool.add_sample(
                     observation=pool._observations[i],
