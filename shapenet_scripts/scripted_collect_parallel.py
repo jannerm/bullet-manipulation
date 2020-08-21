@@ -64,7 +64,7 @@ if __name__ == "__main__":
                         type=float, default=0.05)
     parser.add_argument("--one-reset-per-traj", dest="one_reset_per_traj",
                         action="store_true", default=False)
-    parser.add_argument("--end-at-neutral", dest="end_at_neutral",
+    parser.add_argument("--continue-after-neutral", dest="continue_after_neutral",
                         action="store_true", default=False)
     parser.add_argument("--suboptimal", dest="suboptimal",
                         action="store_true", default=False)
@@ -105,7 +105,8 @@ if __name__ == "__main__":
         command.append('--allow-grasp-retries')
     if args.one_reset_per_traj:
         command.append('--one-reset-per-traj')
-    if args.end_at_neutral:
+    if not args.continue_after_neutral:
+        # Default is to end at neutral (continue_after_neutral = False)
         command.append('--end-at-neutral')
 
     subprocesses = []
