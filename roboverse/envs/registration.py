@@ -140,8 +140,8 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'action_scale': 0.05,
                    'reward_height_threshold': -.26,
                    'num_objects': 2,
-                   'object_names': ('smushed_dumbbell', 'shed'),
-                   'scaling_local_list': [0.3, 0.4],
+                   'object_names': ('square_prism_bin', 'shed'),
+                   'scaling_local_list': [0.4, 0.4],
                    'randomize': True,
                    }
     },
