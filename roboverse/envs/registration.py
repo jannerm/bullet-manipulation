@@ -2,8 +2,14 @@ import gym
 import numpy as np
 
 from roboverse.envs.env_object_list import (
-    POSSIBLE_TRAIN_OBJECTS, POSSIBLE_TRAIN_SCALINGS,
-    POSSIBLE_TEST_OBJECTS, POSSIBLE_TEST_SCALINGS)
+    POSSIBLE_TRAIN_OBJECTS, POSSIBLE_TRAIN_SCALINGS, POSSIBLE_TRAIN_DICT,
+    POSSIBLE_TEST_OBJECTS, POSSIBLE_TEST_SCALINGS, POSSIBLE_TEST_DICT)
+
+none_rolling_objects = ['shed', 'square_prism_bin', 'narrow_tray', 'modern_canoe', 'thick_wood_chair',
+                        'bathtub', 'hex_deep_bowl', 'stalagcite_chunk', 'toilet_bowl', 'flat_bottom_sack_vase']
+
+none_rolling_objects_test = ['pillow', 'pitchfork_shelf', 'circular_picnic_table', 'square_rod_embellishment',
+                             'aero_cylinder']
 
 SEQUENTIAL_ENVIRONMENT_SPECS = (
     {
@@ -316,6 +322,18 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'reward_height_threshold': -.275,
                    'possible_train_objects': POSSIBLE_TRAIN_OBJECTS[:5],
                    'train_scaling_list': POSSIBLE_TRAIN_SCALINGS[:5],}
+    },
+    {
+        'id': 'Widow200GraspV6TenNonRollRandObj-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v6:Widow200GraspV6RandObjEnv'),
+        'kwargs': {'max_force': 10,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.275,
+                   'possible_train_objects': none_rolling_objects,
+                   'train_scaling_list': [POSSIBLE_TRAIN_DICT[k] for k in none_rolling_objects],
+                   'possible_test_objects': none_rolling_objects_test,
+                   'test_scaling_list': [POSSIBLE_TEST_DICT[k] for k in none_rolling_objects_test],
+                   'num_objects': 2}
     },
     {
         'id': 'Widow200GraspV6TenSameTrainTestRandObj-v0',

@@ -51,6 +51,8 @@ POSSIBLE_TRAIN_SCALINGS = [
     0.5, 0.2, 0.5, 0.2, 0.3, 0.2, 0.3, 0.2, 0.3, 0.3,
 ]
 
+POSSIBLE_TRAIN_DICT = dict(zip(POSSIBLE_TRAIN_OBJECTS, POSSIBLE_TRAIN_SCALINGS))
+
 POSSIBLE_TEST_OBJECTS = [
     'conic_bin',
     'jar',
@@ -63,10 +65,20 @@ POSSIBLE_TEST_OBJECTS = [
     'elliptical_capsule',
     'aero_cylinder',
     'grill_trash_can',
+    # Add new objects again for none-rolling:
+    'pillow',
+    'pitchfork_shelf',
+    'circular_picnic_table',
+    'square_rod_embellishment',
+    'aero_cylinder'
 ]
 
 POSSIBLE_TEST_SCALINGS = [
     0.2, 0.5, 0.5, 0.3, 0.3,
     # New objects:
     0.3, 0.3, 0.3, 0.2, 0.3,
+    # None rolling new objects:
+    0.2, 0.2, 0.2, 0.3, 0.2
 ]
+
+POSSIBLE_TEST_DICT = dict(zip(POSSIBLE_TEST_OBJECTS, POSSIBLE_TEST_SCALINGS))
