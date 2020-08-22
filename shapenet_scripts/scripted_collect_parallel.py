@@ -70,6 +70,9 @@ if __name__ == "__main__":
                         action="store_true", default=False)
     parser.add_argument("--save-success-pool", action="store_true", default=False)
     args = parser.parse_args()
+    args.end_at_neutral = not args.continue_after_neutral and not args.suboptimal
+    # Default is to end at neutral (continue_after_neutral = False)
+    # Don't do end-at-neutral for suboptimal.
 
     assert args.semisparse != args.sparse
 
@@ -105,10 +108,7 @@ if __name__ == "__main__":
         command.append('--allow-grasp-retries')
     if args.one_reset_per_traj:
         command.append('--one-reset-per-traj')
-    args.end_at_neutral = not args.continue_after_neutral and not args.suboptimal
     if args.end_at_neutral:
-        # Default is to end at neutral (continue_after_neutral = False)
-        # Don't do end-at-neutral for suboptimal.
         command.append('--end-at-neutral')
 
     subprocesses = []
