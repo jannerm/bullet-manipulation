@@ -124,6 +124,8 @@ class Widow200GraspV2Env(Widow200GraspEnv):
         else:
             object_positions = self.object_positions
 
+        self.object_positions = object_positions
+
         self._load_objects(object_positions)
 
         if "Drawer" in self._env_name:
