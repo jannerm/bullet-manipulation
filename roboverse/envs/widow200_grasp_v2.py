@@ -22,7 +22,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                  observation_mode='state',
                  transpose_image=False,
                  reward_height_threshold=-0.25,
-                 num_objects=1,
+                 num_objects=2,
                  object_names=('beer_bottle',),
                  scaling_local_list=[0.5]*10,
                  reward_type=False,  # Not actually used in grasping envs
@@ -178,7 +178,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
             self._objects[object_name] = load_shapenet_object(
                 obj_path_map[object_name], self.scaling,
                 object_positions[idx], scale_local=self._scaling_local[object_name])
-            for _ in range(10):
+            for _ in range(30):
                 bullet.step()
 
     def step(self, action):
