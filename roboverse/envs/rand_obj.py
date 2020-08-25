@@ -75,5 +75,5 @@ class RandObjEnv:
                 self.object_names_idx.append(chosen_obj_idx)
                 self.object_names.append(self.possible_objects[chosen_obj_idx])
                 self.scaling_local_list.append(self.possible_scaling_local_list[chosen_obj_idx])
-            print("self.object_names", self.object_names, self.scaling_local_list)
+            #print("self.object_names", self.object_names, self.scaling_local_list)
         return super().reset()
