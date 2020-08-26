@@ -180,7 +180,7 @@ if __name__ == "__main__":
             obs, rew, done, info = env.step(action)
             time.sleep(0.05)
 
-            print("info", info)
+            # print("info", info)
             rewards.append(rew)
 
         # print("="*10)

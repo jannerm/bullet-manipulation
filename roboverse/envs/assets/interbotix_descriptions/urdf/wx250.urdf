@@ -23,7 +23,7 @@
     </collision>
     <inertial>
       <origin rpy="0 0 1.57079632679" xyz="-0.0380446000 0.0006138920 0.0193354000"/>
-      <mass value="0.538736"/>
+      <mass value="0.0"/> <!--To fix base onto the table-->
       <inertia ixx="0.0021150000" ixy="-0.0000163500" ixz="0.0000006998" iyy="0.0006921000" iyz="0.0000464200" izz="0.0025240000"/>
     </inertial>
   </link>
@@ -283,6 +283,10 @@
     </inertial>
   </link>
   <joint name="ee_bar" type="fixed">
+    <contact>
+      <rolling_friction value="1000.0"/>
+      <spinning_friction value="1000.0"/>
+    </contact>
     <axis xyz="1 0 0"/>
     <origin rpy="0 0 0" xyz="0.023 0 0"/>
     <parent link="/gripper_bar_link"/>
@@ -296,6 +300,10 @@
   </link>
   <!-- If the default gripper fingers are being used, add those as well -->
   <joint name="left_finger" type="prismatic">
+    <contact>
+      <rolling_friction value="1000.0"/>
+      <spinning_friction value="1000.0"/>
+    </contact>
     <axis xyz="0 1 0"/>
     <limit effort="10" lower="0.015" upper="0.037" velocity="1"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -312,6 +320,10 @@
     </actuator>
   </transmission>
   <link name="/left_finger_link">
+    <contact>
+      <rolling_friction value="1000.0"/>
+      <spinning_friction value="1000.0"/>
+    </contact>
     <visual>
       <origin rpy="3.14159265359 3.14159265359 0" xyz="0 0.005 0"/>
       <geometry>
@@ -332,6 +344,10 @@
     </inertial>
   </link>
   <joint name="right_finger" type="prismatic">
+    <contact>
+      <rolling_friction value="1000.0"/>
+      <spinning_friction value="1000.0"/>
+    </contact>
     <axis xyz="0 1 0"/>
     <limit effort="10" lower="-0.037" upper="-0.015" velocity="1"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -349,6 +365,10 @@
     </actuator>
   </transmission>
   <link name="/right_finger_link">
+    <contact>
+      <rolling_friction value="1000.0"/>
+      <spinning_friction value="1000.0"/>
+    </contact>
     <visual>
       <origin rpy="0 3.14159265359 0" xyz="0 -0.005 0"/>
       <geometry>

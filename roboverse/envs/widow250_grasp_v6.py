@@ -7,7 +7,7 @@ class Widow250GraspV6Env(Widow200GraspV6Env):
     def __init__(self,
                  *args,
                  object_names=('beer_bottle',),
-                 scaling_local_list=[0.3],
+                 scaling_local_list=[0.5],
                  **kwargs):
         self.object_names = object_names
         kwargs['env_name'] = "Widow250GraspEnv"
