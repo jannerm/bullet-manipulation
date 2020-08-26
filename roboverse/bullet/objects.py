@@ -41,7 +41,17 @@ widowx_200 = loader(
   pos=[0.6, 0, -0.4],
   deg=[math.pi, math.pi, math.pi],
   scale=1
-) #pos=[0.4, 0, -0.4], quat=[0, 0, -0.707, -0.707]
+)
+
+widowx_250s = loader(
+  ROBOT_ASSET_PATH,
+  'interbotix_descriptions/urdf/wx250s.urdf',
+  pos=[0.6, 0, -0.4],
+  deg=[math.pi, math.pi, math.pi],
+  scale=1
+)
+
+#pos=[0.4, 0, -0.4], quat=[0, 0, -0.707, -0.707]
 #pos=[0.7, 0, 0.1]
 
 ## pybullet_data objects

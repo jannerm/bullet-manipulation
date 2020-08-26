@@ -92,6 +92,8 @@ class WidowBaseEnv(gym.Env, Serializable):
         else:
             if 'WidowX200' in self._env_name or 'Widow200' in self._env_name:
                 self._robot_id = bullet.objects.widowx_200()
+            elif 'WidowX250s' in self._env_name or 'Widow250s' in self._env_name:
+                self._robot_id = bullet.objects.widowx_250s()
             else:
                 self._robot_id = bullet.objects.widow()
         self._table = bullet.objects.table()
