@@ -4,7 +4,11 @@
 <!-- |    EDITING THIS FILE BY HAND IS NOT RECOMMENDED                                 | -->
 <!-- =================================================================================== -->
 <robot name="wx250" xmlns:xacro="http://ros.org/wiki/xacro">
-  <material name="interbotix_black">
+  <material name="black">
+    <color rgba="0.15 0.15 0.15 1.0"/>
+  </material>
+
+  <material name="black">
     <texture filename="package://interbotix_descriptions/meshes/interbotix_black.png"/>
   </material>
   <link name="/base_link">
@@ -13,7 +17,7 @@
       <geometry>
         <mesh filename="package://interbotix_descriptions/meshes/meshes_wx250/WXA-250-M-1-Base.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="interbotix_black"/>
+      <material name="black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.57079632679" xyz="0 0 0"/>
@@ -49,7 +53,7 @@
       <geometry>
         <mesh filename="package://interbotix_descriptions/meshes/meshes_wx250/WXA-250-M-2-Shoulder.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="interbotix_black"/>
+      <material name="black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.57079632679" xyz="0 0 -0.003"/>
@@ -85,7 +89,7 @@
       <geometry>
         <mesh filename="package://interbotix_descriptions/meshes/meshes_wx250/WXA-250-M-3-UA.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="interbotix_black"/>
+      <material name="black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.57079632679" xyz="0 0 0"/>
@@ -121,7 +125,7 @@
       <geometry>
         <mesh filename="package://interbotix_descriptions/meshes/meshes_wx250/WXA-250-M-4-Forearm.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="interbotix_black"/>
+      <material name="black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.57079632679" xyz="0 0 0"/>
@@ -157,7 +161,7 @@
       <geometry>
         <mesh filename="package://interbotix_descriptions/meshes/meshes_wx250/WXA-250-M-5-Wrist.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="interbotix_black"/>
+      <material name="black"/>
     </visual>
     <collision>
       <origin rpy="0 3.14159265359 1.57079632679" xyz="0 0 0"/>
@@ -193,7 +197,7 @@
       <geometry>
         <mesh filename="package://interbotix_descriptions/meshes/meshes_wx250/WXA-250-M-6-Gripper.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="interbotix_black"/>
+      <material name="black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.57079632679" xyz="-0.02 0 0"/>
@@ -241,7 +245,7 @@
       <geometry>
         <mesh filename="package://interbotix_descriptions/meshes/meshes_wx250/WXA-250-M-7-Gripper-Prop.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="interbotix_black"/>
+      <material name="black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.57079632679" xyz="-0.0685 0 0"/>
@@ -268,7 +272,7 @@
       <geometry>
         <mesh filename="package://interbotix_descriptions/meshes/meshes_wx250/WXA-250-M-8-Gripper-Bar.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="interbotix_black"/>
+      <material name="black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.57079632679" xyz="-0.063 0 0"/>
@@ -329,7 +333,7 @@
       <geometry>
         <mesh filename="package://interbotix_descriptions/meshes/meshes_wx250/WXA-250-M-9-Finger.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="interbotix_black"/>
+      <material name="black"/>
     </visual>
     <collision>
       <origin rpy="3.14159265359 3.14159265359 0" xyz="0 0.005 0"/>
@@ -374,7 +378,7 @@
       <geometry>
         <mesh filename="package://interbotix_descriptions/meshes/meshes_wx250/WXA-250-M-9-Finger.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="interbotix_black"/>
+      <material name="black"/>
     </visual>
     <collision>
       <origin rpy="0 3.14159265359 0" xyz="0 -0.005 0"/>
