@@ -146,6 +146,8 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'action_scale': 0.05,
                    'reward_height_threshold': -.26,
                    'num_objects': 2,
+                   #'object_names': ('smushed_dumbbell', 'shed'),
+                   #'scaling_local_list': [0.3, 0.4],
                    'object_names': ('square_prism_bin', 'shed'),
                    'scaling_local_list': [0.4, 0.4],
                    'randomize': True,
@@ -358,11 +360,22 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'reward_height_threshold': -.275,
                    'possible_train_objects': POSSIBLE_TRAIN_OBJECTS[:30],
                    'train_scaling_list': POSSIBLE_TRAIN_SCALINGS[:30],
+                   'possible_test_objects': POSSIBLE_TEST_OBJECTS[:10],
+                   'test_scaling_list': POSSIBLE_TEST_SCALINGS[:10],
+                   'num_objects': 2,}
+    },
+    {
+        'id': 'Widow200GraspV6ThirtyRandObj0-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v6:Widow200GraspV6RandObjEnv'),
+        'kwargs': {'max_force': 10,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.275,
+                   'possible_train_objects': POSSIBLE_TRAIN_OBJECTS[:30],
+                   'train_scaling_list': POSSIBLE_TRAIN_SCALINGS[:30],
                    'possible_test_objects': POSSIBLE_TEST_OBJECTS[:2],
                    'test_scaling_list': POSSIBLE_TEST_SCALINGS[:2],
                    'num_objects': 2,}
     },
-
     {
         'id': 'Widow200GraspV6ThirtyRandObj1-v0',
         'entry_point': ('roboverse.envs.widow200_grasp_v6:Widow200GraspV6RandObjEnv'),
@@ -375,7 +388,6 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'test_scaling_list': POSSIBLE_TEST_SCALINGS[2:4],
                    'num_objects': 2,}
     },
-
     {
         'id': 'Widow200GraspV6ThirtyRandObj2-v0',
         'entry_point': ('roboverse.envs.widow200_grasp_v6:Widow200GraspV6RandObjEnv'),

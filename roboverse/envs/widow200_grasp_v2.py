@@ -123,10 +123,11 @@ class Widow200GraspV2Env(Widow200GraspEnv):
 
         if self.randomize:
             object_positions = self._generate_object_positions()
+            self.object_positions = object_positions
         else:
             object_positions = self.object_positions
-
         self.original_object_positions = object_positions
+        self.object_positions = object_positions
 
         self._load_objects(object_positions)
 
