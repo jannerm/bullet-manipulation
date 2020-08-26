@@ -8,7 +8,7 @@ from roboverse.envs.serializable import Serializable
 WIDOW200_SERIES_NAMES = ['WidowX200', 'Widow200', 'Widow250', 'Widow250s']
 
 def is_widow200_series_env(env_name):
-    return any([env_name in widow200_name
+    return any([widow200_name in env_name
         for widow200_name in WIDOW200_SERIES_NAMES])
 
 class WidowBaseEnv(gym.Env, Serializable):
@@ -31,10 +31,12 @@ class WidowBaseEnv(gym.Env, Serializable):
                  camera_pitch=-40,
                  use_positive_rew=False,
                  use_pos_neg_rew=False,
+                 env_name="Widow200",
                  ):
 
         self._id = 'WidowBaseEnv'
         self._robot_name = 'widowx'
+        self._env_name = env_name
         self._gripper_joint_name = (
         'gripper_prismatic_joint_1', 'gripper_prismatic_joint_2')
         if is_widow200_series_env(self._env_name):
@@ -48,7 +50,7 @@ class WidowBaseEnv(gym.Env, Serializable):
         if 'WidowX200' in self._env_name or 'Widow200' in self._env_name:
             self._end_effector_link_name = 'wx200/gripper_bar_link'
         elif 'Widow250' in self._env_name:
-            self._end_effector_link_name = 'wx250/gripper_bar_link'
+            self._end_effector_link_name = '/gripper_bar_link'
         elif 'Widow250s' in self._env_name:
             self._end_effector_link_name = 'wx250s/gripper_bar_link'
 

@@ -1,5 +1,6 @@
 from roboverse.envs.widow200_grasp_v6 import Widow200GraspV6Env
 import roboverse
+import numpy as np
 
 class Widow250GraspV6Env(Widow200GraspV6Env):
 
@@ -8,12 +9,13 @@ class Widow250GraspV6Env(Widow200GraspV6Env):
                  object_names=('beer_bottle',),
                  scaling_local_list=[0.3],
                  **kwargs):
-        self._env_name = 'Widow250GraspEnv'
         self.object_names = object_names
+        kwargs['env_name'] = "Widow250GraspEnv"
         super().__init__(*args,
             object_names=self.object_names,
             scaling_local_list=scaling_local_list,
             **kwargs)
+        self._env_name = kwargs['env_name']
 
 if __name__ == "__main__":
     EPSILON = 0.05
@@ -44,7 +46,7 @@ if __name__ == "__main__":
 
             object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
             theta_action = 0.
-            object_goal_dist = np.linalg.norm(object_pos - env._goal_position)
+            object_goal_dist = 0.1 # dummy value
 
             info = env.get_info()
             # theta_action = np.random.uniform()
@@ -74,9 +76,6 @@ if __name__ == "__main__":
             if save_video:
                 images.append(img)
 
-            time.sleep(0.05)
-
         print('object pos: {}'.format(object_pos))
         print('reward: {}'.format(rew))
-        print('distance: {}'.format(info['object_goal_dist']))
         print('--------------------')
