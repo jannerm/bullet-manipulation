@@ -24,6 +24,16 @@ def loader(*filepath, **defaults):
         return load_urdf(filepath, **defaults)
     return fn
 
+def widow_loader(name):
+    assert name in ['wx200', 'wx250', 'wx250s']
+    return loader(
+        ROBOT_ASSET_PATH,
+        'interbotix_descriptions/urdf/{}.urdf'.format(name),
+        pos=[0.6, 0, -0.4],
+        deg=[math.pi, math.pi, math.pi],
+        scale=1
+    )
+
 cur_path = os.path.dirname(os.path.realpath(__file__))
 ASSET_PATH = os.path.join(cur_path, '../envs/assets')
 ROBOT_ASSET_PATH = ASSET_PATH # variable kept for debugging
@@ -35,14 +45,10 @@ obj_dir = "bullet-objects"
 sawyer = loader(ROBOT_ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro.urdf')
 sawyer_invisible = loader(ROBOT_ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro_invisible.urdf')
 sawyer_finger_visual_only = loader(ROBOT_ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro_finger_visual_only.urdf')
-widowx_200 = loader(
-  ROBOT_ASSET_PATH,
-  'interbotix_descriptions/urdf/wx200.urdf',
-  pos=[0.6, 0, -0.4],
-  deg=[math.pi, math.pi, math.pi],
-  scale=1
-) #pos=[0.4, 0, -0.4], quat=[0, 0, -0.707, -0.707]
-#pos=[0.7, 0, 0.1]
+
+widowx_200 = widow_loader("wx200")
+widowx_250 = widow_loader("wx250")
+widowx_250s = widow_loader("wx250s")
 
 ## pybullet_data objects
 

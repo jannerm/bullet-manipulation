@@ -5,6 +5,11 @@ import pdb
 import roboverse.bullet as bullet
 from roboverse.envs.serializable import Serializable
 
+WIDOW200_SERIES_NAMES = ['WidowX200', 'Widow200', 'Widow250', 'Widow250s']
+
+def is_widow200_series_env(env_name):
+    return any([env_name in widow200_name
+        for widow200_name in WIDOW200_SERIES_NAMES])
 
 class WidowBaseEnv(gym.Env, Serializable):
     def __init__(self,
@@ -32,7 +37,7 @@ class WidowBaseEnv(gym.Env, Serializable):
         self._robot_name = 'widowx'
         self._gripper_joint_name = (
         'gripper_prismatic_joint_1', 'gripper_prismatic_joint_2')
-        if 'WidowX200' in self._env_name or 'Widow200' in self._env_name:
+        if is_widow200_series_env(self._env_name):
             self._gripper_joint_name = ('left_finger', 'right_finger')
 
         self._gripper_range = range(7, 9)
@@ -42,6 +47,10 @@ class WidowBaseEnv(gym.Env, Serializable):
 
         if 'WidowX200' in self._env_name or 'Widow200' in self._env_name:
             self._end_effector_link_name = 'wx200/gripper_bar_link'
+        elif 'Widow250' in self._env_name:
+            self._end_effector_link_name = 'wx250/gripper_bar_link'
+        elif 'Widow250s' in self._env_name:
+            self._end_effector_link_name = 'wx250s/gripper_bar_link'
 
         self.obs_img_dim = img_dim
         self.image_shape = (img_dim, img_dim)
@@ -96,6 +105,10 @@ class WidowBaseEnv(gym.Env, Serializable):
         else:
             if 'WidowX200' in self._env_name or 'Widow200' in self._env_name:
                 self._robot_id = bullet.objects.widowx_200()
+            elif 'Widow250' in self._env_name:
+                self._robot_id = bullet.objects.widowx_250()
+            elif 'Widow250s' in self._env_name:
+                self._robot_id = bullet.objects.widowx_250s()
             else:
                 self._robot_id = bullet.objects.widow()
         self._table = bullet.objects.table()
