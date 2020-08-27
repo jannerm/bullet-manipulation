@@ -59,6 +59,8 @@ def collect_one_trajectory(env, env2, pool, render_images):
         # Detect change in button, and change trigger state
         if e[BUTTONS][33] & p.VR_BUTTON_IS_DOWN:
             trigger = -0.8
+        elif e[BUTTONS][33] & p.VR_BUTTON_WAS_RELEASED:
+            trigger = 0.8
         else:
             trigger = 0.0
 
@@ -151,7 +153,7 @@ def main(args):
         os.makedirs(video_save_path)
 
     reward_type = 'sparse'
-    env = roboverse.make('Widow200GraspV6ThirtyRandObj-v0', reward_type=reward_type,
+    env = roboverse.make('Widow200GraspTwoAndPushV6-v0', reward_type=reward_type,
                          randomize=True, observation_mode='pixels_debug', num_objects=2)
     env.reset()
     print(env.render_obs())
@@ -205,9 +207,9 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--data-save-directory", type=str, default="vr_expert_demos")
-    parser.add_argument("-n", "--num-trajectories", type=int, default=150)
+    parser.add_argument("-n", "--num-trajectories", type=int, default=400)
     parser.add_argument("-p", "--num-parallel-threads", type=int, default=1)
-    parser.add_argument("--num-timesteps", type=int, default=25)
+    parser.add_argument("--num-timesteps", type=int, default=30)
     parser.add_argument("--noise-std", type=float, default=0.1)
     parser.add_argument("--video_save_frequency", type=int,
                         default=1, help="Set to zero for no video saving")
