@@ -22,7 +22,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                  observation_mode='state',
                  transpose_image=False,
                  reward_height_threshold=-0.25,
-                 num_objects=1,
+                 num_objects=2,
                  object_names=('beer_bottle',),
                  scaling_local_list=[0.5]*10,
                  reward_type=False,  # Not actually used in grasping envs
@@ -59,6 +59,8 @@ class Widow200GraspV2Env(Widow200GraspEnv):
         self._gripper_open = True
 
     def set_scaling_dicts(self):
+        print("self.object_names: ", self.object_names)
+
         assert isinstance(self._scaling_local_list, list), (
             "self._scaling_local_list not a list")
         self.object_path_dict = dict(
@@ -121,8 +123,11 @@ class Widow200GraspV2Env(Widow200GraspEnv):
 
         if self.randomize:
             object_positions = self._generate_object_positions()
+            self.object_positions = object_positions
         else:
             object_positions = self.object_positions
+        self.original_object_positions = object_positions
+        self.object_positions = object_positions
 
         self._load_objects(object_positions)
 
@@ -134,7 +139,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                 bullet.close_drawer(self._drawer)
 
     def _generate_object_positions(self):
-        import scipy.spatial
+        #import scipy.spatial
         min_distance_threshold = 0.07
         object_positions = np.random.uniform(
             low=self._object_position_low, high=self._object_position_high)
@@ -147,8 +152,13 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                 low=self._object_position_low, high=self._object_position_high)
             object_position_candidate = np.reshape(
                 object_position_candidate, (1,3))
-            min_distance = scipy.spatial.distance.cdist(
-                object_position_candidate, object_positions)
+            #min_distance = scipy.spatial.distance.cdist(
+            #    object_position_candidate, object_positions)
+            min_distance = []
+            for o in object_positions:
+                dist = np.linalg.norm(o-object_position_candidate)
+                min_distance.append(dist)
+            min_distance = np.array(min_distance)
             if (min_distance > min_distance_threshold).any():
                 object_positions = np.concatenate(
                     (object_positions, object_position_candidate), axis=0)
@@ -169,7 +179,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
             self._objects[object_name] = load_shapenet_object(
                 obj_path_map[object_name], self.scaling,
                 object_positions[idx], scale_local=self._scaling_local[object_name])
-            for _ in range(10):
+            for _ in range(30):
                 bullet.step()
 
     def step(self, action):
