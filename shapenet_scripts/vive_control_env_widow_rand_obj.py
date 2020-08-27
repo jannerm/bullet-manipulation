@@ -106,7 +106,8 @@ def collect_one_trajectory(env, env2, pool, render_images):
         terminals=[],
         agent_infos=[],
         env_infos=[],
-        original_object_positions=env.original_object_positions
+        original_object_positions=env.original_object_positions,
+        object_names_idx=env.object_names_idx
     )
 
     # Collect a fixed length of trajectory
@@ -114,7 +115,6 @@ def collect_one_trajectory(env, env2, pool, render_images):
 
         # for _ in range(3):
         action = get_VR_output()
-        print("action: ", action)
 
         if True:
             img = env.render_obs()
@@ -133,12 +133,8 @@ def collect_one_trajectory(env, env2, pool, render_images):
         pool.add_sample(observation, action, next_state, reward, done)
         time.sleep(0.03)
 
-        if reward > 0:
-            print("grasp success")
-            if not accept:
-                print("num steps before success: ", i)
-            accept = "y"
-
+    if reward > 0:
+        accept = "y"
 
     return accept, images, traj
 
@@ -156,8 +152,8 @@ def main(args):
         os.makedirs(video_save_path)
 
     reward_type = 'sparse'
-    env = roboverse.make('Widow200GraspOneV6-v0', reward_type=reward_type,
-                         randomize=True, observation_mode='pixels_debug')
+    env = roboverse.make('Widow200GraspV6ThirtyRandObj-v0', reward_type=reward_type,
+                         randomize=True, observation_mode='pixels_debug', num_objects=2)
     env.reset()
     print(env.render_obs())
 
@@ -210,7 +206,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--data-save-directory", type=str, default="vr_expert_demos")
-    parser.add_argument("-n", "--num-trajectories", type=int, default=250)
+    parser.add_argument("-n", "--num-trajectories", type=int, default=150)
     parser.add_argument("-p", "--num-parallel-threads", type=int, default=1)
     parser.add_argument("--num-timesteps", type=int, default=25)
     parser.add_argument("--noise-std", type=float, default=0.1)
