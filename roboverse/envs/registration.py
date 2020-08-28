@@ -953,8 +953,25 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
         'entry_point': ('roboverse.envs.widow200_box_packing_v2:WidowBoxPackingV2Env'),
         'kwargs': {'max_force': 100, 'action_scale': 0.05}
     },
-
+    # Widow 250 stuff.
+    {
+        'id': 'Widow250GraspV6-v0',
+        'entry_point': ('roboverse.envs.widow250_grasp_v6:Widow250GraspV6Env'),
+        'kwargs': {'max_force': 10,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.275}
+    },
+    # Widow 250s stuff.
+    {
+        'id': 'Widow250sGraspV6-v0',
+        'entry_point': ('roboverse.envs.widow250s_grasp_v6:Widow250sGraspV6Env'),
+        'kwargs': {'max_force': 10,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.275}
+    },
 )
+
+
 
 GRASP_V3_ENV_SPECS = []
 OBJ_IDS_TEN = [0, 1, 25, 30, 50, 215, 255, 265, 300, 310]

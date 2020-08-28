@@ -5,12 +5,17 @@ from roboverse.utils.shapenet_utils import load_single_object
 
 
 class Widow200GraspEnv(WidowBaseEnv):
-    def __init__(self, goal_pos=(.7, 0.15, -0.20), *args, **kwargs):
-        self._env_name = 'WidowX200GraspEnv'
+    def __init__(self, goal_pos=(.7, 0.15, -0.20),
+            env_name="WidowX200GraspEnv", *args, **kwargs):
         kwargs['downwards'] = False
-        super().__init__(*args, **kwargs)
+        super().__init__(env_name=env_name, *args, **kwargs)
         self._goal_pos = goal_pos
-        self.RESET_JOINTS = [1.57, -0.6, -0.6, -1.57, 1.57]
+        if "200" in env_name:
+            self.RESET_JOINTS = [1.57, -0.6, -0.6, -1.57, 1.57]
+        elif "250s" in env_name:
+            self.RESET_JOINTS = [1.57, -0.6, -0.6, 0, -1.57]
+        elif "250" in env_name:
+            self.RESET_JOINTS = [1.57, -0.6, -0.6, -1.57, 0]
         self._end_effector = 8
         self.terminates = True
         self.scripted_traj_len = 50
