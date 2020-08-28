@@ -11,11 +11,12 @@ class Widow250sGraspV6Env(Widow200GraspV6Env):
                  **kwargs):
         self.object_names = object_names
         kwargs['env_name'] = "Widow250sGraspEnv"
+        self._env_name = kwargs['env_name']
         super().__init__(*args,
             object_names=self.object_names,
             scaling_local_list=scaling_local_list,
             **kwargs)
-        self._env_name = kwargs['env_name']
+
 
 if __name__ == "__main__":
     EPSILON = 0.05

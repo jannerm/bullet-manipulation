@@ -959,6 +959,8 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
         'entry_point': ('roboverse.envs.widow250_grasp_v6:Widow250GraspV6Env'),
         'kwargs': {'max_force': 10,
                    'action_scale': 0.05,
+                   'object_names': ('square_prism_bin', 'shed'),
+                   'scaling_local_list': [0.3, 0.4],
                    'reward_height_threshold': -.275}
     },
     # Widow 250s stuff.
@@ -967,6 +969,8 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
         'entry_point': ('roboverse.envs.widow250s_grasp_v6:Widow250sGraspV6Env'),
         'kwargs': {'max_force': 10,
                    'action_scale': 0.05,
+                   'object_names': ('square_prism_bin', 'shed'),
+                   'scaling_local_list': [0.3, 0.4],
                    'reward_height_threshold': -.275}
     },
 )
