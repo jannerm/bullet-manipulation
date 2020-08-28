@@ -12,8 +12,6 @@ class Widow200GraspEnv(WidowBaseEnv):
         self._goal_pos = goal_pos
         if "200" in env_name:
             self.RESET_JOINTS = [1.57, -0.6, -0.6, -1.57, 1.57]
-        elif "250s" in env_name:
-            self.RESET_JOINTS = [1.57, -0.6, -0.6, 0, -1.57]
         elif "250" in env_name:
             self.RESET_JOINTS = [1.57, -0.6, -0.6, -1.57, 0]
         self._end_effector = 8
