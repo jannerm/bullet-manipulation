@@ -4,6 +4,10 @@
 <!-- |    EDITING THIS FILE BY HAND IS NOT RECOMMENDED                                 | -->
 <!-- =================================================================================== -->
 <robot name="wx250s" xmlns:xacro="http://ros.org/wiki/xacro">
+  <material name="black">
+    <color rgba="0.15 0.15 0.15 1.0"/>
+  </material>
+
   <material name="interbotix_black">
     <texture filename="package://interbotix_descriptions/meshes/interbotix_black.png"/>
   </material>
@@ -13,7 +17,7 @@
       <geometry>
         <mesh filename="package://interbotix_descriptions/meshes/meshes_wx250s/WXSA-250-M-1-Base.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="interbotix_black"/>
+      <material name="black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.57079632679" xyz="0 0 0"/>
@@ -23,7 +27,7 @@
     </collision>
     <inertial>
       <origin rpy="0 0 1.57079632679" xyz="-0.0380446000 0.0006138920 0.0193354000"/>
-      <mass value="0.538736"/>
+      <mass value="0.0"/> <!--To fix base onto the table-->
       <inertia ixx="0.0021150000" ixy="-0.0000163500" ixz="0.0000006998" iyy="0.0006921000" iyz="0.0000464200" izz="0.0025240000"/>
     </inertial>
   </link>
@@ -49,7 +53,7 @@
       <geometry>
         <mesh filename="package://interbotix_descriptions/meshes/meshes_wx250s/WXSA-250-M-2-Shoulder.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="interbotix_black"/>
+      <material name="black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.57079632679" xyz="0 0 -0.003"/>
@@ -85,7 +89,7 @@
       <geometry>
         <mesh filename="package://interbotix_descriptions/meshes/meshes_wx250s/WXSA-250-M-3-UA.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="interbotix_black"/>
+      <material name="black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.57079632679" xyz="0 0 0"/>
@@ -121,7 +125,7 @@
       <geometry>
         <mesh filename="package://interbotix_descriptions/meshes/meshes_wx250s/WXSA-250-M-4-UF.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="interbotix_black"/>
+      <material name="black"/>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -157,7 +161,7 @@
       <geometry>
         <mesh filename="package://interbotix_descriptions/meshes/meshes_wx250s/WXSA-250-M-5-LF.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="interbotix_black"/>
+      <material name="black"/>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -193,7 +197,7 @@
       <geometry>
         <mesh filename="package://interbotix_descriptions/meshes/meshes_wx250s/WXSA-250-M-6-Wrist.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="interbotix_black"/>
+      <material name="black"/>
     </visual>
     <collision>
       <origin rpy="0 3.14159265359 1.57079632679" xyz="0 0 0"/>
@@ -229,7 +233,7 @@
       <geometry>
         <mesh filename="package://interbotix_descriptions/meshes/meshes_wx250s/WXSA-250-M-7-Gripper.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="interbotix_black"/>
+      <material name="black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.57079632679" xyz="-0.02 0 0"/>
@@ -277,7 +281,7 @@
       <geometry>
         <mesh filename="package://interbotix_descriptions/meshes/meshes_wx250s/WXSA-250-M-8-Gripper-Prop.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="interbotix_black"/>
+      <material name="black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.57079632679" xyz="-0.0685 0 0"/>
@@ -304,7 +308,7 @@
       <geometry>
         <mesh filename="package://interbotix_descriptions/meshes/meshes_wx250s/WXSA-250-M-9-Gripper-Bar.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="interbotix_black"/>
+      <material name="black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.57079632679" xyz="-0.063 0 0"/>
@@ -319,6 +323,10 @@
     </inertial>
   </link>
   <joint name="ee_bar" type="fixed">
+    <contact>
+      <rolling_friction value="1000.0"/>
+      <spinning_friction value="1000.0"/>
+    </contact>
     <axis xyz="1 0 0"/>
     <origin rpy="0 0 0" xyz="0.023 0 0"/>
     <parent link="/gripper_bar_link"/>
@@ -332,6 +340,10 @@
   </link>
   <!-- If the default gripper fingers are being used, add those as well -->
   <joint name="left_finger" type="prismatic">
+    <contact>
+      <rolling_friction value="1000.0"/>
+      <spinning_friction value="1000.0"/>
+    </contact>
     <axis xyz="0 1 0"/>
     <limit effort="10" lower="0.015" upper="0.037" velocity="1"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -348,12 +360,16 @@
     </actuator>
   </transmission>
   <link name="/left_finger_link">
+    <contact>
+      <rolling_friction value="1000.0"/>
+      <spinning_friction value="1000.0"/>
+    </contact>
     <visual>
       <origin rpy="3.14159265359 3.14159265359 0" xyz="0 0.005 0"/>
       <geometry>
         <mesh filename="package://interbotix_descriptions/meshes/meshes_wx250s/WXSA-250-M-10-Finger.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="interbotix_black"/>
+      <material name="black"/>
     </visual>
     <collision>
       <origin rpy="3.14159265359 3.14159265359 0" xyz="0 0.005 0"/>
@@ -368,6 +384,10 @@
     </inertial>
   </link>
   <joint name="right_finger" type="prismatic">
+    <contact>
+      <rolling_friction value="1000.0"/>
+      <spinning_friction value="1000.0"/>
+    </contact>
     <axis xyz="0 1 0"/>
     <limit effort="10" lower="-0.037" upper="-0.015" velocity="1"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -385,12 +405,16 @@
     </actuator>
   </transmission>
   <link name="/right_finger_link">
+    <contact>
+      <rolling_friction value="1000.0"/>
+      <spinning_friction value="1000.0"/>
+    </contact>
     <visual>
       <origin rpy="0 3.14159265359 0" xyz="0 -0.005 0"/>
       <geometry>
         <mesh filename="package://interbotix_descriptions/meshes/meshes_wx250s/WXSA-250-M-10-Finger.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-      <material name="interbotix_black"/>
+      <material name="black"/>
     </visual>
     <collision>
       <origin rpy="0 3.14159265359 0" xyz="0 -0.005 0"/>

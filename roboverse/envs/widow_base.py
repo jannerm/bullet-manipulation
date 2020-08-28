@@ -51,8 +51,6 @@ class WidowBaseEnv(gym.Env, Serializable):
             self._end_effector_link_name = 'wx200/gripper_bar_link'
         elif 'Widow250' in self._env_name:
             self._end_effector_link_name = '/gripper_bar_link'
-        elif 'Widow250s' in self._env_name:
-            self._end_effector_link_name = 'wx250s/gripper_bar_link'
 
         self.obs_img_dim = img_dim
         self.image_shape = (img_dim, img_dim)
@@ -107,10 +105,10 @@ class WidowBaseEnv(gym.Env, Serializable):
         else:
             if 'WidowX200' in self._env_name or 'Widow200' in self._env_name:
                 self._robot_id = bullet.objects.widowx_200()
-            elif 'Widow250' in self._env_name:
-                self._robot_id = bullet.objects.widowx_250()
             elif 'Widow250s' in self._env_name:
                 self._robot_id = bullet.objects.widowx_250s()
+            elif 'Widow250' in self._env_name:
+                self._robot_id = bullet.objects.widowx_250()
             else:
                 self._robot_id = bullet.objects.widow()
         self._table = bullet.objects.table()
