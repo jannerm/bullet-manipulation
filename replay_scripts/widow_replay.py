@@ -28,7 +28,7 @@ success = []
 failed_id = []
 
 reward_type = 'sparse'
-env = roboverse.make('Widow200GraspTwoV6-v0', reward_type=reward_type,
+env = roboverse.make('Widow200PushV6-v0', reward_type=reward_type,
                      randomize=True, observation_mode='pixels_debug')
 
 for i in tqdm(range(len(data))):
@@ -63,7 +63,7 @@ for i in tqdm(range(len(data))):
     obs = env.get_observation()
 
     replay_obs_list.append(obs[env.fc_input_key])
-    data[i]["observations"] = data[i]["observations"][1:]
+    #data[i]["observations"] = data[i]["observations"][1:]
 
     print("length of obs: ", len(data[i]["observations"]))
     print("length of action: ", len(data[i]["actions"]))
@@ -76,23 +76,23 @@ for i in tqdm(range(len(data))):
         replay_obs_list.append(obs[env.fc_input_key])
         images.append(Image.fromarray(env.render_obs()))
 
-    print(info["grasp_success"])
-    success.append(info["grasp_success"])
+    print(rew)
+    success.append(rew)
 
-    if not info["grasp_success"]:
+    if not rew:
         failed_id.append(i)
 
     replay_obs_list = np.array(replay_obs_list)
     ax.plot3D(replay_obs_list[:, 0], replay_obs_list[:, 1], replay_obs_list[:, 2], label="replay", color="blue")
 
-    if not os.path.exists('replay_videos_trimodal_random'):
-        os.mkdir('replay_videos_trimodal_random')
+    if not os.path.exists('replay_videos_single_random'):
+        os.mkdir('replay_videos_single_random')
 
-    images[0].save('{}/{}.gif'.format("replay_videos_trimodal_random", i),
+    images[0].save('{}/{}.gif'.format("replay_videos_single_random", i),
                 format='GIF', append_images=images[1:],
                 save_all=True, duration=100, loop=0)
     plt.legend()
-    fig.savefig('{}/{}.png'.format("replay_videos_trimodal_random", i))
+    fig.savefig('{}/{}.png'.format("replay_videos_single_random", i))
     fig.clf()
     
 success = np.array(success)
