@@ -139,22 +139,31 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'action_scale': 0.05,
                    'reward_height_threshold': -.275}
     },
-{
+    {
         'id': 'Widow200GraspTwoV6-v0',
         'entry_point': ('roboverse.envs.widow200_grasp_v6:Widow200GraspV6Env'),
         'kwargs': {'max_force': 100,
                    'action_scale': 0.05,
                    'reward_height_threshold': -.26,
                    'num_objects': 2,
-                   #'object_names': ('smushed_dumbbell', 'shed'),
-                   #'scaling_local_list': [0.3, 0.4],
                    'object_names': ('square_prism_bin', 'shed'),
-                   'scaling_local_list': [0.4, 0.4],
+                   'scaling_local_list': [0.3, 0.4],
                    'randomize': True,
                    }
     },
-
-{
+    {
+        'id': 'Widow200PushV6-v0',
+        'entry_point': ('roboverse.envs.widow200_grasp_v6:Widow200GraspV6Env'),
+        'kwargs': {'max_force': 100,
+                   'action_scale': 0.05,
+                   'reward_height_threshold': -.26,
+                   'num_objects': 2,
+                   'object_names': ('cube', 'square_prism_bin'),
+                   'scaling_local_list': [0.037, 0.3],
+                   'randomize': True,
+                   }
+    },
+    {
         'id': 'Widow200GraspOneV6-v0',
         'entry_point': ('roboverse.envs.widow200_grasp_v6:Widow200GraspV6Env'),
         'kwargs': {'max_force': 100,

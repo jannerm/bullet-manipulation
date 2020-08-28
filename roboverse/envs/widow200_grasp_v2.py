@@ -29,6 +29,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                  randomize=True,
                  object_positions=None,
                  target_object=None,
+                 task_reward='grasping',
                  **kwargs):
 
         self._object_position_high = (.82, .075, -.20)
@@ -43,9 +44,12 @@ class Widow200GraspV2Env(Widow200GraspEnv):
         self.randomize = randomize
         self.object_positions = object_positions
         self.target_object = target_object
+        self.task_reward = task_reward
 
         if self.target_object is not None:
             assert target_object in self.object_names
+
+        assert task_reward in ["grasping", "pushing", "placing", "multi"]
 
         if not self.randomize:
             assert self.object_positions is not None
@@ -139,7 +143,6 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                 bullet.close_drawer(self._drawer)
 
     def _generate_object_positions(self):
-        #import scipy.spatial
         min_distance_threshold = 0.07
         object_positions = np.random.uniform(
             low=self._object_position_low, high=self._object_position_high)
@@ -152,8 +155,6 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                 low=self._object_position_low, high=self._object_position_high)
             object_position_candidate = np.reshape(
                 object_position_candidate, (1,3))
-            #min_distance = scipy.spatial.distance.cdist(
-            #    object_position_candidate, object_positions)
             min_distance = []
             for o in object_positions:
                 dist = np.linalg.norm(o-object_position_candidate)
@@ -176,9 +177,14 @@ class Widow200GraspV2Env(Widow200GraspEnv):
 
         for idx in indexes:
             object_name = self.object_names[idx]
-            self._objects[object_name] = load_shapenet_object(
-                obj_path_map[object_name], self.scaling,
-                object_positions[idx], scale_local=self._scaling_local[object_name])
+            if object_name == "cube":
+                self._objects[object_name] = bullet.objects.cube(pos=object_positions[idx],
+                                                                 scale=self._scaling_local[object_name],
+                                                                 rgba=[0, 1, 1, 1])
+            else:
+                self._objects[object_name] = load_shapenet_object(
+                    obj_path_map[object_name], self.scaling,
+                    object_positions[idx], scale_local=self._scaling_local[object_name])
             for _ in range(30):
                 bullet.step()
 
