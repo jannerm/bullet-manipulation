@@ -2571,7 +2571,7 @@ def main(args):
     env = roboverse.make(roboverse_env_name, reward_type=reward_type,
                          gui=args.gui, randomize=args.randomize,
                          observation_mode=args.observation_mode,
-                         transpose_image=True)
+                         transpose_image=True, target_object=args.target_object)
 
     assert args.num_timesteps == env.scripted_traj_len, (
         "args.num_timesteps: {} != env.scripted_traj_len: {}".format(
@@ -2844,6 +2844,7 @@ if __name__ == "__main__":
                         action="store_true", default=False)
     parser.add_argument("--end-at-neutral", dest="end_at_neutral",
                         action="store_true", default=False)
+    parser.add_argument("--target-object", type=str, default=None)
 
     args = parser.parse_args()
 
