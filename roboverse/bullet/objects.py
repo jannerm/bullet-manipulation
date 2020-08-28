@@ -24,12 +24,12 @@ def loader(*filepath, **defaults):
         return load_urdf(filepath, **defaults)
     return fn
 
-def widow_loader(name):
+def widow_loader(name, pos=[0.6, 0, -0.4]):
     assert name in ['wx200', 'wx250', 'wx250s']
     return loader(
         ROBOT_ASSET_PATH,
         'interbotix_descriptions/urdf/{}.urdf'.format(name),
-        pos=[0.6, 0, -0.4],
+        pos=pos,
         deg=[math.pi, math.pi, math.pi],
         scale=1
     )
@@ -48,7 +48,7 @@ sawyer_finger_visual_only = loader(ROBOT_ASSET_PATH, 'sawyer_robot/sawyer_descri
 
 widowx_200 = widow_loader("wx200")
 widowx_250 = widow_loader("wx250")
-widowx_250s = widow_loader("wx250s")
+widowx_250s = widow_loader("wx250s", [0.55, 0, -0.4])
 
 ## pybullet_data objects
 
