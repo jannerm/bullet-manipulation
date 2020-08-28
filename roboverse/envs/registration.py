@@ -152,7 +152,7 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    }
     },
     {
-        'id': 'Widow200GraspTwoAndPushV6-v0',
+        'id': 'Widow200PushV6-v0',
         'entry_point': ('roboverse.envs.widow200_grasp_v6:Widow200GraspV6Env'),
         'kwargs': {'max_force': 100,
                    'action_scale': 0.05,

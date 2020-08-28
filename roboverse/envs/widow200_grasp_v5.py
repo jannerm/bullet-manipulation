@@ -103,13 +103,15 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
         if self.is_objects_close(object_list):
             push_reward = 1.0
 
-        if self.task_reward is None:
+        if self.task_reward is "multi":
             return max(grasp_reward, push_reward)
         else:
             if self.task_reward == "pushing":
                 return push_reward
-            else:
+            elif self.task_reward == "grasping":
                 return grasp_reward
+            else: # placing
+                return 0 # Not implemented yet
 
     def get_wrist_joint_angle(self):
         # Returns scalar corresponding to gripper wrist angle.

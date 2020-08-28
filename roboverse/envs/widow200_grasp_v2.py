@@ -29,11 +29,11 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                  randomize=True,
                  object_positions=None,
                  target_object=None,
-                 task_reward=None,
+                 task_reward='grasping',
                  **kwargs):
 
-        self._object_position_high = (.815, .070, -.20)
-        self._object_position_low = (.775, -.120, -.20)
+        self._object_position_high = (.82, .075, -.20)
+        self._object_position_low = (.78, -.125, -.20)
         self._num_objects = num_objects
         self.object_names = list(object_names)
         self._scaling_local_list = scaling_local_list # converted into dict below.
@@ -49,8 +49,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
         if self.target_object is not None:
             assert target_object in self.object_names
 
-        if self.task_reward is not None:
-            assert task_reward in ["grasping", "pushing", "placing"]
+        assert task_reward in ["grasping", "pushing", "placing", "multi"]
 
         if not self.randomize:
             assert self.object_positions is not None
@@ -144,7 +143,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                 bullet.close_drawer(self._drawer)
 
     def _generate_object_positions(self):
-        min_distance_threshold = 0.09
+        min_distance_threshold = 0.07
         object_positions = np.random.uniform(
             low=self._object_position_low, high=self._object_position_high)
         object_positions = np.reshape(object_positions, (1,3))
