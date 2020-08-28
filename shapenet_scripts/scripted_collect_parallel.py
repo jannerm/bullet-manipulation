@@ -13,9 +13,6 @@ def get_data_save_directory(args):
     else:
         data_save_directory += '_{}'.format(args.num_trajectories)
 
-    if args.target_object is not None:
-        data_save_directory += '_target_{}'.format(args.target_object)
-
     if args.suboptimal:
         data_save_directory += '_nonrelevant'
 
@@ -67,14 +64,15 @@ if __name__ == "__main__":
                         type=float, default=0.05)
     parser.add_argument("--one-reset-per-traj", dest="one_reset_per_traj",
                         action="store_true", default=False)
-    parser.add_argument("--end-at-neutral", dest="end_at_neutral",
+    parser.add_argument("--continue-after-neutral", dest="continue_after_neutral",
                         action="store_true", default=False)
     parser.add_argument("--suboptimal", dest="suboptimal",
                         action="store_true", default=False)
-    parser.add_argument("--target-object", type=str, default=None)
     parser.add_argument("--save-success-pool", action="store_true", default=False)
-
     args = parser.parse_args()
+    args.end_at_neutral = not args.continue_after_neutral and not args.suboptimal
+    # Default is to end at neutral (continue_after_neutral = False)
+    # Don't do end-at-neutral for suboptimal.
 
     assert args.semisparse != args.sparse
 
@@ -98,8 +96,6 @@ if __name__ == "__main__":
                '-o{}'.format(args.observation_mode),
                '-j {}'.format(args.joint_norm_thresh),
                ]
-    if args.target_object is not None:
-        command.append('--target-object={}'.format(args.target_object))
     if args.sparse:
         command.append('--sparse')
     if args.semisparse:

@@ -20,7 +20,9 @@ NFS_PATH = '/nfs/kun1/users/avi/batch_rl_datasets/'
 EPSILON = 0.05
 ending_target_pos = np.array([0.73822169, -0.03909928, -0.25635483])
 
-def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise=0.2):
+def suboptimal_scripted_grasping_V6_drawer_closed_placing_V0(
+    env, env_name, pool, success_pool, noise=0.2,
+    one_reset_per_traj=True, joint_norm_thresh=0.05, end_at_neutral=True):
     observation = env.reset()
     blocking_object_ind = 1
     actions, observations, next_observations, rewards, terminals, infos = \
@@ -66,8 +68,8 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
             env._robot_id)[1][:len(env.RESET_JOINTS)]
         joint_norm_dev_from_neutral = np.linalg.norm(currJointStates - env.RESET_JOINTS)
 
-        eligible_for_reset = ((args.one_reset_per_traj and reset_never_taken) or
-            (not args.one_reset_per_traj))
+        eligible_for_reset = ((one_reset_per_traj and reset_never_taken) or
+            (not one_reset_per_traj))
 
         if (blocking_object_gripper_dist > dist_thresh ) and \
                 env._gripper_open and not info['blocking_object_in_box_success']:
@@ -100,7 +102,7 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
             action[2] = 0.2
             action = np.concatenate(
                 (action, np.asarray([0., 0.7, 0.])))
-        elif ((joint_norm_dev_from_neutral > args.joint_norm_thresh) and
+        elif ((joint_norm_dev_from_neutral > joint_norm_thresh) and
             eligible_for_reset):
             # print("Move toward neutral")
             action = np.asarray([0., 0., 0., 0., 0., 0.7])
@@ -126,7 +128,7 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
         if done:
             break
 
-        if not reset_never_taken and args.end_at_neutral:
+        if not reset_never_taken and end_at_neutral:
             break
 
 
@@ -147,10 +149,12 @@ def scripted_grasping_V6_drawer_closed_placing_V0(env, pool, success_pool, noise
     pool.add_path(path)
     if rewards[-1] > 0:
         success_pool.add_path(path)
-        if args.end_at_neutral:
+        if end_at_neutral:
             return 1 # Only return 1 if end_at_neutral == True and last timestep was success.
 
-def scripted_grasping_V6_double_drawer_close_open_V0(env, pool, success_pool, noise=0.2):
+def suboptimal_scripted_grasping_V6_double_drawer_close_open_V0(
+    env, env_name, pool, success_pool, noise=0.2,
+    one_reset_per_traj=True, joint_norm_thresh=0.05, end_at_neutral=True):
     observation = env.reset()
     object_ind = 0
     margin = 0.025
@@ -193,8 +197,8 @@ def scripted_grasping_V6_double_drawer_close_open_V0(env, pool, success_pool, no
             env._robot_id)[1][:len(env.RESET_JOINTS)]
         joint_norm_dev_from_neutral = np.linalg.norm(currJointStates - env.RESET_JOINTS)
 
-        eligible_for_reset = ((args.one_reset_per_traj and reset_never_taken) or
-            (not args.one_reset_per_traj))
+        eligible_for_reset = ((one_reset_per_traj and reset_never_taken) or
+            (not one_reset_per_traj))
 
         if (gripper_handle_dist > dist_thresh
             and not env.is_drawer_opened("bottom", widely=drawer_never_opened)):
@@ -225,7 +229,7 @@ def scripted_grasping_V6_double_drawer_close_open_V0(env, pool, success_pool, no
                 action[2]  *= 0.5  # force upward action to avoid upper box
             action = np.concatenate(
                 (action, np.asarray([theta_action, 0.7, 0.])))
-        elif ((joint_norm_dev_from_neutral > args.joint_norm_thresh) and
+        elif ((joint_norm_dev_from_neutral > joint_norm_thresh) and
             eligible_for_reset):
             # print("Take neutral action")
             action = np.asarray([0., 0., 0., 0., 0., 0.7])
@@ -254,7 +258,7 @@ def scripted_grasping_V6_double_drawer_close_open_V0(env, pool, success_pool, no
 
         observation = next_observation
 
-        if done or (not reset_never_taken and args.end_at_neutral):
+        if done or (not reset_never_taken and end_at_neutral):
             break
 
     path = dict(
@@ -277,7 +281,9 @@ def scripted_grasping_V6_double_drawer_close_open_V0(env, pool, success_pool, no
         if args.end_at_neutral:
             return 1
 
-def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
+def suboptimal_scripted_grasping_V6_opening_only_V0(
+    env, env_name, pool, success_pool, noise=0.2,
+    one_reset_per_traj=True, joint_norm_thresh=0.05, end_at_neutral=True):
     observation = env.reset()
     object_ind = np.random.randint(0, env._num_objects)
     margin = 0.025
@@ -306,7 +312,7 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
                          object_ind * 7 + 8: object_ind * 7 + 8 + 3]
             ee_pos = observation[:3]
 
-        if "DoubleDrawer" in args.env:
+        if "DoubleDrawer" in env_name:
             handle_pos = env.get_bottom_drawer_handle_pos() + handle_offset
             drawer_opened = env.is_drawer_opened("bottom", widely=drawer_never_opened)
         else:
@@ -323,8 +329,8 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
         currJointStates = bullet.get_joint_positions(
             env._robot_id)[1][:len(env.RESET_JOINTS)]
         joint_norm_dev_from_neutral = np.linalg.norm(currJointStates - env.RESET_JOINTS)
-        eligible_for_reset = ((args.one_reset_per_traj and reset_never_taken) or
-            (not args.one_reset_per_traj))
+        eligible_for_reset = ((one_reset_per_traj and reset_never_taken) or
+            (not one_reset_per_traj))
 
         if (gripper_handle_dist > dist_thresh
             and not drawer_opened):
@@ -346,7 +352,7 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
             action = np.array([0, 0, 0.7]) # force upward action to avoid upper box
             action = np.concatenate(
                 (action, np.asarray([theta_action, 0., 0.])))
-        elif ((joint_norm_dev_from_neutral > args.joint_norm_thresh) and
+        elif ((joint_norm_dev_from_neutral > joint_norm_thresh) and
             eligible_for_reset):
             # print("Move toward neutral")
             action = np.asarray([0., 0., 0., 0., 0., 0.7])
@@ -373,7 +379,7 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
         if done:
             break
 
-        if not reset_never_taken and args.end_at_neutral:
+        if not reset_never_taken and end_at_neutral:
             break
 
     path = dict(
@@ -393,7 +399,7 @@ def scripted_grasping_V6_opening_only_V0(env, pool, success_pool, noise=0.2):
     pool.add_path(path)
     if rewards[-1] > 0:
         success_pool.add_path(path)
-        if args.end_at_neutral:
+        if end_at_neutral:
             return 1
 
 def main(args):
@@ -439,18 +445,18 @@ def main(args):
         if args.env in (V6_GRASPING_V0_DRAWER_CLOSED_PLACING_ENV +
             V6_GRASPING_V0_DOUBLE_DRAWER_PICK_PLACE_OPEN_ENVS):
             success = False
-            result = scripted_grasping_V6_drawer_closed_placing_V0(
-                env, railrl_pool, railrl_success_pool, noise=args.noise_std)
+            result = suboptimal_scripted_grasping_V6_drawer_closed_placing_V0(
+                env, args.env, railrl_pool, railrl_success_pool, noise=args.noise_std)
             end_at_neutral_num_successes += (result == 1)
         elif args.env in V6_GRASPING_V0_DOUBLE_DRAWER_CLOSING_OPENING_ENVS:
             success = False
-            result = scripted_grasping_V6_double_drawer_close_open_V0(
-                env, railrl_pool, railrl_success_pool, noise=args.noise_std)
+            result = suboptimal_scripted_grasping_V6_double_drawer_close_open_V0(
+                env, args.env, railrl_pool, railrl_success_pool, noise=args.noise_std)
             end_at_neutral_num_successes += (result == 1)
         elif args.env in V6_GRASPING_V0_DRAWER_OPENING_ONLY_ENVS:
             success = False
-            result = scripted_grasping_V6_opening_only_V0(
-                env, railrl_pool, railrl_success_pool, noise=args.noise_std)
+            result = suboptimal_scripted_grasping_V6_opening_only_V0(
+                env, args.env, railrl_pool, railrl_success_pool, noise=args.noise_std)
             end_at_neutral_num_successes += (result == 1)
         else:
             raise NotImplementedError

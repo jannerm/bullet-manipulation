@@ -4,16 +4,19 @@ import roboverse.utils as utils
 from roboverse.envs.widow200_grasp import Widow200GraspEnv
 import gym
 from roboverse.bullet.misc import load_obj
-from roboverse.utils.shapenet_utils import load_shapenet_object, \
-    import_shapenet_metadata
+from roboverse.utils.shapenet_utils import (
+    load_shapenet_object, import_shapenet_metadata,
+    load_sapien_object, import_sapien_metadata,
+)
 import os.path as osp
 
 REWARD_NEGATIVE = -1.0
 REWARD_POSITIVE = 10.0
 
-obj_path_map, path_scaling_map = import_shapenet_metadata()
-# obj_path_map = dict: object str names --> Shapenet Paths ({class_id}/{object_id})
-# path_scaling_map = dict: Shapenet Paths ({class_id}/{object_id}) --> scaling factor
+shapenet_obj_path_map, shapenet_path_scaling_map = import_shapenet_metadata()
+sapien_obj_path_map, sapien_path_scaling_map = import_sapien_metadata()
+# shapenet_obj_path_map = dict: object str names --> Shapenet Paths ({class_id}/{object_id})
+# shapenet_path_scaling_map = dict: Shapenet Paths ({class_id}/{object_id}) --> scaling factor
 
 
 class Widow200GraspV2Env(Widow200GraspEnv):
@@ -22,14 +25,12 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                  observation_mode='state',
                  transpose_image=False,
                  reward_height_threshold=-0.25,
-                 num_objects=2,
+                 num_objects=1,
                  object_names=('beer_bottle',),
                  scaling_local_list=[0.5]*10,
                  reward_type=False,  # Not actually used in grasping envs
-                 randomize=True,
-                 object_positions=None,
+                 randomize=True,  # Not actually used
                  target_object=None,
-                 task_reward='grasping',
                  **kwargs):
 
         self._object_position_high = (.82, .075, -.20)
@@ -41,18 +42,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
         self._observation_mode = observation_mode
         self._transpose_image = transpose_image
         self._reward_type = reward_type
-        self.randomize = randomize
-        self.object_positions = object_positions
         self.target_object = target_object
-        self.task_reward = task_reward
-
-        if self.target_object is not None:
-            assert target_object in self.object_names
-
-        assert task_reward in ["grasping", "pushing", "placing", "multi"]
-
-        if not self.randomize:
-            assert self.object_positions is not None
 
         super().__init__(*args, **kwargs)
 
@@ -63,10 +53,12 @@ class Widow200GraspV2Env(Widow200GraspEnv):
         self._gripper_open = True
 
     def set_scaling_dicts(self):
-        print("self.object_names: ", self.object_names)
-
         assert isinstance(self._scaling_local_list, list), (
             "self._scaling_local_list not a list")
+        obj_path_map, path_scaling_map = dict(shapenet_obj_path_map), dict(shapenet_path_scaling_map)
+        obj_path_map.update(sapien_obj_path_map)
+        path_scaling_map.update(sapien_path_scaling_map)
+
         self.object_path_dict = dict(
             [(obj, path) for obj, path in obj_path_map.items() if obj in self.object_names])
         self.scaling = dict(
@@ -125,14 +117,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
             xyz_min=self._pos_low, xyz_max=self._pos_high,
             visualize=False, rgba=[0,1,0,.1])
 
-        if self.randomize:
-            object_positions = self._generate_object_positions()
-            self.object_positions = object_positions
-        else:
-            object_positions = self.object_positions
-        self.original_object_positions = object_positions
-        self.object_positions = object_positions
-
+        object_positions = self._generate_object_positions()
         self._load_objects(object_positions)
 
         if "Drawer" in self._env_name:
@@ -143,6 +128,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                 bullet.close_drawer(self._drawer)
 
     def _generate_object_positions(self):
+        import scipy.spatial
         min_distance_threshold = 0.07
         object_positions = np.random.uniform(
             low=self._object_position_low, high=self._object_position_high)
@@ -155,11 +141,8 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                 low=self._object_position_low, high=self._object_position_high)
             object_position_candidate = np.reshape(
                 object_position_candidate, (1,3))
-            min_distance = []
-            for o in object_positions:
-                dist = np.linalg.norm(o-object_position_candidate)
-                min_distance.append(dist)
-            min_distance = np.array(min_distance)
+            min_distance = scipy.spatial.distance.cdist(
+                object_position_candidate, object_positions)
             if (min_distance > min_distance_threshold).any():
                 object_positions = np.concatenate(
                     (object_positions, object_position_candidate), axis=0)
@@ -169,6 +152,20 @@ class Widow200GraspV2Env(Widow200GraspEnv):
 
         return object_positions
 
+    def _load_object(self, object_name, idx, object_positions):
+        if object_name in shapenet_obj_path_map:
+            obj = load_shapenet_object(
+                shapenet_obj_path_map[object_name], self.scaling,
+                object_positions[idx], scale_local=self._scaling_local[object_name])
+        elif object_name in sapien_obj_path_map:
+            obj = load_sapien_object(
+                sapien_obj_path_map[object_name], self.scaling,
+                object_positions[idx], scale_local=self._scaling_local[object_name])
+        else:
+            raise NotImplementedError("No such object: {}".format(object_name))
+        return obj
+
+
     def _load_objects(self, object_positions):
         assert len(self.object_names) >= self._num_objects
         import random
@@ -177,15 +174,9 @@ class Widow200GraspV2Env(Widow200GraspEnv):
 
         for idx in indexes:
             object_name = self.object_names[idx]
-            if object_name == "cube":
-                self._objects[object_name] = bullet.objects.cube(pos=object_positions[idx],
-                                                                 scale=self._scaling_local[object_name],
-                                                                 rgba=[0, 1, 1, 1])
-            else:
-                self._objects[object_name] = load_shapenet_object(
-                    obj_path_map[object_name], self.scaling,
-                    object_positions[idx], scale_local=self._scaling_local[object_name])
-            for _ in range(30):
+            self._objects[object_name] = self._load_object(
+                object_name, idx, object_positions)
+            for _ in range(10):
                 bullet.step()
 
     def step(self, action):
@@ -322,8 +313,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
     def get_reward(self, info):
         object_list = self._objects.keys()
         reward = REWARD_NEGATIVE
-
-        def check_grasp(object_name):
+        for object_name in object_list:
             object_info = bullet.get_body_info(self._objects[object_name],
                                                quat_to_deg=False)
             object_pos = np.asarray(object_info['pos'])
@@ -333,16 +323,7 @@ class Widow200GraspV2Env(Widow200GraspEnv):
                 object_gripper_distance = np.linalg.norm(
                     object_pos - end_effector_pos)
                 if object_gripper_distance < 0.1:
-                    return True
-            return False
-
-        if self.target_object is None:
-            for object_name in object_list:
-                if check_grasp(object_name):
                     reward = REWARD_POSITIVE
-        else:
-            if check_grasp(self.target_object):
-                reward = REWARD_POSITIVE
         return reward
 
 
