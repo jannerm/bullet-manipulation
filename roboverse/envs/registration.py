@@ -161,6 +161,7 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'object_names': ('cube', 'square_prism_bin'),
                    'scaling_local_list': [0.037, 0.3],
                    'randomize': True,
+                   'task_reward': "pushing",
                    }
     },
     {
