@@ -14,6 +14,7 @@ from railrl.data_management.obs_dict_replay_buffer import \
     ObsDictReplayBuffer
 
 from roboverse.envs.env_list import *
+from roboverse.envs.norm_wrapper_env import NormWrapperEnv
 
 OBJECT_NAME = 'lego'
 EPSILON = 0.05
@@ -374,7 +375,7 @@ def scripted_grasping_V5(env, pool, success_pool, noise=0.2):
     if rewards[-1] > 0:
         success_pool.add_path(path)
 
-def scripted_grasping_V6(env, env_name, pool, success_pool, noise=0.2):
+def scripted_grasping_V6(env, env_name, pool, success_pool, noise=0.2, norm=True):
     observation = env.reset()
     object_ind = 0
     margin = 0.025
@@ -395,9 +396,15 @@ def scripted_grasping_V6(env, env_name, pool, success_pool, noise=0.2):
                          object_ind * 7 + 8: object_ind * 7 + 8 + 3]
             ee_pos = observation[:3]
 
+        if norm:
+            object_pos = (object_pos-env.p_low)/(env.p_hi-env.p_low)
+
         object_lifted_with_margin = object_pos[2] > (env._reward_height_thresh + margin)
 
-        object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
+        if norm:
+            object_gripper_dist = np.linalg.norm((object_pos - ee_pos)*(env.p_hi-env.p_low))
+        else:
+            object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
         theta_action = 0.
 
         if "Drawer" in env._env_name:
@@ -435,7 +442,7 @@ def scripted_grasping_V6(env, env_name, pool, success_pool, noise=0.2):
                 (action, np.asarray([0., 0., 0., 0.])))
 
         # action += np.random.normal(scale=noise, size=(6,))
-        action[:3] += np.random.normal(scale=noise, size=(3,))
+        action[:3] += np.random.normal(scale=noise, size=(3,)) / (env.p_hi-env.p_low)
         action[3] += np.random.normal(scale=noise*0.1)
         action[4:] += np.random.normal(scale=noise, size=(2,))
         action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
@@ -2664,15 +2671,21 @@ def main(args):
         env = roboverse.make(roboverse_env_name, reward_type=reward_type,
                          gui=args.gui, randomize=args.randomize,
                          observation_mode=args.observation_mode,
-                         transpose_image=True, downwards=True,
-                         pos_init=[0.5, 0.5, 0.5], pos_high=[1, 1, 1],
-                         pos_low=[0, 0, 0],)
+                         transpose_image=True, downwards=True)
     else:        
         env = roboverse.make(roboverse_env_name, reward_type=reward_type,
                          gui=args.gui, randomize=args.randomize,
                          observation_mode=args.observation_mode,
-                         transpose_image=True, pos_init=[0.5, 0.5, 0.5],
-                         pos_high=[1, 1, 1], pos_low=[0, 0, 0],)
+                         transpose_image=True)
+
+    if args.norm:
+        env = NormWrapperEnv(env)
+
+    if not hasattr(env, 'scripted_traj_len'):
+        try:
+            env.scripted_traj_len = env.env.scripted_traj_len
+        except:
+            env.scripted_traj_len = args.num_timesteps
 
     assert args.num_timesteps == env.scripted_traj_len, (
         "args.num_timesteps: {} != env.scripted_traj_len: {}".format(
@@ -2927,7 +2940,7 @@ if __name__ == "__main__":
     parser.add_argument("-n", "--num-trajectories", type=int, default=2000)
     parser.add_argument("-p", "--num-parallel-threads", type=int, default=1)
     parser.add_argument("--num-timesteps", type=int, default=50)
-    parser.add_argument("--noise-std", type=float, default=0.2)
+    parser.add_argument("--noise-std", type=float, default=0.1)
     parser.add_argument("--video_save_frequency", type=int,
                         default=0, help="Set to zero for no video saving")
     parser.add_argument("--randomize", dest="randomize",
@@ -2954,6 +2967,7 @@ if __name__ == "__main__":
     parser.add_argument('--rand_reaching',  action='store_true')
     parser.add_argument('--downwards',  action='store_true')
     parser.add_argument('--theta',  action='store_true')
+    parser.add_argument('--norm', action='store_true')
 
     args = parser.parse_args()
 

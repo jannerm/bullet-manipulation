@@ -35,6 +35,7 @@ obj_dir = "bullet-objects"
 sawyer = loader(ROBOT_ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro.urdf')
 sawyer_invisible = loader(ROBOT_ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro_invisible.urdf')
 sawyer_finger_visual_only = loader(ROBOT_ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro_finger_visual_only.urdf')
+franka = loader(ROBOT_ASSET_PATH, 'franka_description/robots/panda_arm.urdf')
 widowx_200 = loader(
   ROBOT_ASSET_PATH,
   'interbotix_descriptions/urdf/wx200.urdf',

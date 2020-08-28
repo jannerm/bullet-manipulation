@@ -106,21 +106,23 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
         info['grasp_success'] = float(self.is_object_grasped())
 
         observation = self.get_observation()
-        self._prev_pos = bullet.get_link_state(self._robot_id, self._end_effector,
-                                               'pos')
+        self._prev_pos = bullet.get_link_state(self._robot_id, self._end_effector,'pos')
         done = False
 
         return observation, reward, done, info, images
-    """
+
     def reset(self):
         obs = super().reset()
         pos = np.random.uniform(low = self._pos_low, high = self._pos_high, size = (3,))
         theta = list(bullet.get_link_state(self._robot_id, self._end_effector, 'theta'))
-        self._simulate(pos, theta, 0, delta_theta=0)
-        import ipdb; ipdb.set_trace()
+        for _ in range(10): self._simulate(pos, theta, 0, delta_theta=0)
+        eep = self.get_end_effector_pos()
+        in_bound = (np.array(eep) < np.array(self._pos_high)).all() and (np.array(eep) > np.array(self._pos_low)).all()
+        if not in_bound:
+            super().reset()
         obs = self.get_observation()
         return obs
-    """
+
     def _load_meshes(self):
         super()._load_meshes()
         self.object_path_dict['ball'] = obj_path_map['ball']

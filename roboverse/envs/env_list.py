@@ -70,5 +70,4 @@ V7_GRASPING_ENVS = ['Widow200GraspV7-v0',
                     'Widow200GraspV7BoxV0TenRandObj-v0',
                     'Widow200GraspV7BoxV0TwentyIncludeTestRandObj-v0',
                     'Widow200GraspV7BoxV0FiftyIncludeTestRandObj-v0']
-
 PROXY_ENVS_MAP = {}

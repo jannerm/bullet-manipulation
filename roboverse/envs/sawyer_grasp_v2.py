@@ -89,6 +89,18 @@ class SawyerGraspV2Env(SawyerBaseEnv):
         act_bound = 1
         act_high = np.ones(act_dim) * act_bound
         self.action_space = gym.spaces.Box(-act_high, act_high)
+    
+    def reset(self):
+        obs = super().reset()
+        pos = np.random.uniform(low = self._pos_low, high = self._pos_high, size = (3,))
+        theta = list(bullet.get_link_state(self._sawyer, self._end_effector, 'theta'))
+        for _ in range(10): self._simulate(pos, theta, 0)
+        eep = self.get_end_effector_pos()
+        in_bound = (np.array(eep) < np.array(self._pos_high)).all() and (np.array(eep) > np.array(self._pos_low)).all()
+        if not in_bound:
+            super().reset()
+        obs = self.get_observation()
+        return obs
 
     def _set_spaces(self):
         self._set_action_space()
