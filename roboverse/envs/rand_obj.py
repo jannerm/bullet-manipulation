@@ -11,17 +11,12 @@ class RandObjEnv:
     def __init__(self,
                  *args,
                  in_eval=False,
-                 deterministic_idx=[],
                  train_scaling_list=[0.3]*10,
                  test_scaling_list=[0.3]*10,
                  possible_train_objects="default",
                  possible_test_objects="default",
-                 num_objects=2,
                  **kwargs):
         self.in_eval = in_eval # True when doing evaluation
-        self.deterministic_idx = deterministic_idx # Contain desired idx when doing replay
-        self._num_objects = num_objects
-        print("self num objects in init: ", self._num_objects)
         # so that we use novel test_objects.
 
         if possible_train_objects == "default":
@@ -56,24 +51,10 @@ class RandObjEnv:
             **kwargs)
 
     def reset(self):
-        if len(self.deterministic_idx) > 0:
-            self.object_names = []
-            self.scaling_local_list = []
-            for i in range(self._num_objects):
-                chosen_obj_idx = self.deterministic_idx[i]
-                self.object_names.append(self.possible_objects[chosen_obj_idx])
-                self.scaling_local_list.append(self.possible_scaling_local_list[chosen_obj_idx])
-        else:
-            """Change implementation to multiple objects"""
-            self.object_names = []
-            self.scaling_local_list = []
-            self.object_names_idx = []
-            for _ in range(self._num_objects):
-                chosen_obj_idx = np.random.randint(0, len(self.possible_objects))
-                while chosen_obj_idx in self.object_names_idx:
-                    chosen_obj_idx = np.random.randint(0, len(self.possible_objects))
-                self.object_names_idx.append(chosen_obj_idx)
-                self.object_names.append(self.possible_objects[chosen_obj_idx])
-                self.scaling_local_list.append(self.possible_scaling_local_list[chosen_obj_idx])
-            #print("self.object_names", self.object_names, self.scaling_local_list)
+        """Currently only implemented for selecting 1 object at random"""
+        chosen_obj_idx = np.random.randint(0, len(self.possible_objects))
+        self.object_names = [self.possible_objects[chosen_obj_idx]]
+        self.scaling_local_list = [
+            self.possible_scaling_local_list[chosen_obj_idx]]
+        # print("self.object_names", self.object_names, self.scaling_local_list)
         return super().reset()

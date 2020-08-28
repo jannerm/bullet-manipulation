@@ -54,64 +54,27 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
         else:
             raise NotImplementedError
 
-    def is_object_grasped(self, object_name):
+    def is_object_grasped(self):
         """Returns true if any object is above reward height thresh."""
+        object_list = self._objects.keys()
         is_grasped = False
-        object_info = bullet.get_body_info(self._objects[object_name],
-                                           quat_to_deg=False)
-        object_pos = np.asarray(object_info['pos'])
-        object_height = object_pos[2]
-        if object_height > self._reward_height_thresh:
-            end_effector_pos = np.asarray(self.get_end_effector_pos())
-            object_gripper_distance = np.linalg.norm(
-                object_pos - end_effector_pos)
-            if object_gripper_distance < 0.1:
-                is_grasped = True
-        return is_grasped
-
-    def is_objects_close(self, object_names):
-        assert len(object_names) == 2  # for now
-        is_close = False
-        close_threshold = 0.06
-        object_pos_list = []
-        for object_name in object_names:
+        for object_name in object_list:
             object_info = bullet.get_body_info(self._objects[object_name],
                                                quat_to_deg=False)
             object_pos = np.asarray(object_info['pos'])
-            object_pos_list.append(object_pos)
-        dist = np.linalg.norm(object_pos_list[0]-object_pos_list[1])
-        if dist < close_threshold:
-            is_close = True
-        return is_close
+            object_height = object_pos[2]
+            if object_height > self._reward_height_thresh:
+                end_effector_pos = np.asarray(self.get_end_effector_pos())
+                object_gripper_distance = np.linalg.norm(
+                    object_pos - end_effector_pos)
+                if object_gripper_distance < 0.1:
+                    is_grasped = True
+        return is_grasped
 
     def get_reward(self, info):
-        grasp_reward = 0.0
-
-        if self.target_object is None:
-            object_list = self._objects.keys()
-            for object_name in object_list:
-                if self.is_object_grasped(object_name):
-                    grasp_reward = 1.0
-        else:
-            if self.is_object_grasped(self.target_object):
-                grasp_reward = 1.0
-
-        grasp_reward = self.adjust_rew_if_use_positive(grasp_reward)
-
-        push_reward = 0.0
-        object_list = self._objects.keys()
-        if self.is_objects_close(object_list):
-            push_reward = 1.0
-
-        if self.task_reward is "multi":
-            return max(grasp_reward, push_reward)
-        else:
-            if self.task_reward == "pushing":
-                return push_reward
-            elif self.task_reward == "grasping":
-                return grasp_reward
-            else: # placing
-                return 0 # Not implemented yet
+        reward = float(self.is_object_grasped())
+        reward = self.adjust_rew_if_use_positive(reward)
+        return reward
 
     def get_wrist_joint_angle(self):
         # Returns scalar corresponding to gripper wrist angle.
