@@ -36,6 +36,8 @@ class WidowBaseEnv(gym.Env, Serializable):
 
         self._id = 'WidowBaseEnv'
         self._robot_name = 'widowx'
+        self._env_name = env_name
+
         self._gripper_joint_name = (
         'gripper_prismatic_joint_1', 'gripper_prismatic_joint_2')
         if is_widow200_series_env(self._env_name):
