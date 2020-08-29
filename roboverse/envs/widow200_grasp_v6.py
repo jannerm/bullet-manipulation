@@ -36,7 +36,17 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
 
         object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
 
-        info = dict(object_gripper_dist=object_gripper_dist)
+        assert len(self._objects.keys()) == 2  # for now
+        object_pos_list = []
+        for object_name in self._objects.keys():
+            object_info = bullet.get_body_info(self._objects[object_name],
+                                               quat_to_deg=False)
+            object_pos = np.asarray(object_info['pos'])
+            object_pos_list.append(object_pos)
+        dist_btw_objects = np.linalg.norm(object_pos_list[0] - object_pos_list[1])
+
+        info = dict(object_gripper_dist=object_gripper_dist,
+                    dist_btw_objects=dist_btw_objects)
         return info
 
     def step(self, action):
