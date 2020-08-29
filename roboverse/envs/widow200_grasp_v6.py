@@ -17,6 +17,8 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
                  **kwargs):
         self.object_names = object_names
         self.reward_height_threshold = -0.275
+        kwargs['env_name'] = "Widow200GraspEnv"
+        self._env_name = kwargs['env_name']
         super().__init__(*args,
             object_names=self.object_names,
             scaling_local_list=scaling_local_list,
@@ -75,6 +77,10 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
             else:
                 info['grasp_success_target'] = 0.0
 
+        info['push_success'] = 0.0
+        object_list = self._objects.keys()
+        if self.is_objects_close(object_list):
+            info['push_success'] = 1.0
 
         observation = self.get_observation()
         self._prev_pos = bullet.get_link_state(self._robot_id, self._end_effector,
