@@ -165,7 +165,7 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    }
     },
     {
-        'id': 'Widow200GraspTwoPushV6-v0',
+        'id': 'Widow200GraspTwoPushMultiV6-v0',
         'entry_point': ('roboverse.envs.widow200_grasp_v6:Widow200GraspV6Env'),
         'kwargs': {'max_force': 100,
                    'action_scale': 0.05,
@@ -174,7 +174,7 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'object_names': ('cube', 'square_prism_bin'),
                    'scaling_local_list': [0.037, 0.3],
                    'randomize': True,
-                   'task_reward': "grasping",
+                   'task_reward': "multi",
                    }
     },
     {
