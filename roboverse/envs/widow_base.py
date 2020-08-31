@@ -14,6 +14,7 @@ def is_widow200_series_env(env_name):
 class WidowBaseEnv(gym.Env, Serializable):
     def __init__(self,
                  img_dim=48,
+                 img_dim_video_saving=256,
                  gui=False,
                  action_scale=.2,
                  action_repeat=10,
@@ -54,6 +55,7 @@ class WidowBaseEnv(gym.Env, Serializable):
             self._end_effector_link_name = '/gripper_bar_link'
 
         self.obs_img_dim = img_dim
+        self.img_dim_video_saving = img_dim_video_saving
         self.image_shape = (img_dim, img_dim)
         self.image_length = img_dim*img_dim*3
 
