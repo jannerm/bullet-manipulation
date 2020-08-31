@@ -17,6 +17,8 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
                  **kwargs):
         self.object_names = object_names
         self.reward_height_threshold = -0.275
+        kwargs['env_name'] = "Widow200GraspEnv"
+        self._env_name = kwargs['env_name']
         super().__init__(*args,
             object_names=self.object_names,
             scaling_local_list=scaling_local_list,
@@ -34,7 +36,17 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
 
         object_gripper_dist = np.linalg.norm(object_pos - ee_pos)
 
-        info = dict(object_gripper_dist=object_gripper_dist)
+        assert len(self._objects.keys()) == 2  # for now
+        object_pos_list = []
+        for object_name in self._objects.keys():
+            object_info = bullet.get_body_info(self._objects[object_name],
+                                               quat_to_deg=False)
+            object_pos = np.asarray(object_info['pos'])
+            object_pos_list.append(object_pos)
+        dist_btw_objects = np.linalg.norm(object_pos_list[0] - object_pos_list[1])
+
+        info = dict(object_gripper_dist=object_gripper_dist,
+                    dist_btw_objects=dist_btw_objects)
         return info
 
     def step(self, action):
@@ -75,6 +87,10 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
             else:
                 info['grasp_success_target'] = 0.0
 
+        info['push_success'] = 0.0
+        object_list = self._objects.keys()
+        if self.is_objects_close(object_list):
+            info['push_success'] = 1.0
 
         observation = self.get_observation()
         self._prev_pos = bullet.get_link_state(self._robot_id, self._end_effector,
