@@ -27,7 +27,7 @@ def ik(body, link, pos, theta, damping):
         n_dof = p.getNumJoints(body)
         damping = [damping for _ in range(n_dof)]
     ik_solution = p.calculateInverseKinematics(body, link, pos,
-                                               # targetOrientation=theta,
+                                               targetOrientation=theta,
                                                jointDamping=damping)
     return np.array(ik_solution)
 
