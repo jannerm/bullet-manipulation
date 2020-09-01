@@ -92,6 +92,7 @@ spam = loader(ASSET_PATH, os.path.join(obj_dir, "spam", "spam.urdf"),
               deg=[90,0,-90],
               scale=0.025)
 
+<<<<<<< HEAD
 ## tray
 
 tray = loader('', os.path.join("tray", "tray.urdf"),
@@ -159,3 +160,8 @@ widow200_hidden_tray = loader(ASSET_PATH, os.path.join(obj_dir, "tray", "tray.ur
               pos=[0.82, -0.05, -0.5],
               deg=[0, 0, 0],
               scale=0.5)
+bowl_sliding = loader(ASSET_PATH, 'objects/bowl_sliding/bowl.urdf',
+              pos=[.75, 0, -.3],
+              scale=0.25)
+
+
