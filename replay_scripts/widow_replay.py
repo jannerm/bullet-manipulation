@@ -28,8 +28,8 @@ success = []
 failed_id = []
 
 reward_type = 'sparse'
-env = roboverse.make('Widow200PushV6-v0', reward_type=reward_type,
-                     randomize=True, observation_mode='pixels_debug')
+env = roboverse.make('Widow200GraspTwoPushV6-v0', reward_type=reward_type,
+                     randomize=True, observation_mode='pixels_debug', task_reward="multi")
 
 for i in tqdm(range(len(data))):
 
