@@ -299,7 +299,8 @@ def suboptimal_scripted_grasping_V6_opening_only_V0(
     x_rand = np.random.choice([np.random.uniform(-h, -l), np.random.uniform(l, h)])
     y_rand = np.random.choice([np.random.uniform(-h, -l), np.random.uniform(l, h)])
 
-    handle_offset = np.array([x_rand, y_rand, 0])
+    # handle_offset = np.array([x_rand, y_rand, 0])
+    handle_offset = 0
 
     for _ in range(env.scripted_traj_len):
 
@@ -342,7 +343,7 @@ def suboptimal_scripted_grasping_V6_opening_only_V0(
             action = np.concatenate((action, np.asarray([theta_action,0.,0.])))
         elif not drawer_opened:
             # print("opening drawer")
-            action = np.array([0, -1.0, 0])
+            action = np.array([0, 1.0, 0]) # MESSUP: push inward instead of out.
             # action = np.asarray([0., 0., 0.7])
             action = np.concatenate(
                 (action, np.asarray([0., 0., 0.])))
