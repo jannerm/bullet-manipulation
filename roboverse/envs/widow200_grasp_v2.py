@@ -82,6 +82,14 @@ class Widow200GraspV2Env(Widow200GraspEnv):
             img = np.transpose(img, (2, 0, 1))
         return img
 
+    def render_obs_video(self):
+        img, depth, segmentation = bullet.render(
+            self.img_dim_video_saving, self.img_dim_video_saving, self._view_matrix_obs,
+            self._projection_matrix_obs, shadow=0, gaussian_width=0)
+        if self._transpose_image:
+            img = np.transpose(img, (2, 0, 1))
+        return img
+
     def _set_action_space(self):
         act_dim = 4
         act_bound = 1

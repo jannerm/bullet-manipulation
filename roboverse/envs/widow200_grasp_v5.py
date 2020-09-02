@@ -200,6 +200,7 @@ class Widow200GraspV5Env(Widow200GraspV2Env):
             self._simulate(pos, target_theta, gripper, delta_theta=delta_theta)
             pass
         else:
+            print(gripper_action, is_gripper_open)
             raise NotImplementedError
 
     def step(self, action):
