@@ -162,6 +162,7 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'scaling_local_list': [0.037, 0.3],
                    'randomize': True,
                    'task_reward': "pushing",
+                   'use_tray': False,
                    }
     },
     {
@@ -175,6 +176,7 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'scaling_local_list': [0.037, 0.3],
                    'randomize': True,
                    'task_reward': "multi",
+                   'use_tray': False,
                    }
     },
     {

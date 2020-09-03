@@ -14,11 +14,13 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
                  *args,
                  object_names=('beer_bottle',),
                  scaling_local_list=[0.5],
+                 use_tray=True,
                  **kwargs):
         self.object_names = object_names
         self.reward_height_threshold = -0.275
         kwargs['env_name'] = "Widow200GraspEnv"
         self._env_name = kwargs['env_name']
+        self.use_tray = use_tray
         super().__init__(*args,
             object_names=self.object_names,
             scaling_local_list=scaling_local_list,
