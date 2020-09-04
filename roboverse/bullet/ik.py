@@ -134,7 +134,6 @@ def sawyer_position_theta_ik(body, link, pos, theta, gripper, wrist_theta,
     joints, current = get_joint_positions(body)
     #### position control
     forces = [max_force for _ in range(len(joints))]
-    ik_solution[4] += 3.0*wrist_theta
     # print("ik_solution[4]", ik_solution[4])
     p.setJointMotorControlArray(body, joints, p.POSITION_CONTROL,
                                 targetPositions=ik_solution, forces=forces)

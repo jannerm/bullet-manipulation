@@ -64,9 +64,8 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
 
             theta = list(bullet.get_link_state(self._robot_id, self._end_effector,
                                                'theta'))
-            target_theta = theta
             delta_theta = action[3]
-            target_theta = np.clip(target_theta, [0, 85, 137], [180, 85, 137])
+            target_theta = theta + np.asarray([0., 0., delta_theta])
             target_theta = bullet.deg_to_quat(target_theta)
 
             gripper_action = action[4]
