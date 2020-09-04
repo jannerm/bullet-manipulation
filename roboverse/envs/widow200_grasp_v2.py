@@ -125,7 +125,8 @@ class Widow200GraspV2Env(Widow200GraspEnv):
             self._tray = bullet.objects.widow200_hidden_tray()
             # tray is underneath table so we can get its center.
         else:
-            self._tray = bullet.objects.widow200_tray()
+            pass
+            #self._tray = bullet.objects.widow200_tray()
 
         self._objects = {}
         self._sensors = {}
