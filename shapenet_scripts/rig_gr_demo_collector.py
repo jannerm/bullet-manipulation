@@ -9,7 +9,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--name", type=str)
-parser.add_argument("--num_trajectories", type=int, default=1000)
+parser.add_argument("--num_trajectories", type=int, default=10)
 parser.add_argument("--num_timesteps", type=int, default=50)
 parser.add_argument("--video_save_frequency", type=int,
                     default=0, help="Set to zero for no video saving")
@@ -52,6 +52,7 @@ for i in tqdm(range(args.num_trajectories)):
         'terminals': np.zeros((args.num_timesteps), dtype=np.uint8),
         'agent_infos': np.zeros((args.num_timesteps), dtype=np.uint8),
         'env_infos': np.zeros((args.num_timesteps), dtype=np.uint8),
+        'object_name': env.curr_object,
     }
 
     env.reset()
@@ -62,33 +63,45 @@ for i in tqdm(range(args.num_trajectories)):
         images.append(Image.fromarray(img))
 
         ee_pos = env.get_end_effector_pos()
+        target_pos = env.get_object_midpoint('obj')
+        aligned = np.linalg.norm(target_pos[:2] - ee_pos[:2]) < 0.04
+        enclosed = np.linalg.norm(target_pos[2] - ee_pos[2]) < 0.025
+        above = ee_pos[2] > -0.3
 
-        if j < 25:
-            action = target_pos - ee_pos
+        if not aligned and not above:
+            #print('Stage 1')
+            action = (target_pos - ee_pos) * 3.0
+            action[2] = 1
+            grip = -1.
+        elif not aligned:
+            #print('Stage 2')
+            action = (target_pos - ee_pos) * 3.0
             action[2] = 0.
             action *= 3.0
-            grip = 0.
-        elif j < 35:
+            grip = -1.
+        elif aligned and not enclosed:
+            #print('Stage 3')
             action = target_pos - ee_pos
             action[2] -= 0.03
             action *= 3.0
             action[2] *= 2.0
-            grip = 0.
-        elif j < 42:
-            action = np.zeros((3,))
-            grip = 0.5
-        elif j < 50:
-            action = np.zeros((3,))
-            action[2] = 1.0
+            grip = -1.
+        elif enclosed and grip < 1:
+            #print('Stage 4')
+            action = target_pos - ee_pos
+            action[2] -= 0.03
+            action *= 3.0
+            action[2] *= 2.0
+            grip += 0.5
+        else:
+            #print('Stage 5')
+            action = env.goal_pos - ee_pos
+            action *= 3.0
             grip = 1.
-        # else:
-        #     action = env.goal_pos - ee_pos
-        #     action *= 3.0
-        #     grip = 1.
-
 
         action = np.append(action, [grip])
         action = np.random.normal(action, 0.1)
+        action = np.clip(action, a_min=-1, a_max=1)
 
         observation = env.get_observation()
         next_observation, reward, done, info = env.step(action)
@@ -101,7 +114,6 @@ for i in tqdm(range(args.num_trajectories)):
         returns += reward
     
     success += info['picked_up']
-    #success += info['object_goal_success']
 
     if args.video_save_frequency > 0 and i % args.video_save_frequency == 0:
         images[0].save('{}/{}.gif'.format(video_save_path, i),
