@@ -126,6 +126,7 @@ class FrankaBaseEnv(gym.Env, Serializable):
         self._workspace = bullet.Sensor(self._franka,
             xyz_min=self._pos_low, xyz_max=self._pos_high,
             visualize=False, rgba=[0,1,0,.1])
+        import ipdb; ipdb.set_trace()
         self._end_effector = bullet.get_index_by_attribute(
             self._franka, 'link_name', 'gripper_site')
 
@@ -208,3 +209,6 @@ class FrankaBaseEnv(gym.Env, Serializable):
         return obs
 
 
+if __name__ == "__main__":
+    fr = FrankaBaseEnv(img_dim=256, gui=False, action_scale=.2, action_repeat=10, timestep=1./120, solver_iterations=150, gripper_bounds=[-1,1],
+                 pos_init=[0.5, 0, 0], pos_high=[1,.4,.25], pos_low=[.4,-.6,-.36], max_force=1000., visualize=True,)
