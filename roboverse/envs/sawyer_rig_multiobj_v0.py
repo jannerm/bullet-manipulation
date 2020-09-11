@@ -4,7 +4,7 @@ import pybullet as p
 from gym.spaces import Box, Dict
 from collections import OrderedDict
 from roboverse.envs.sawyer_base import SawyerBaseEnv
-from roboverse.bullet.misc import load_obj, deg_to_quat, quat_to_deg
+from roboverse.bullet.misc import load_obj, deg_to_quat, quat_to_deg, bbox_intersecting
 from bullet_objects import loader, metadata
 import os.path as osp
 import importlib.util
@@ -12,10 +12,7 @@ import random
 import pickle
 import gym
 
-easy_objects = [bullet.objects.lego, bullet.objects.duck, bullet.objects.cube,
-    bullet.objects.spam, bullet.objects.lid]
-test_set = ['mug', 'square_deep_bowl', 'bathtub', 'crooked_lid_trash_can', 'beer_bottle', 
-    'l_automatic_faucet', 'toilet_bowl', 'narrow_top_vase']
+test_set = ['mug', 'long_sofa', 'camera', 'grill_trash_can', 'beer_bottle']
 
 class SawyerRigMultiobjV0(SawyerBaseEnv):
 
@@ -26,12 +23,15 @@ class SawyerRigMultiobjV0(SawyerBaseEnv):
                  randomize=True,
                  observation_mode='state',
                  obs_img_dim=48,
-                 success_threshold=0.05,
+                 success_threshold=0.08,
                  transpose_image=False,
                  invisible_robot=False,
-                 object_subset='lego',
-                 task='pickup',
-                 DoF=4,
+                 object_subset='all',
+                 use_bounding_box=True,
+                 random_color_p=0.5,
+                 quat_dict={},
+                 task='goal_reaching',
+                 DoF=3,
                  *args,
                  **kwargs
                  ):
@@ -48,18 +48,25 @@ class SawyerRigMultiobjV0(SawyerBaseEnv):
         """
         assert DoF in [3, 4, 6]
         assert task in ['goal_reaching', 'pickup']
-        assert object_subset in ['test', 'train', 'easy', '', 'lego']
         print("Task Type: " + task)
+
+        is_set = object_subset in ['test', 'train', 'all']
+        is_list = type(object_subset) == list
+        assert is_set or is_list
+
         self.goal_pos = np.asarray(goal_pos)
+        self.quat_dict = quat_dict
         self._reward_type = reward_type
         self._reward_min = reward_min
         self._randomize = randomize
-        self.pickup_eps = -0.35 if (object_subset == 'easy') else -0.3
+        self.pickup_eps = -0.3
         self._observation_mode = observation_mode
         self._transpose_image = transpose_image
         self._invisible_robot = invisible_robot
         self.image_shape = (obs_img_dim, obs_img_dim)
         self.image_length = np.prod(self.image_shape) * 3  # image has 3 channels
+        self.random_color_p = random_color_p
+        self.use_bounding_box = use_bounding_box
         self.object_subset = object_subset
         self._ddeg_scale = 5
         self.task = task
@@ -67,10 +74,11 @@ class SawyerRigMultiobjV0(SawyerBaseEnv):
 
         self.object_dict, self.scaling = self.get_object_info()
         self.curr_object = None
-
-        self._object_position_low = (.65, -0.1, -.3)
-        self._object_position_high = (.75, 0.1, -.3)
-        self._fixed_object_position = (.75, 0.2, -.36)
+        self._object_position_low = (.65, -0.15, -.3)
+        self._object_position_high = (.75, 0.15, -.3)
+        self._goal_low = np.array([0.65,-0.15,-.34])
+        self._goal_high = np.array([0.75,0.15,-0.22])
+        self._fixed_object_position = np.array([.7, 0.0, -.3])
         self.start_obj_ind = 4 if (self.DoF == 3) else 8
         self.default_theta = bullet.deg_to_quat([180, 0, 0])
         self._success_threshold = success_threshold
@@ -86,12 +94,15 @@ class SawyerRigMultiobjV0(SawyerBaseEnv):
     def get_object_info(self):
         complete_object_dict, scaling = metadata.obj_path_map, metadata.path_scaling_map
         complete = self.object_subset is None
-        train = (self.object_subset == 'train') or (self.object_subset == '')
-        test = (self.object_subset == 'test') or (self.object_subset == '')
+        train = (self.object_subset == 'train') or (self.object_subset == 'all')
+        test = (self.object_subset == 'test') or (self.object_subset == 'all')
 
         object_dict = {}
         for k in complete_object_dict.keys():
             in_test = (k in test_set)
+            in_subset = (k in self.object_subset)
+            if in_subset:
+                object_dict[k] = complete_object_dict[k]
             if complete:
                 object_dict[k] = complete_object_dict[k]
             if train and not in_test:
@@ -139,36 +150,72 @@ class SawyerRigMultiobjV0(SawyerBaseEnv):
         self._end_effector = bullet.get_index_by_attribute(
             self._sawyer, 'link_name', 'gripper_site')
 
+    def sample_object_location(self):
+        if self._randomize:
+            return np.random.uniform(
+                low=self._object_position_low, high=self._object_position_high)
+        return self._fixed_object_position
 
-    def _load_meshes(self):
-        object_position = np.random.uniform(
-            low=self._object_position_low, high=self._object_position_high)
+    def sample_object_color(self):
+        if np.random.uniform() < self.random_color_p:
+            return list(np.random.choice(range(256), size=3) / 255.0) + [1]
+        return None
 
-        if self.object_subset == 'easy':
-            rgba = list(np.random.choice(range(256), size=3) / 255.0) + [1]
-            quat = deg_to_quat([0, 0, np.random.randint(0, 180)])
-            obj = random.choice(easy_objects)
-            self._objects = {
-                'obj': obj(pos=object_position, quat=quat, rgba=rgba)
-            }
-        elif self.object_subset == 'lego':
-            self.curr_object = object_name
-            self._objects = {
-                'obj': bullet.objects.lego(pos=object_position)
-            }
+    def sample_quat(self, object_name):
+        if object_name in self.quat_dict:
+            return self.quat_dict[self.curr_object]
+        return deg_to_quat(np.random.randint(0, 360, size=3))
+
+    def _set_positions(self, pos):
+        bullet.reset()
+        bullet.setup_headless(self._timestep, solver_iterations=self._solver_iterations)
+        self._load_table()
+
+        hand_pos = pos[:3]
+        gripper = pos[self.start_obj_ind - 1]
+        object_pos = pos[self.start_obj_ind:self.start_obj_ind + 3]
+        object_quat = pos[self.start_obj_ind + 4:self.start_obj_ind + 7]
+        self.add_object(change_object=False, object_position=object_pos, quat=object_quat)
+
+        if self.DoF > 3:
+            hand_theta = pos[3:7]
         else:
-            object_name, object_id = random.choice(list(self.object_dict.items()))
-            self.curr_object = object_name
-            #print("Current Object: " + object_name)
+            hand_theta = self.default_theta
 
-            self._objects = {
-                'obj': loader.load_shapenet_object(
-                 object_id,
-                 self.scaling,
-                 object_position)
+        self._format_state_query()
+        self._prev_pos = np.array(hand_pos)
+
+        bullet.position_control(self._sawyer, self._end_effector, self._prev_pos, self.default_theta)
+        action = np.array([0 for i in range(self.DoF)] + [gripper])
+        
+        for _ in range(10):
+            self.step(action)
+
+    def add_object(self, change_object=True, object_position=None, quat=None):
+        # Pick object if necessary and save information
+        if change_object:
+            self.curr_object, self.curr_id = random.choice(list(self.object_dict.items()))
+            self.curr_color = self.sample_object_color()
+
+        # Generate random object position
+        if object_position is None:
+            object_position = self.sample_object_location()
+
+        # Generate quaterion if none is given
+        if quat is None:
+            quat = self.sample_quat(self.curr_object)
+
+        # Spawn object above table
+        self._objects = {
+            'obj': loader.load_shapenet_object(
+                self.curr_id,
+                self.scaling,
+                object_position,
+                quat=quat,
+                rgba=self.curr_color)
             }
 
-        # Allow the objects to land softly in low g
+        # Allow the objects to land softly in low gravity
         p.setGravity(0, 0, -1)
         for _ in range(100):
             bullet.step()
@@ -205,6 +252,15 @@ class SawyerRigMultiobjV0(SawyerBaseEnv):
                 raise RuntimeError('Unrecognized action: {}'.format(action))
             return np.array(delta_pos), np.array(delta_angle), gripper
 
+    def enforce_bounding_box(self):
+        object_pos = bullet.get_body_info(self._objects['obj'])['pos']
+        low, high = np.array(self._pos_low), np.array(self._pos_high)
+        #low, high = low - 0.15, high + 0.15
+        low[2], high[2] = low[2] - 0.15, high[2] + 0.15
+        contained = (object_pos > low).all() and (object_pos < high).all()
+
+        if not contained:
+            self.reset(change_object=False)
 
     def step(self, *action):
         # Get positional information
@@ -233,6 +289,10 @@ class SawyerRigMultiobjV0(SawyerBaseEnv):
         pos = np.clip(pos, self._pos_low, self._pos_high)
         theta = deg_to_quat(angle)
         self._simulate(pos, theta, gripper)
+
+        # Reset if bounding box is violated
+        if self.use_bounding_box:
+            self.enforce_bounding_box()
 
         # Get tuple information
         observation = self.get_observation()
@@ -268,35 +328,50 @@ class SawyerRigMultiobjV0(SawyerBaseEnv):
         state_key = "state_observation"
         goal_key = "state_desired_goal"
         values = []
+        eps1, eps2 = [], []
         for i in range(len(paths)):
             state = paths[i]["observations"][-1][state_key][self.start_obj_ind:self.start_obj_ind + 3]
-            height = state[2]
             goal = contexts[i][goal_key][self.start_obj_ind:self.start_obj_ind + 3]
             distance = np.linalg.norm(state - goal)
-            values.append(height)
-            #values.append(distance)
-        #diagnostics_key = goal_key + "/final/distance"
-        diagnostics_key = goal_key + "/final/height"
-        diagnostics.update(create_stats_ordered_dict(
-            diagnostics_key,
-            values,
-        ))
+
+            if self.task == 'pickup':
+                values.append(state[2] > self.pickup_eps)
+            if self.task == 'goal_reaching':
+                values.append(distance)
+                eps1.append(distance < 0.05)
+                eps2.append(distance < 0.08)
+
+        if self.task == 'pickup':
+            diagnostics_key = goal_key + "/final/picked_up"
+        if self.task == 'goal_reaching':
+            diagnostics_key = goal_key + "/final/distance"
+            diagnostics.update(create_stats_ordered_dict(goal_key + "/final/success_0.05", eps1))
+            diagnostics.update(create_stats_ordered_dict(goal_key + "/final/success_0.08", eps2))
+        diagnostics.update(create_stats_ordered_dict(diagnostics_key, values))
 
         values = []
+        eps1, eps2 = [], []
         for i in range(len(paths)):
             for j in range(len(paths[i]["observations"])):
                 state = paths[i]["observations"][j][state_key][self.start_obj_ind:self.start_obj_ind + 3]
-                height = state[2]
                 goal = contexts[i][goal_key][self.start_obj_ind:self.start_obj_ind + 3]
                 distance = np.linalg.norm(state - goal)
-                values.append(height)
-                #values.append(distance)
-        #diagnostics_key = goal_key + "/distance"
-        diagnostics_key = goal_key + "/height"
-        diagnostics.update(create_stats_ordered_dict(
-            diagnostics_key,
-            values,
-        ))
+                
+                if self.task == 'pickup':
+                    values.append(state[2] > self.pickup_eps)
+                if self.task == 'goal_reaching':
+                    values.append(distance)
+                    eps1.append(distance < 0.05)
+                    eps2.append(distance < 0.08)
+        
+        if self.task == 'pickup':
+            diagnostics_key = goal_key + "/picked_up"
+        if self.task == 'goal_reaching':
+            diagnostics_key = goal_key + "/distance"
+            diagnostics.update(create_stats_ordered_dict(goal_key + "/success_0.05", eps1))
+            diagnostics.update(create_stats_ordered_dict(goal_key + "/success_0.08", eps2))
+
+        diagnostics.update(create_stats_ordered_dict(diagnostics_key, values))
         return diagnostics
 
     def render_obs(self):
@@ -320,18 +395,17 @@ class SawyerRigMultiobjV0(SawyerBaseEnv):
         elif self.task == 'pickup':
             return info['picked_up'] - 1
 
-    def reset(self):
+    def reset(self, change_object=True):
         # Load Enviorment
         bullet.reset()
         bullet.setup_headless(self._timestep, solver_iterations=self._solver_iterations)
         self._load_table()
-        self._load_meshes()
+        self.add_object(change_object=change_object)
         self._format_state_query()
 
         # Sample and load starting positions
         init_pos = np.array(self._pos_init)
-        low, high = self._pos_low[:], self._pos_high[:]
-        self.goal_pos = np.random.uniform(low=low, high=high)
+        self.goal_pos = np.random.uniform(low=self._goal_low, high=self._goal_high)
         bullet.position_control(self._sawyer, self._end_effector, init_pos, self.default_theta)
 
         # Move to starting positions
