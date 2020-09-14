@@ -31,11 +31,12 @@ PDATA_PATH = pdata.getDataPath()
 obj_dir = "bullet-objects"
 
 ## robots
-
 sawyer = loader(ROBOT_ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro.urdf')
 sawyer_invisible = loader(ROBOT_ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro_invisible.urdf')
 sawyer_finger_visual_only = loader(ROBOT_ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro_finger_visual_only.urdf')
-franka = loader(ROBOT_ASSET_PATH, 'franka_description/robots/panda_arm.urdf')
+franka = loader(ROBOT_ASSET_PATH,'franka_panda/panda_scaled.urdf',
+pos=[0.6, -0.2, -0.4])
+
 widowx_200 = loader(
   ROBOT_ASSET_PATH,
   'interbotix_descriptions/urdf/wx200.urdf',

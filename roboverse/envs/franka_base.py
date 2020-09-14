@@ -7,7 +7,6 @@ from roboverse.envs.serializable import Serializable
 
 
 class FrankaBaseEnv(gym.Env, Serializable):
-
     def __init__(self,
                  img_dim=256,
                  gui=False,
@@ -36,6 +35,18 @@ class FrankaBaseEnv(gym.Env, Serializable):
         self._visualize = visualize
         self._id = 'FrankaBaseEnv'
 
+        self.camera_target_pos=[0.4,-0.1,-0.6]
+        self.camera_distance=0.9
+        self.camera_yaw=90
+        self.camera_pitch=-23
+        self.camera_roll=0
+
+        self._gripper_range = range(9, 11)
+
+        view_matrix_args = dict(target_pos=self.camera_target_pos,
+                                distance=self.camera_distance, yaw=self.camera_yaw,
+                                pitch=self.camera_pitch, roll=self.camera_roll, up_axis_index=2)
+
         self.theta = bullet.deg_to_quat([180, 0, 0])
 
         bullet.connect_headless(self._gui)
@@ -43,7 +54,7 @@ class FrankaBaseEnv(gym.Env, Serializable):
         self._set_spaces()
 
         self._img_dim = img_dim
-        self._view_matrix = bullet.get_view_matrix()
+        self._view_matrix = bullet.get_view_matrix(**view_matrix_args)
         self._projection_matrix = bullet.get_projection_matrix(self._img_dim, self._img_dim)
 
     def get_params(self):
@@ -83,7 +94,6 @@ class FrankaBaseEnv(gym.Env, Serializable):
         self.observation_space = gym.spaces.Box(-obs_high, obs_high)
 
     def reset(self):
-
         bullet.reset()
         bullet.setup_headless(self._timestep, solver_iterations=self._solver_iterations)
         self._load_meshes()
@@ -126,9 +136,8 @@ class FrankaBaseEnv(gym.Env, Serializable):
         self._workspace = bullet.Sensor(self._franka,
             xyz_min=self._pos_low, xyz_max=self._pos_high,
             visualize=False, rgba=[0,1,0,.1])
-        import ipdb; ipdb.set_trace()
         self._end_effector = bullet.get_index_by_attribute(
-            self._franka, 'link_name', 'gripper_site')
+            self._franka, 'link_name', 'panda_hand')
 
 
     def _format_state_query(self):
@@ -174,9 +183,9 @@ class FrankaBaseEnv(gym.Env, Serializable):
                 self._franka, self._end_effector, 
                 pos, theta,
                 gripper, gripper_bounds=self._gripper_bounds, 
-                discrete_gripper=False, max_force=self._max_force
+                discrete_gripper=False, gripper_name=('panda_finger_joint1','panda_finger_joint2'), max_force=self._max_force
             )
-            bullet.step_ik()
+            bullet.step_ik(self._gripper_range)
 
     def render(self, mode='rgb_array'):
         img, depth, segmentation = bullet.render(
@@ -212,3 +221,4 @@ class FrankaBaseEnv(gym.Env, Serializable):
 if __name__ == "__main__":
     fr = FrankaBaseEnv(img_dim=256, gui=False, action_scale=.2, action_repeat=10, timestep=1./120, solver_iterations=150, gripper_bounds=[-1,1],
                  pos_init=[0.5, 0, 0], pos_high=[1,.4,.25], pos_low=[.4,-.6,-.36], max_force=1000., visualize=True,)
+    print(fr.reset())

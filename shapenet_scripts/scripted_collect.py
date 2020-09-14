@@ -16,6 +16,7 @@ from railrl.data_management.obs_dict_replay_buffer import \
 from roboverse.envs.env_list import *
 from roboverse.envs.norm_wrapper_env import NormWrapperEnv
 from roboverse.envs.pushing_wrapper_env import PushingWrapperEnv
+# from roboverse.envs.franka_base import FrankaBaseEnv
 
 OBJECT_NAME = 'lego'
 EPSILON = 0.05

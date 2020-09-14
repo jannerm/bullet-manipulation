@@ -44,6 +44,7 @@ def _lookup_by_joint(body, joint, lookup_fn, labels, keys, return_list, quat_to_
     ## ensure all query keys are in labels for this lookup function
     assert all([key in labels for key in keys])
     ## bullet lookup functions returns list of vals
+    # print(body, joint)
     raw_info = lookup_fn(body, joint)
     ## turn raw bullet output into a dictionary with key labels
     info_d = {labels[i]: raw_info[i] for i in range(len(raw_info))}

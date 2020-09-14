@@ -207,4 +207,6 @@ class SawyerBaseEnv(gym.Env, Serializable):
     def convert_to_active_observation(self, obs):
         return obs
 
-
+if __name__ == "__main__":
+    fr = SawyerBaseEnv(img_dim=256, gui=False, action_scale=.2, action_repeat=10, timestep=1./120, solver_iterations=150, gripper_bounds=[-1,1],
+                 pos_init=[0.5, 0, 0], pos_high=[1,.4,.25], pos_low=[.4,-.6,-.36], max_force=1000., visualize=True,)
