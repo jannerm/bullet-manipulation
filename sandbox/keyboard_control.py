@@ -101,9 +101,10 @@ env_kwargs={
     'obj_urdf': 'spam',
     'max_joint_velocity': None,
 
-    'num_obj': 4,
+    'num_obj': 2,
 
-    'objs_to_reset_outside_bowl': [0, 1, 2, 3],
+    # 'objs_to_reset_outside_bowl': [0, 1, 2, 3],
+    'objs_to_reset_inside_bowl': [0],
 }
 env = SawyerLiftEnvGC(**env_kwargs)
 
@@ -147,7 +148,7 @@ while True:
                 action = np.zeros(10)
             if action.any():
                 env.step(action[:4])
-                # print(env.get_dict_observation()['state_observation'])
+                print(env.get_dict_observation()['state_observation'])
                 # print(env.get_dict_observation()['state_achieved_goal'])
                 # print(env.get_dict_observation()['state_desired_goal'])
                 # print()

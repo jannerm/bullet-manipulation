@@ -54,6 +54,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             bowl_reward=True,
             reward_type=None,
             objs_to_reset_outside_bowl=[],
+            objs_to_reset_inside_bowl=[],
             obj_success_threshold=0.10,
             fixed_reset_and_goal_mode=None,
             **kwargs
@@ -68,6 +69,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
         self.bowl_reward = bowl_reward
         self.reward_type = reward_type
         self.objs_to_reset_outside_bowl = objs_to_reset_outside_bowl
+        self.objs_to_reset_inside_bowl = objs_to_reset_inside_bowl
         self.obj_success_threshold = obj_success_threshold
 
         if fixed_reset_and_goal_mode is not None:
@@ -109,6 +111,15 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
                 reset_state = SawyerLiftEnvGC.FIXED_RESETS[self.fixed_reset_and_goal_mode]
                 start_idx = (obj_id + 1) * 2
                 cube_reset_pos = np.concatenate(([SawyerLiftEnvGC.X_POS], reset_state[start_idx:start_idx+2]))
+            elif obj_id in self.objs_to_reset_inside_bowl:
+                bowl_xpos = self._bowl_pos[1]
+                low = self._pos_low.copy()
+                high = self._pos_high.copy()
+                low[1], high[1] = bowl_xpos - 0.08, bowl_xpos + 0.08
+                # low[1], high[1] = bowl_xpos - 0.175, bowl_xpos + 0.175
+                # low[1], high[1] = bowl_xpos - 0.175, bowl_xpos - 0.125
+                cube_reset_pos = np.random.uniform(low=low, high=high)
+                cube_reset_pos[-1] = SawyerLiftEnvGC.GROUND_Y
             elif obj_id in self.objs_to_reset_outside_bowl:
                 bowl_xpos = self._bowl_pos[1]
                 bowl_xrange = [bowl_xpos - 0.15, bowl_xpos + 0.15]
@@ -271,6 +282,21 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             bowl_obj_success = float(obj_bowl_dist <= 0.10)
             info['bowl_{}_success'.format(obj_name)] = bowl_obj_success
             num_bowl_obj_success += bowl_obj_success
+
+            ### logging for the two bump task ###
+            if obj_id == 0:
+                pos = cube_pos
+                # pos = achieved_goal_info['hand_pos']
+
+                distance_bump1 = bullet.l2_dist(pos, [-0.25, -0.35])
+                info['distance_to_bump1'] = distance_bump1
+
+                distance_bump2 = bullet.l2_dist(pos, [0.25, -0.35])
+                info['distance_to_bump2'] = distance_bump2
+
+                distance_bumps_min = np.minimum(distance_bump1, distance_bump2)
+                info['distance_to_bumps_min'] = distance_bumps_min
+
         info['num_obj_success'] = num_obj_success
         info['num_bowl_obj_success'] = num_bowl_obj_success
 
