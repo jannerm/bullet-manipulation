@@ -86,7 +86,7 @@ env_kwargs={
     'pos_high': [.75, .4, .3],
     'pos_low': [.75, -.4, -.36],
     'reset_obj_in_hand_rate': 0.0,
-    'goal_sampling_mode': 'obj_in_bowl', #'first_obj_in_bowl_oracle', #'obj_in_bowl', #'ground'
+    'goal_sampling_mode': 'first_obj_on_bump_oracle', #'first_obj_in_bowl_oracle', #'obj_in_bowl', #'ground'
     'bowl_bounds': [-0.40, 0.40],
     'random_init_bowl_pos': False,
     'bowl_type': 'fixed',

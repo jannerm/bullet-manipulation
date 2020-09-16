@@ -360,6 +360,7 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
             '50p_ground__50p_obj_in_bowl',
             'first_obj_in_bowl_oracle',
             'ground_away_from_curr_state',
+            'first_obj_on_bump_oracle',
         ]
 
         if goal_sampling_mode == '50p_ground__50p_obj_in_bowl':
@@ -458,6 +459,17 @@ class SawyerLiftEnvGC(Sawyer2dEnv):
                 (batch_size, 1)
             )
             obj_goals[:,0] = curr_state[-2]
+        elif goal_sampling_mode == 'first_obj_on_bump_oracle':
+            curr_state = self.get_achieved_goal()
+            obj_goals = np.tile(
+                curr_state[2:(self.num_obj+1)*2],
+                (batch_size, 1)
+            )
+            for i in range(batch_size):
+                if obj_goals[i,0] >= 0.0:
+                    obj_goals[i,0] = 0.25
+                else:
+                    obj_goals[i,0] = -0.25
         else:
             raise RuntimeError("Invalid goal mode: {}".format(self.goal_sampling_mode))
 
