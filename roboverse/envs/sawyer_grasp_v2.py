@@ -280,7 +280,6 @@ class SawyerGraspV2Env(SawyerBaseEnv):
             image_observation = np.float32(image_observation.flatten())/255.0
             state_observation = np.concatenate(
                 (end_effector_pos, end_effector_theta, gripper_tips_distance))
-
             for object_name in range(self._num_objects):
                 object_info = bullet.get_body_info(self._objects[object_name],
                                                    quat_to_deg=False)
