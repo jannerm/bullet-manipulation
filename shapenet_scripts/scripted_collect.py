@@ -18,6 +18,8 @@ from roboverse.envs.norm_wrapper_env import NormWrapperEnv
 from roboverse.envs.pushing_wrapper_env import PushingWrapperEnv
 from roboverse.envs.kuka_grasping_env import KukaGraspingProceduralEnv
 import gym
+# from roboverse.envs.franka_base import FrankaBaseEnv
+
 
 OBJECT_NAME = 'lego'
 EPSILON = 0.05

@@ -43,6 +43,17 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    }
     },
     {
+        'id': 'FrankaGraspV2-v0',
+        'entry_point': ('roboverse.envs.franka_grasp_v2:FrankaGraspV2Env'),
+        'kwargs': {'max_force': 100,
+                   'action_scale': 0.05,
+                   'pos_init': [0.7, 0.2, -0.2],
+                   'pos_low': [.5, -.05, -.38],
+                   'pos_high': [.9, .30, -.15],
+                   'num_objects': 5,
+                   }
+    },
+    {
         'id': 'SawyerGraspTenV2-v0',
         'entry_point': ('roboverse.envs.sawyer_grasp_v2:SawyerGraspV2Env'),
         'kwargs': {'max_force': 100,

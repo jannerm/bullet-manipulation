@@ -162,7 +162,8 @@ def get_gripper_state(body, gripper, gripper_bounds, discrete_gripper, gripper_n
         l_limits, r_limits = _get_gripper_limits(body, *gripper_name)
     else:
         l_limits, r_limits = _get_gripper_limits(body)
-
+    
+    # import ipdb; ipdb.set_trace()
     if discrete_gripper:
         return _get_discrete_gripper_state(gripper, gripper_bounds, l_limits, r_limits)
     else:
