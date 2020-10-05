@@ -63,10 +63,9 @@ for i in tqdm(range(args.num_trajectories)):
     target_pos = env.get_object_midpoint(object_name)
     images = []
 
-    env = np.uint8(env.render_obs()).transpose() / 255.0
-    env = ptu.from_numpy(env)
-
-    dataset['initial_latent_state'][i] = ptu.get_numpy(model.encode(env)).flatten()
+    init_img = np.uint8(env.render_obs()).transpose() / 255.0
+    dataset['initial_latent_state'][i] = ptu.get_numpy(model.encode(ptu.from_numpy(init_img))).flatten()
+    
     for j in range(args.num_timesteps):
         img = np.uint8(env.render_obs())
         images.append(Image.fromarray(img))
@@ -128,6 +127,7 @@ for i in tqdm(range(args.num_trajectories)):
         dataset['latent_desired_goal'][i * args.num_timesteps + j] = latent_obs
         dataset['state_desired_goal'][i * args.num_timesteps + j] = obs['state_achieved_goal']
         dataset['image_desired_goal'][i * args.num_timesteps + j] = img.flatten()
+        dataset['initial_image_observation'][i * args.num_timesteps + j] = init_img.flatten()
 
         returns += reward
     
