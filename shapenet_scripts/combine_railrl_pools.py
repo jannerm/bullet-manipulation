@@ -8,6 +8,8 @@ from railrl.data_management.env_replay_buffer import EnvReplayBuffer
 from railrl.data_management.obs_dict_replay_buffer import \
     ObsDictReplayBuffer
 from roboverse.envs.env_list import PROXY_ENVS_MAP
+from roboverse.envs.kuka_grasping_env import KukaGraspingProceduralEnv
+import gym
 
 EXTRA_POOL_SPACE = int(1e5)
 REWARD_NEGATIVE = -10
@@ -24,8 +26,6 @@ if __name__ == "__main__":
     parser.add_argument("--success-only", dest="success_only", action="store_true", default=False)
     parser.add_argument('--output', type=str, default='railrl_consolidated.pkl')
     args = parser.parse_args()
-
-    # if args.env == 
 
     if osp.exists(NFS_PATH):
         data_directory = osp.join(NFS_PATH, args.data_directory)
@@ -52,20 +52,26 @@ if __name__ == "__main__":
     for pool in pools:
         original_pool_size += pool._top
     pool_size = original_pool_size + EXTRA_POOL_SPACE
-
-    if args.env in PROXY_ENVS_MAP:
-        roboverse_env_name = PROXY_ENVS_MAP[args.env]
+    
+    if args.env == 'kuka':
+        env = KukaGraspingProceduralEnv(continuous=True, downsample_width=48, downsample_height=48)
+        spaces = {'image': env.observation_space[0], 'state': env.observation_space[1]}
+        env.observation_space = gym.spaces.Dict(spaces)
     else:
-        roboverse_env_name = args.env
-        
-    if args.downwards:
-        env = roboverse.make(roboverse_env_name,
-                         observation_mode=args.observation_mode,
-                         transpose_image=True, downwards = True)
-    else:     
-        env = roboverse.make(roboverse_env_name,
+        if args.env in PROXY_ENVS_MAP:
+            roboverse_env_name = PROXY_ENVS_MAP[args.env]
+        else:
+            roboverse_env_name = args.env
+            
+        if args.downwards:
+            env = roboverse.make(roboverse_env_name,
                             observation_mode=args.observation_mode,
-                            transpose_image=True)
+                            transpose_image=True, downwards = True)
+        else:     
+            env = roboverse.make(roboverse_env_name,
+                                observation_mode=args.observation_mode,
+                                transpose_image=True)
+
     if args.observation_mode == 'state':
         consolidated_pool = EnvReplayBuffer(pool_size, env)
         for pool in pools:

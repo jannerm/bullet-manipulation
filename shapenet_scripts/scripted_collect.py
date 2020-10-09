@@ -2832,7 +2832,7 @@ def main(args):
     else:
         roboverse_env_name = args.env
     if args.kuka:
-        env = KukaGraspingProceduralEnv(continuous=True)
+        env = KukaGraspingProceduralEnv(continuous=True, downsample_width=48, downsample_height=48)
         spaces = {'image': env.observation_space[0], 'state': env.observation_space[1]}
         env.observation_space = gym.spaces.Dict(spaces)
     elif args.downwards:

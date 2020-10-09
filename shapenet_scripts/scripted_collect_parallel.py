@@ -72,6 +72,7 @@ if __name__ == "__main__":
     parser.add_argument("--suboptimal", dest="suboptimal",
                         action="store_true", default=False)
     parser.add_argument("--save-success-pool", action="store_true", default=False)
+    parser.add_argument('--kuka',  action='store_true')
     args = parser.parse_args()
 
     assert args.semisparse != args.sparse
@@ -98,6 +99,8 @@ if __name__ == "__main__":
                ]
     if args.sparse:
         command.append('--sparse')
+    if args.kuka:
+        command.append('--kuka')
     if args.semisparse:
         command.append('--semisparse')
     if args.randomize:
