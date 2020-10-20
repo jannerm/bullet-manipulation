@@ -55,11 +55,11 @@ class KukaGraspingProceduralEnv(gym.Env):
       camera_random=0,
       simple_observations=False,
       continuous=False,
-      remove_height_hack=False,
+      remove_height_hack=True,
       urdf_list=None,
       render_mode='DIRECT',
       num_objects=5,
-      dv=0.06,
+      dv=1,
       target=False,
       target_filenames=None,
       non_target_filenames=None,
@@ -141,6 +141,8 @@ class KukaGraspingProceduralEnv(gym.Env):
     self._allow_duplicate_objects = allow_duplicate_objects
     self._max_num_training_models = max_num_training_models
     self._max_num_test_models = max_num_test_models
+    self._pos_low = np.array([0,0,0])
+    self._pos_high = np.array([1,1,1])
 
     if render_mode == 'GUI':
       self.cid = pybullet.connect(pybullet.GUI)
@@ -319,6 +321,8 @@ class KukaGraspingProceduralEnv(gym.Env):
     return np.concatenate((pos, ori, end_effector_pos, end_effector_ori))
 
   def step(self, action):
+    if action.shape[-1] < 5:
+      action = np.concatenate(action, np.array([0.3]))
     dv = self._dv  # velocity per physics step.
     if self._continuous:
       dx = dv * action[0]
@@ -342,7 +346,7 @@ class KukaGraspingProceduralEnv(gym.Env):
         dy = [0, 0, 0, -dv, dv, 0, 0][action]
         dz = -dv
         da = [0, 0, 0, 0, 0, -0.25, 0.25][action]
-    return self._step_continuous([dx, dy, dz, da, 0.3])
+    return self._step_continuous([dx, dy, dz, da, action[4]])
 
   def _step_continuous(self, action):
     """Applies a continuous velocity-control action.
@@ -441,10 +445,14 @@ if __name__ == "__main__":
     env = KukaGraspingProceduralEnv(continuous=True)
     env.reset()
     for i in range(10):
-      action = np.zeros((4,))
+      action = np.zeros((5,))
       std = [0.035, 0.035, 0.05]
       mean = np.zeros_like(std)
-      action[:3] = np.random.normal(mean, std)*50
-      state, observation, reward, done = env.step(action)
-      print(state, observation, reward)
+      action[:3] = np.random.normal(mean, std)
+      action[3] = np.random.random()*2-1
+      action[4] = np.random.random()
+      # action[:3] = np.array([0,0,-1])
+      obs, reward, done, info = env.step(action)
+      print(obs['state'])
+      print(action)
       

@@ -18,6 +18,7 @@ from roboverse.envs.norm_wrapper_env import NormWrapperEnv
 from roboverse.envs.pushing_wrapper_env import PushingWrapperEnv
 from roboverse.envs.kuka_grasping_env import KukaGraspingProceduralEnv
 import gym
+from roboverse.envs.franka_base_grasp import FrankaBaseGraspEnv
 # from roboverse.envs.franka_base import FrankaBaseEnv
 
 
@@ -2544,7 +2545,7 @@ def random_reaching(env, pool, render_images):
     success = info['object_gripper_distance'] < 0.03
     return success, images
 
-def random_reaching_kuka(env, pool, success_pool, with_theta=False):
+def random_reaching_railrl(env, pool, success_pool, with_theta=False, kuka = False):
     """
 
     :param env:
@@ -2569,64 +2570,10 @@ def random_reaching_kuka(env, pool, success_pool, with_theta=False):
         if with_theta:
             theta_action = np.zeros((2,)) #gripper + reset
             action = np.concatenate((action, theta_action))
-        
-        action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
-        
-        state, next_observation, reward, done, info = *env.step(action), {}
-
-        actions.append(action)
-        observations.append(observation)
-        rewards.append(reward)
-        terminals.append(done)
-        infos.append(info)
-        next_observations.append(next_observation)
-
-        observation = next_observation
-
-    path = dict(
-        actions=actions,
-        rewards=np.asarray(rewards).reshape((-1, 1)),
-        terminals=np.asarray(terminals).reshape((-1, 1)),
-        infos=infos,
-        observations=observations,
-        next_observations=next_observations,
-    )
-
-    if not isinstance(observation, dict):
-        path_length = len(rewards)
-        path['agent_infos'] = np.asarray([{} for i in range(path_length)])
-        path['env_infos'] = np.asarray([{} for i in range(path_length)])
-
-    pool.add_path(path)
-    success_pool.add_path(path)
-
-
-def random_reaching_railrl(env, pool, success_pool, with_theta=False):
-    """
-
-    :param env:
-    :param pool:
-    :param success_pool:
-    :param random_actions: When set to True, executes random actions instead
-    of following the object(s).
-    :return:
-    """
-
-    observation = env.reset()
-    # import ipdb; ipdb.set_trace()
-    
-    actions, observations, next_observations, rewards, terminals, infos = \
-        [], [], [], [], [], []
-
-    for _ in range(args.num_timesteps):
-        std = [0.035, 0.035, 0.05, np.pi / 8]
-        mean = np.zeros_like(std)
-        action = np.random.normal(mean, std) * 7.0
-        
-        if with_theta:
-            theta_action = np.zeros((2,)) #gripper + reset
+        if kuka:
+            theta_action = np.random.random((1,))
             action = np.concatenate((action, theta_action))
-        
+
         action = np.clip(action, -1 + EPSILON, 1 - EPSILON)
         
         next_observation, reward, done, info = env.step(action)
@@ -2831,10 +2778,14 @@ def main(args):
         roboverse_env_name = PROXY_ENVS_MAP[args.env]
     else:
         roboverse_env_name = args.env
+    
     if args.kuka:
         env = KukaGraspingProceduralEnv(continuous=True, downsample_width=48, downsample_height=48)
         spaces = {'image': env.observation_space[0], 'state': env.observation_space[1]}
         env.observation_space = gym.spaces.Dict(spaces)
+    elif args.franka:
+        env = FrankaBaseGraspEnv(obs_img_dim=48, gui=False, action_scale=1, action_repeat=10, timestep=1./120, solver_iterations=150,
+            gripper_bounds=[-1,1],max_force=1000., visualize=False,observation_mode=args.observation_mode,)
     elif args.downwards:
         env = roboverse.make(roboverse_env_name, reward_type=reward_type,
                          gui=args.gui, randomize=args.randomize,
@@ -2845,7 +2796,6 @@ def main(args):
                          gui=args.gui, randomize=args.randomize,
                          observation_mode=args.observation_mode,
                          transpose_image=True)
-
     if args.norm:
         env = NormWrapperEnv(env)
 
@@ -2887,7 +2837,7 @@ def main(args):
         if args.rand_reaching and not args.pushing:
             try:
                 success = False
-                random_reaching_railrl(env, railrl_pool, railrl_success_pool, with_theta=args.theta)
+                random_reaching_railrl(env, railrl_pool, railrl_success_pool, with_theta=args.theta, kuka=args.kuka)
             except NameError:
                 success, images = random_reaching(env, pool, render_images)
         elif args.pushing:
@@ -3143,12 +3093,15 @@ if __name__ == "__main__":
     parser.add_argument('--rand_reaching',  action='store_true')
     parser.add_argument('--downwards',  action='store_true')
     parser.add_argument('--kuka',  action='store_true')
+    parser.add_argument('--franka',  action='store_true')
     parser.add_argument('--theta',  action='store_true')
     parser.add_argument('--norm', action='store_true')
 
     args = parser.parse_args()
 
     if args.kuka:
+        args.env = 'SawyerGraspV2-v0'
+    if args.franka:
         args.env = 'SawyerGraspV2-v0'
 
     assert args.semisparse != args.sparse

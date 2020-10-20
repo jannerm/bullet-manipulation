@@ -34,8 +34,7 @@ obj_dir = "bullet-objects"
 sawyer = loader(ROBOT_ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro.urdf')
 sawyer_invisible = loader(ROBOT_ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro_invisible.urdf')
 sawyer_finger_visual_only = loader(ROBOT_ASSET_PATH, 'sawyer_robot/sawyer_description/urdf/sawyer_xacro_finger_visual_only.urdf')
-franka = loader(ROBOT_ASSET_PATH,'franka_panda/panda_scaled.urdf',
-pos=[0.6, -0.2, -0.4])
+franka = loader(ROBOT_ASSET_PATH,'franka_panda/panda_scaled.urdf', pos=[0.4, -0.2, -0.35])#, pos=[0.6, -0.2, -0.4])
 
 widowx_200 = loader(
   ROBOT_ASSET_PATH,
@@ -84,10 +83,21 @@ spam = loader(ASSET_PATH, os.path.join(obj_dir, "spam", "spam.urdf"),
               deg=[90,0,-90],
               scale=0.025)
 
+pos_cube=[0.8, -0.2, -0.3]
+pos_cube[0:2] += np.random.normal(0, 0.05, (2,))
+cube2 = loader(ASSET_PATH, os.path.join(obj_dir, "cube", "cube.urdf"),
+              pos=pos_cube,
+              scale=0.05)
+
 ## tray
 
 tray = loader('', os.path.join("tray", "tray.urdf"),
               pos=[0.70, 0.15, -0.36],
+              deg=[0, 0, 0],
+              scale=0.75)
+
+tray_v2 = loader('', os.path.join("tray", "tray.urdf"),
+              pos=[0.8, -0.2, -0.36],
               deg=[0, 0, 0],
               scale=0.75)
 

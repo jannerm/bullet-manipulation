@@ -132,7 +132,8 @@ class SawyerGraspV2Env(SawyerBaseEnv):
             self._sawyer = bullet.objects.sawyer_finger_visual_only()
         self._table = bullet.objects.table()
         self._tray = bullet.objects.tray()
-
+        self._cube = bullet.objects.cube2()
+        
         self._objects = {}
         self._sensors = {}
         self._workspace = bullet.Sensor(self._sawyer,

@@ -8,7 +8,7 @@ def change_obs(obs):
     new_obs = np.rot90(new_obs,3,axes=(-3,-2))
     new_obs = np.rollaxis(new_obs,3)
     new_obs = new_obs.reshape(new_obs.shape[0], -1)
-    return new_obs
+    return np.squeeze(new_obs)
 
 class ReshapeObsEnv(gym.Env):
     def __init__(self, env):
