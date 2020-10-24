@@ -13,8 +13,8 @@ import pickle
 SHAPENET_ASSET_PATH = osp.join(
     osp.dirname(osp.abspath(__file__)), 'assets/bullet-objects/ShapeNetCore')
 
-REWARD_NEGATIVE = -1.0
-REWARD_POSITIVE = 10.0
+REWARD_NEGATIVE = 0
+REWARD_POSITIVE = 1
 
 
 class FrankaBaseGraspEnv(gym.Env, Serializable):
@@ -409,7 +409,7 @@ if __name__ == "__main__":
         act = np.zeros(4)
         act[0:3] = np.random.uniform(-1,1,(3,)) * 0.3
         # act[2] = pos[2] + np.sin(t) * 0.5 - bullet.get_link_state(fr._franka, fr._end_effector, 'pos')[2]
-        # act[3] = (-1)**t * np.random.random()
+        act[3] = (-1)**t
         print('action', act)
         print('loc', bullet.get_link_state(fr._franka, fr._end_effector, 'pos'))
         pos_arr.append(bullet.get_link_state(fr._franka, fr._end_effector, 'pos'))
