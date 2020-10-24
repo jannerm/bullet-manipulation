@@ -24,7 +24,7 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'action_scale': 0.05,
                    'pos_init': [0.7, 0.2, -0.2],
                    'pos_low': [.5, -.05, -.38],
-                   'pos_high': [.9, .30, -.15],
+                   'pos_high': [.9, .35, -.15],
                    'object_position_low': (.65, .10, -.20),
                    'object_position_high': (.80, .25, -.20),
                    'num_objects': 1,

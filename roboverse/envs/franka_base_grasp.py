@@ -27,8 +27,8 @@ class FrankaBaseGraspEnv(gym.Env, Serializable):
                  solver_iterations=150,
                  gripper_bounds=[-1,1],
                  pos_init=[0.5, 0, 0],
-                 pos_high=[1, .4, 0.2],
-                 pos_low=[.4, -.6, -.36],
+                 pos_high=[0.9, .0, 0.2],
+                 pos_low=[0.4, -.4, -.36],
                 # pos_low=[.4,-.6,0],
                  max_force=1000.,
                  visualize=True,
@@ -84,6 +84,7 @@ class FrankaBaseGraspEnv(gym.Env, Serializable):
 
         self.theta = bullet.deg_to_quat([180, 0, 0])
 
+        self._is_gripper_open = True
         bullet.connect_headless(self._gui)
         # self.set_reset_hook()
         self._set_spaces()
@@ -160,6 +161,7 @@ class FrankaBaseGraspEnv(gym.Env, Serializable):
             self.step([np.random.random()*0.2-0.1,np.random.random()*0.2-0.1,0.08,-1])
             # self.step([0,0,0.1, -1])
         # self.open_gripper()
+        self._is_gripper_open = True
         return self.get_observation()
 
     # def set_reset_hook(self, fn=lambda env: None):
@@ -260,11 +262,16 @@ class FrankaBaseGraspEnv(gym.Env, Serializable):
         
         pos += delta_pos * self._action_scale
         pos = np.clip(pos, self._pos_low, self._pos_high)
+        print('delta_pos', delta_pos)
 
-        # if gripper < 0:
-        #     gripper = -1
-        # else:
-        #     gripper = 1
+        if gripper > 0.5:
+            gripper = -1
+            self._is_gripper_open = False 
+        elif gripper < -0.5:
+            gripper = 1
+            self._is_gripper_open = True
+        else:
+            gripper = 1 if self._is_gripper_open else -1 
 
 
         self._simulate(pos, self.theta, gripper)
@@ -407,12 +414,16 @@ if __name__ == "__main__":
     pos[2] += 0.1
     for t in range(50):
         act = np.zeros(4)
-        act[0:3] = np.random.uniform(-1,1,(3,)) * 0.3
+        #act[0:3] = np.random.uniform(-1,1,(3,)) * 0.3
+        act[0:3] = [0, 0, 1]
         # act[2] = pos[2] + np.sin(t) * 0.5 - bullet.get_link_state(fr._franka, fr._end_effector, 'pos')[2]
-        act[3] = (-1)**t
-        print('action', act)
-        print('loc', bullet.get_link_state(fr._franka, fr._end_effector, 'pos'))
+        #act[3] = np.random.uniform(-1, 1) 
+        act[3] = (-1)**t 
         pos_arr.append(bullet.get_link_state(fr._franka, fr._end_effector, 'pos'))
         obs_arr.append(fr.step(act))
+        print('action', act)
+        print('loc', bullet.get_link_state(fr._franka, fr._end_effector, 'pos'))
+
         sleep(.05)    
+        #import ipdb; ipdb.set_trace()
     import ipdb; ipdb.set_trace()
