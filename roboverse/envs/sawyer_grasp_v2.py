@@ -82,10 +82,11 @@ class SawyerGraspV2Env(SawyerBaseEnv):
 
         super().__init__(*args, **kwargs)
         self.theta = bullet.deg_to_quat([180, 0, 90])
+        self._is_gripper_open = True
         self._load_meshes()
 
     def _set_action_space(self):
-        act_dim = 4
+        act_dim = 5
         act_bound = 1
         act_high = np.ones(act_dim) * act_bound
         self.action_space = gym.spaces.Box(-act_high, act_high)
@@ -194,40 +195,54 @@ class SawyerGraspV2Env(SawyerBaseEnv):
         pos = list(bullet.get_link_state(self._sawyer, self._end_effector, 'pos'))
         delta_pos = action[:3]
         pos += delta_pos * self._action_scale
+        print('pre clip pos', pos)
         pos = np.clip(pos, self._pos_low, self._pos_high)
+        print('pos low', self._pos_low)
+        print('pos high', self._pos_high)
 
         theta = list(bullet.get_link_state(self._sawyer, self._end_effector, 'theta'))
         delta_theta = action[3]
         target_theta = theta + np.asarray([0., 0., delta_theta*20])
         target_theta = np.clip(target_theta, [180, 0., 0.], [180, 0., 180.])
         target_theta = bullet.deg_to_quat(target_theta)
-        gripper = -0.8
+        if len(action) > 4 and action[4] > 0.5:
+            gripper = -0.8
+            self._is_gripper_open = True
+        elif len(action) > 4 and action[4] < -0.5:
+            gripper = 0.8
+            self._is_gripper_open = False 
+        else:
+            gripper = -0.8 if self._is_gripper_open else 0.8
 
         self._simulate(pos, target_theta, gripper)
         # if self._visualize: self.visualize_targets(pos)
 
-        pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
-        if pos[2] < self._height_threshold:
-            gripper = 0.8
-            for i in range(10):
-                self._simulate(pos, target_theta, gripper)
-            for i in range(50):
-                pos = bullet.get_link_state(self._sawyer, self._end_effector,
-                                            'pos')
-                pos = list(pos)
-                pos = np.clip(pos, self._pos_low, self._pos_high)
-                pos[2] += 0.05
-                self._simulate(pos, target_theta, gripper)
-            done = True
-            reward = self.get_reward({})
-            if reward > 0:
-                info = {'grasp_success': 1.0}
-            else:
-                info = {'grasp_success': 0.0}
-        else:
-            done = False
-            reward = REWARD_NEGATIVE
-            info = {'grasp_success': 0.0}
+#         pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
+#         if pos[2] < self._height_threshold:
+#             gripper = 0.8
+#             for i in range(10):
+#                 self._simulate(pos, target_theta, gripper)
+#             for i in range(50):
+#                 pos = bullet.get_link_state(self._sawyer, self._end_effector,
+#                                             'pos')
+#                 pos = list(pos)
+#                 pos = np.clip(pos, self._pos_low, self._pos_high)
+#                 pos[2] += 0.05
+#                 self._simulate(pos, target_theta, gripper)
+#             done = True
+#             reward = self.get_reward({})
+#             if reward > 0:
+#                 info = {'grasp_success': 1.0}
+#             else:
+#                 info = {'grasp_success': 0.0}
+#         else:
+#             done = False
+#             reward = REWARD_NEGATIVE
+#             info = {'grasp_success': 0.0}
+# 
+        done = False
+        reward = REWARD_NEGATIVE
+        info = {'grasp_success': 0.0}
 
         observation = self.get_observation()
         self._prev_pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
@@ -305,7 +320,8 @@ if __name__ == "__main__":
     num_objects = 1
     env = roboverse.make("SawyerGraspOneV2-v0",
                          gui=True,
-                         observation_mode='state',)
+                         observation_mode='state',
+                         )
                          # num_objects=num_objects)
     obs = env.reset()
     # object_ind = np.random.randint(0, env._num_objects)
@@ -319,18 +335,32 @@ if __name__ == "__main__":
         action = object_pos - ee_pos
         action = action*4.0
         action += np.random.normal(scale=0.1, size=(3,))
+        #action = np.random.normal(scale=0.2, size=(3,))
+        if _ < 100:
+            action = [1, 0, 0]
+        elif _ < 200:
+            action = [-1, 0, 0]
+        elif _ < 300:
+            action = [0, 1, 0]
+        elif _ < 400:
+            action = [0, -1, 0]
+        elif _ < 500:
+            action = [0, 0, 1]
+        elif _ < 600:
+            action = [0, 0, -1]
+        action = np.array(action) 
 
         # action = np.random.uniform(low=-1.0, high=1.0, size=(3,))
         # if np.random.uniform() < 0.9:
         #     action[2] = -1
         # theta_action = np.random.uniform()
-        theta_action = 0.0
+        theta_action = 0.1
 
-        action = np.concatenate((action, np.asarray([theta_action])))
+        action = np.concatenate((action, np.asarray([theta_action, np.random.uniform()*2-1])))
         obs, rew, done, info = env.step(action)
         env.render_obs()
         i+=1
-        if done or i > 50:
+        if done or i > 10000:
             # object_ind = np.random.randint(0, env._num_objects)
             object_ind = num_objects - 1
             obs = env.reset()

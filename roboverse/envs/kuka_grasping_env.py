@@ -143,6 +143,7 @@ class KukaGraspingProceduralEnv(gym.Env):
     self._max_num_test_models = max_num_test_models
     self._pos_low = np.array([0,0,0])
     self._pos_high = np.array([1,1,1])
+    self._is_gripper_open = False
 
     if render_mode == 'GUI':
       self.cid = pybullet.connect(pybullet.GUI)
@@ -362,6 +363,14 @@ class KukaGraspingProceduralEnv(gym.Env):
     """
     # Perform commanded action.
     self._env_step += 1
+    if action[4] > 0.5:
+        action[4] = 1.0
+        self._is_gripper_open = True 
+    elif action[4] < -0.5:
+        action[4] = 0.0
+        self._is_gripper_open = False
+    else:
+        action[4] = 1.0 if self._is_gripper_open else 0.0  
     self._kuka.applyAction(action)
     for _ in range(self._action_repeat):
       pybullet.stepSimulation(physicsClientId=self.cid)
@@ -442,17 +451,31 @@ class KukaGraspingProceduralEnv(gym.Env):
   
 
 if __name__ == "__main__":
-    env = KukaGraspingProceduralEnv(continuous=True)
+    env = KukaGraspingProceduralEnv(continuous=True, render_mode='GUI')
     env.reset()
-    for i in range(10):
-      action = np.zeros((5,))
-      std = [0.035, 0.035, 0.05]
-      mean = np.zeros_like(std)
-      action[:3] = np.random.normal(mean, std)
-      action[3] = np.random.random()*2-1
-      action[4] = np.random.random()
-      # action[:3] = np.array([0,0,-1])
-      obs, reward, done, info = env.step(action)
-      print(obs['state'])
-      print(action)
-      
+    for i in range(400):
+        if i < 10:
+            act = [1, 0, 0]
+        elif i < 20:
+            act = [-1, 0, 0]
+        elif i < 100:
+            act = [0, 1, 0]
+        elif i < 200:
+            act = [0, -1, 0]
+        elif i < 220:
+            act = [0, 0, 1]
+        elif i < 240:
+            act = [0, 0, -1]
+
+        action = np.zeros((5,))
+#std = [0.035, 0.035, 0.05]
+#mean = np.zeros_like(std)
+        action[:3] = act
+#action[:3] = np.random.normal(mean, std)
+        action[3] = np.random.random()*2-1
+        #action[4] = np.random.random()
+        action[4] = np.random.random()*2-1 
+# action[:3] = np.array([0,0,-1])
+        obs, reward, done, info = env.step(action)
+        print(obs['state'])
+        print(action)

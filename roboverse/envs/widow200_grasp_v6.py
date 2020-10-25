@@ -24,6 +24,16 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
         self.terminates = False
         self.scripted_traj_len = 25
 
+    def _set_action_space(self):
+        act_dim = 5
+        # first three actions are delta x,y,z
+        # action 4 is wrist rotation
+        # action 5 is gripper open/close (> 0.5 for open, < -0.5 for close)
+        # ST: Remove reset action (index 5)
+        act_bound = 1
+        act_high = np.ones(act_dim) * act_bound
+        self.action_space = gym.spaces.Box(-act_high, act_high)
+
     def get_info(self):
         assert self._num_objects == 1
         object_name = list(self._objects.keys())[0]
@@ -77,27 +87,22 @@ class Widow200GraspV6Env(Widow200GraspV5Env):
         # move to reset command.
         images = []
 
-        if action[5] > 0.5:
-            # currently nothing happens for large negative action[5] commands.
-            images = bullet.move_to_neutral_slow(self.RESET_JOINTS, self._robot_id,
-                image_size, view_matrix, projection_matrix)
-        else:
-            pos = list(bullet.get_link_state(self._robot_id, self._end_effector, 'pos'))
-            delta_pos = action[:3]
-            pos += delta_pos * self._action_scale
-            pos = np.clip(pos, self._pos_low, self._pos_high)
+        pos = list(bullet.get_link_state(self._robot_id, self._end_effector, 'pos'))
+        delta_pos = action[:3]
+        pos += delta_pos * self._action_scale
+        pos = np.clip(pos, self._pos_low, self._pos_high)
 
-            theta = list(bullet.get_link_state(self._robot_id, self._end_effector,
-                                               'theta'))
-            target_theta = theta
-            delta_theta = action[3]
-            target_theta = np.clip(target_theta, [0, 85, 137], [180, 85, 137])
-            target_theta = bullet.deg_to_quat(target_theta)
+        theta = list(bullet.get_link_state(self._robot_id, self._end_effector,
+                                           'theta'))
+        target_theta = theta
+        delta_theta = action[3]
+        target_theta = np.clip(target_theta, [0, 85, 137], [180, 85, 137])
+        target_theta = bullet.deg_to_quat(target_theta)
 
-            gripper_action = action[4]
-            images = self._gripper_simulate_slow(
-                pos, target_theta, delta_theta, gripper_action,
-                image_size, view_matrix, projection_matrix)
+        gripper_action = action[4]
+        images = self._gripper_simulate_slow(
+            pos, target_theta, delta_theta, gripper_action,
+            image_size, view_matrix, projection_matrix)
 
         reward = self.get_reward({})
         info = self.get_info()
