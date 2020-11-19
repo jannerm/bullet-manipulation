@@ -1,6 +1,8 @@
 import roboverse as rv
 
 spacemouse = rv.devices.SpaceMouse()
+# Alternatively
+# spacemouse = rv.devices.SpaceMouseLinux()
 env = rv.make('SawyerLift2d-v0', gui=True)
 
 while True:
