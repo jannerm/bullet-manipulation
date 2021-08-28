@@ -1,9 +1,28 @@
 import roboverse.bullet as bullet
 import numpy as np
+from gym.spaces import Box, Dict
+import pickle
+import railrl.torch.pytorch_util as ptu
 from roboverse.envs.sawyer_base import SawyerBaseEnv
 import gym
 
-class SawyerGraspOneEnv(SawyerBaseEnv):
+
+def load_vae(vae_file):
+    if vae_file[0] == "/":
+        local_path = vae_file
+    else:
+        local_path = sync_down(vae_file)
+    vae = pickle.load(open(local_path, "rb"))
+    # vae = torch.load(local_path, map_location='cpu')
+    print("loaded", local_path)
+    vae.to("cuda")
+    return vae
+
+
+model = load_vae("/home/ashvin/data/sasha/pixelcnn/vqvae.pkl")
+
+
+class SawyerRigVaeEnv(SawyerBaseEnv):
 
     def __init__(self,
                  goal_pos=(0.75, 0.2, -0.1),
@@ -39,6 +58,9 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         self.image_shape = (obs_img_dim, obs_img_dim)
         self.image_length = np.prod(self.image_shape) * 3  # image has 3 channels
 
+        self.model = load_vae("/home/ashvin/data/sasha/pixelcnn/vqvae.pkl")
+        #self.model = load_vae("/home/ashvin/data/sasha/pybullet-testing/vqvae/run10/id0/itr_100.pkl")
+
         self._object_position_low = (.65, -0.1, -.36)
         self._object_position_high = (.75, 0.1, -.36)
         self._fixed_object_position = (.75, 0.2, -.36)
@@ -53,14 +75,22 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         self.dt = 0.1
         super().__init__(*args, **kwargs)
 
+
     def _set_spaces(self):
         act_dim = 4
         act_bound = 1
         act_high = np.ones(act_dim) * act_bound
         self.action_space = gym.spaces.Box(-act_high, act_high)
+        
+        # observation_dim = 11
+        # obs_bound = 100
+        # obs_high = np.ones(observation_dim) * obs_bound
+        # state_space = gym.spaces.Box(-obs_high, obs_high)
+
 
         if self._observation_mode == 'state':
-            observation_dim = 11
+            #observation_dim = 11
+            observation_dim = self.model.representation_size
             obs_bound = 100
             obs_high = np.ones(observation_dim) * obs_bound
             self.observation_space = gym.spaces.Box(-obs_high, obs_high)
@@ -77,6 +107,17 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
             self.observation_space = gym.spaces.Dict(spaces)
         else:
             raise NotImplementedError
+
+        # self.observation_space = Dict([
+        #     ('observation', state_space),
+        #     ('state_observation', state_space),
+        #     ('desired_goal', state_space),
+        #     ('state_desired_goal', state_space),
+        #     ('achieved_goal', state_space),
+        #     ('state_achieved_goal', state_space),
+        # ])
+
+        # import ipdb; ipdb.set_trace()
 
     def _load_meshes(self):
         if self._invisible_robot:
@@ -104,9 +145,11 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         for _ in range(50):
             bullet.step()
 
+
     def step(self, *action):
         delta_pos, gripper = self._format_action(*action)
         pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos')
+
         pos += delta_pos * self._action_scale
         pos = np.clip(pos, self._pos_low, self._pos_high)
 
@@ -122,6 +165,7 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
 
     def get_info(self):
         object_pos = np.asarray(self.get_object_midpoint('lego'))
+        height = object_pos[2]
         object_goal_distance = np.linalg.norm(object_pos - self._goal_pos)
         end_effector_pos = self.get_end_effector_pos()
         object_gripper_distance = np.linalg.norm(
@@ -129,15 +173,49 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
         gripper_goal_distance = np.linalg.norm(
             self._goal_pos - end_effector_pos)
         object_goal_success = int(object_goal_distance < self._success_threshold)
+        picked_up = height > -0.36
 
         info = {
-            'object_goal_distance': object_goal_distance,
+            'object_height': height,
+            # 'object_goal_distance': object_goal_distance,
             'object_gripper_distance': object_gripper_distance,
-            'gripper_goal_distance': gripper_goal_distance,
-            'object_goal_success': object_goal_success,
+            'success': picked_up,
+            # 'gripper_goal_distance': gripper_goal_distance,
+            # 'object_goal_success': object_goal_success,
         }
 
         return info
+
+
+    def get_contextual_diagnostics(self, paths, contexts):
+        diagnostics = OrderedDict()
+        state_key = "state_observation"
+        goal_key = "state_desired_goal"
+        values = []
+        for i in range(len(paths)):
+            state = paths[i]["observations"][-1][state_key]
+            goal = contexts[i][goal_key]
+            distance = np.linalg.norm(state - goal)
+            values.append(distance)
+        diagnostics_key = goal_key + "/final/distance"
+        diagnostics.update(create_stats_ordered_dict(
+            diagnostics_key,
+            values,
+        ))
+
+        values = []
+        for i in range(len(paths)):
+            for j in range(len(paths[i]["observations"])):
+                state = paths[i]["observations"][j][state_key]
+                goal = contexts[i][goal_key]
+                distance = np.linalg.norm(state - goal)
+                values.append(distance)
+        diagnostics_key = goal_key + "/distance"
+        diagnostics.update(create_stats_ordered_dict(
+            diagnostics_key,
+            values,
+        ))
+        return diagnostics
 
     def render_obs(self):
         img, depth, segmentation = bullet.render(
@@ -147,67 +225,51 @@ class SawyerGraspOneEnv(SawyerBaseEnv):
             img = np.transpose(img, (2, 0, 1))
         return img
 
+    def _get_obs(self):
+        import ipdb; ipdb.set_trace()
+        return None
+
+    def get_image(self, width, height):
+        image = np.float32(self.render_obs())
+        return image
+
+    def compute_reward(action, next_obs):
+        img = ptu.from_numpy(next_obs / 255.0)
+        logprob = ptu.get_numpy(model.logprob(img.reshape(1, -1)))
+        #img = np.uint8(self.render_obs()).transpose() / 255.0
+        return logprob
+
     def get_reward(self, info):
+        # img = ptu.from_numpy(np.uint8(self.render_obs()).transpose() / 255.0)
+        # logprob = ptu.get_numpy(self.model.logprob(img.reshape(1, -1)))
+        # return logprob
 
-        if self._reward_type == 'sparse':
-            if info['object_goal_distance'] < 0.05:
-                reward = 1
-            else:
-                reward = 0
-        elif self._reward_type == 'shaped':
-            reward = -1*(4*info['object_goal_distance']
-                         + info['object_gripper_distance'])
-            reward = max(reward, self._reward_min)
-        else:
-            raise NotImplementedError
 
+        h = info['object_height']
+        reward = (h + 0.36) / 0.16 - 1
         return reward
 
+
+    def reset(self):
+
+        bullet.reset()
+        bullet.setup_headless(self._timestep, solver_iterations=self._solver_iterations)
+        self._load_meshes()
+        self._format_state_query()
+
+
+        self._prev_pos = np.array(self._pos_init)
+        bullet.position_control(self._sawyer, self._end_effector, self._prev_pos, self.theta)
+        # self._reset_hook(self)
+        for _ in range(3):
+            self.step([0.,0.,0.,-1])
+        return self.get_observation()
+
+
+    def _get_obs(self):
+        return self.get_observation()
+
     def get_observation(self):
-        left_tip_pos = bullet.get_link_state(
-            self._sawyer, 'right_gripper_l_finger_joint', keys='pos')
-        right_tip_pos = bullet.get_link_state(
-            self._sawyer, 'right_gripper_r_finger_joint', keys='pos')
-        left_tip_pos = np.asarray(left_tip_pos)
-        right_tip_pos = np.asarray(right_tip_pos)
-
-        gripper_tips_distance = [np.linalg.norm(
-            left_tip_pos - right_tip_pos)]
-        end_effector_pos = self.get_end_effector_pos()
-
-        if self._observation_mode == 'state':
-            object_info = bullet.get_body_info(self._objects['lego'],
-                                               quat_to_deg=False)
-            object_pos = object_info['pos']
-            object_theta = object_info['theta']
-            observation = np.concatenate(
-                (end_effector_pos, gripper_tips_distance,
-                 object_pos, object_theta))
-        elif self._observation_mode == 'pixels':
-            image_observation = self.render_obs()
-            image_observation = np.float32(image_observation.flatten())/255.0
-            # image_observation = np.zeros((48, 48, 3), dtype=np.uint8)
-            observation = {
-                'state': np.concatenate(
-                    (end_effector_pos, gripper_tips_distance)),
-                'image': image_observation
-            }
-        elif self._observation_mode == 'pixels_debug':
-            # This mode passes in all the true state information + images
-            image_observation = self.render_obs()
-            image_observation = np.float32(image_observation.flatten())/255.0
-            object_info = bullet.get_body_info(self._objects['lego'],
-                                               quat_to_deg=False)
-            object_pos = object_info['pos']
-            object_theta = object_info['theta']
-            state = np.concatenate(
-                (end_effector_pos,gripper_tips_distance,
-                 object_pos, object_theta))
-            observation = {
-                'state': state,
-                'image': image_observation,
-            }
-        else:
-            raise NotImplementedError
-
-        return observation
+        img = ptu.from_numpy(np.uint8(self.render_obs()).transpose() / 255.0)
+        encoded_obs = ptu.get_numpy(self.model.encode(img, cont=True)).flatten()
+        return encoded_obs

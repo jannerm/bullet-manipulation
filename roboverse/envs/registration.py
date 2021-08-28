@@ -81,6 +81,49 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    }
     },
     {
+        'id': 'SawyerRigGrasp-v0',
+        'entry_point': ('roboverse.envs.sawyer_rig_grasp_v0:SawyerRigGraspV0Env'),
+        'kwargs': {'max_force': 100,
+                   'action_scale': 0.05,
+                   }
+    },
+    {
+        'id': 'SawyerRigGR-v0',
+        'entry_point': ('roboverse.envs.sawyer_rig_gr_v0:SawyerRigGRV0Env'),
+        'kwargs': {'max_force': 100,
+                   'action_scale': 0.05,
+                   }
+    },
+    {
+        'id': 'SawyerRigMultiobj-v0',
+        'entry_point': ('roboverse.envs.sawyer_rig_multiobj_v0:SawyerRigMultiobjV0'),
+        'kwargs': {'max_force': 100,
+                   'action_scale': 0.05,
+                   }
+    },
+    {
+        'id': 'SawyerRigVae-v0',
+        'entry_point': ('roboverse.envs.sawyer_rig_vae:SawyerRigVaeEnv'),
+        'kwargs': {'max_force': 100,
+                   'action_scale': 0.05,
+                   }
+    },
+    {
+        'id': 'SawyerRigGrasp-v1',
+        'entry_point': ('roboverse.envs.sawyer_rig_grasp_v1:SawyerRigGraspV1Env'),
+        'kwargs': {'max_force': 100,
+                   'action_scale': 0.05,
+                   'pos_init': [0.7, 0.2, -0.2],
+                   'pos_low': [.5, -.05, -.38],
+                   'pos_high': [.9, .30, -.15],
+                   'object_position_low': (.65, .10, -.20),
+                   'object_position_high': (.80, .25, -.20),
+                   'num_objects': 1,
+                   # 'height_threshold': -0.3,
+                   # 'object_ids': [1]
+                   }
+    },
+    {
         'id': 'SawyerGraspOneObjectSetTenV3-v0',
         'entry_point': ('roboverse.envs.sawyer_grasp_v3:SawyerGraspV3ObjectSetEnv'),
         'kwargs': {'max_force': 100,
@@ -169,7 +212,7 @@ PARALLEL_ENVIRONMENT_SPECS = tuple(
 BULLET_ENVIRONMENT_SPECS = SEQUENTIAL_ENVIRONMENT_SPECS + \
                            PROJECTION_ENVIRONMENT_SPECS + \
                            PARALLEL_ENVIRONMENT_SPECS + \
-                           GRASP_V3_ENV_SPECS
+                           GRASP_V3_ENV_SPECS 
 
 def register_bullet_environments():
     for bullet_environment in BULLET_ENVIRONMENT_SPECS:
@@ -177,7 +220,7 @@ def register_bullet_environments():
 
     gym_ids = tuple(
         environment_spec['id']
-        for environment_spec in  BULLET_ENVIRONMENT_SPECS)
+        for environment_spec in BULLET_ENVIRONMENT_SPECS)
 
     return gym_ids
 
