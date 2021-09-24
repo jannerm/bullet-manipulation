@@ -72,7 +72,11 @@ def format_query(filtered_d, keys, return_list):
 def get_index_by_attribute(body, attr, val):
     num_joints = p.getNumJoints(body)
     link_names = {get_joint_info(body, j, attr): j for j in range(num_joints)}
-    link_index = link_names[val]
+    
+    try:
+        link_index = link_names[val]
+    except:
+        import pdb; pdb.set_trace()
     return link_index
 
 #########################

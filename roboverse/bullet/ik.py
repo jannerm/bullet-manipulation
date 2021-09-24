@@ -78,6 +78,7 @@ def position_control(body, link, pos, theta, damping=1e-3):
         p.resetJointState(body, joint_ind, pos)
 
 
+
 def sawyer_ik(body, link, pos, theta, gripper, gripper_name=None, damping=1e-3,
               gripper_bounds=(-1,1), arm_vel_mult=3, gripper_vel_mult=10,
               discrete_gripper=True):
@@ -137,6 +138,66 @@ def sawyer_position_theta_ik(body, link, pos, theta, gripper, wrist_theta,
     p.setJointMotorControlArray(body, joints, p.POSITION_CONTROL,
                                 targetPositions=ik_solution, forces=forces)
 
+def get_joint_states(body_id, joint_indices):
+    all_joint_states = p.getJointStates(body_id, joint_indices)
+    joint_positions, joint_velocities = [], []
+    for state in all_joint_states:
+        joint_positions.append(state[0])
+        joint_velocities.append(state[1])
+
+    return np.asarray(joint_positions), np.asarray(joint_velocities)
+
+def get_movable_joints(body_id):
+    num_joints = p.getNumJoints(body_id)
+    movable_joints = []
+    for i in range(num_joints):
+        if p.getJointInfo(body_id, i)[2] != p.JOINT_FIXED:
+            movable_joints.append(i)
+    return movable_joints
+
+def apply_action_ik(target_ee_pos, target_ee_quat, target_gripper_state,
+                    robot_id, end_effector_index, movable_joints,
+                    lower_limit, upper_limit, rest_pose, joint_range,
+                    num_sim_steps=5):
+    joint_poses = p.calculateInverseKinematics(robot_id,
+                                               end_effector_index,
+                                               target_ee_pos,
+                                               target_ee_quat,
+                                               lowerLimits=lower_limit,
+                                               upperLimits=upper_limit,
+                                               jointRanges=joint_range,
+                                               restPoses=rest_pose,
+                                               jointDamping=[0.001] * len(
+                                                   movable_joints),
+                                               solver=0,
+                                               maxNumIterations=100,
+                                               residualThreshold=.01)
+
+    p.setJointMotorControlArray(robot_id,
+                                movable_joints,
+                                controlMode=p.POSITION_CONTROL,
+                                targetPositions=joint_poses,
+                                # targetVelocity=0,
+                                forces=[500] * len(movable_joints),
+                                positionGains=[0.03] * len(movable_joints),
+                                # velocityGain=1
+                                )
+    # set gripper action
+    p.setJointMotorControl2(robot_id,
+                            movable_joints[-2],
+                            controlMode=p.POSITION_CONTROL,
+                            targetPosition=target_gripper_state[0],
+                            force=500,
+                            positionGain=0.03)
+    p.setJointMotorControl2(robot_id,
+                            movable_joints[-1],
+                            controlMode=p.POSITION_CONTROL,
+                            targetPosition=target_gripper_state[1],
+                            force=500,
+                            positionGain=0.03)
+
+    for _ in range(num_sim_steps):
+        p.stepSimulation()
 
 def step_ik(gripper_range=range(20, 25), body=0):
     '''
@@ -144,8 +205,11 @@ def step_ik(gripper_range=range(20, 25), body=0):
     '''
     p.stepSimulation()
     for joint in gripper_range:
-        low, high = get_joint_info(body, joint, ['low', 'high'],
+        try:
+            low, high = get_joint_info(body, joint, ['low', 'high'],
                                    return_list=True)
+        except:
+            import pdb; pdb.set_trace()
         pos = get_joint_state(body, joint, 'pos')
         pos = np.clip(pos, low, high)
         p.resetJointState(body, joint, pos)

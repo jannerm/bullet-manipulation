@@ -177,7 +177,7 @@ class SawyerBaseEnv(gym.Env, Serializable):
             )
             bullet.step_ik()
 
-    def render(self, mode='rgb_array'):
+    def render_obs(self, mode='rgb_array'):
         img, depth, segmentation = bullet.render(
             self._img_dim, self._img_dim, self._view_matrix, self._projection_matrix)
         return img

@@ -94,7 +94,7 @@ class WidowBaseEnv(gym.Env, Serializable):
 
         # self._setup_environment()
 
-        self._end_effector = self._end_effector = bullet.get_index_by_attribute(
+        self._end_effector = bullet.get_index_by_attribute(
             self._robot_id, 'link_name', self._end_effector_link_name)
         self._set_spaces()
 
@@ -166,14 +166,8 @@ class WidowBaseEnv(gym.Env, Serializable):
         bullet.setup_headless(self._timestep,
                               solver_iterations=self._solver_iterations)
         self._load_meshes()
-        # Allow the objects to settle down after they are dropped in sim
-        # for _ in range(50):
-        #     bullet.step()
-
         self._format_state_query()
-
         self._prev_pos = np.array(self._pos_init)
-        # self.theta = bullet.deg_to_quat([180, 0, 0])
         self.theta = bullet.deg_to_quat([110, 85, 37])
 
         bullet.position_control(self._robot_id, self._end_effector,
@@ -227,7 +221,7 @@ class WidowBaseEnv(gym.Env, Serializable):
         delta_pos, gripper = self._format_action(*action)
         pos = bullet.get_link_state(self._robot_id, self._end_effector, 'pos')
         pos += delta_pos * self._action_scale
-        pos = np.clip(pos, self._pos_low, self._pos_high)
+        #pos = np.clip(pos, self._pos_low, self._pos_high)
 
         self._simulate(pos, self.theta, gripper)
         if self._visualize: self.visualize_targets(pos)
@@ -250,7 +244,7 @@ class WidowBaseEnv(gym.Env, Serializable):
             )
             bullet.step_ik(self._gripper_range)
 
-    def render(self, mode='rgb_array'):
+    def render_obs(self, mode='rgb_array'):
         img, depth, segmentation = bullet.render(
             self._img_dim, self._img_dim, self._view_matrix,
             self._projection_matrix)

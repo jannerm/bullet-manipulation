@@ -26,7 +26,7 @@ def connect():
     p.configureDebugVisualizer(p.COV_ENABLE_RENDERING, 0)
     p.configureDebugVisualizer(p.COV_ENABLE_RENDERING, 1)
 
-    p.resetDebugVisualizerCamera(cameraDistance=1, cameraYaw=90, cameraPitch=-40, cameraTargetPosition=[.7, 0, -0.3])
+    p.resetDebugVisualizerCamera(cameraDistance=1, cameraYaw=90, cameraPitch=-40, cameraTargetPosition=[.7, -0.4, -0.3])
     #p.resetDebugVisualizerCamera(0.8, 90, -20, [0.75, -.2, 0])
     p.setAdditionalSearchPath(pdata.getDataPath())
 
@@ -38,7 +38,9 @@ def connect_headless(gui=False):
     else:
         p.connect(p.DIRECT)
 
-    p.resetDebugVisualizerCamera(cameraDistance=1, cameraYaw=90, cameraPitch=-40, cameraTargetPosition=[.7, 0, -0.3])
+    # p.resetDebugVisualizerCamera(cameraDistance=1, cameraYaw=90, cameraPitch=-40, cameraTargetPosition=[.7, 0, -0.3])
+    p.resetDebugVisualizerCamera(cameraDistance=0.25, cameraYaw=90, cameraPitch=-40, cameraTargetPosition=[2.5, 0., -0.2])
+    # yaw 0
     #p.resetDebugVisualizerCamera(0.8, 90, -20, [0.75, -.2, 0])
     p.setAdditionalSearchPath(pdata.getDataPath())
 
@@ -65,8 +67,34 @@ def setup_headless(timestep=1./240, solver_iterations=150, gravity=-10):
 def reset():
     p.resetSimulation()
 
-def load_urdf(filepath, pos=[0, 0, 0], quat=[0, 0, 0, 1], scale=1, rgba=None):
-    body = p.loadURDF(filepath, globalScaling=scale)
+def replace_line(filename, line_num, text):
+    lines = open(filename, 'r').readlines()
+    lines[line_num] = text
+    out = open(filename, 'w')
+    out.writelines(lines)
+    out.close()
+
+def load_urdf_randomize_color(filepath, pos=[0, 0, 0], quat=[0, 0, 0, 1], scale=1, rgba=None):
+    from shutil import copyfile
+
+    if rgba is not None:
+        rand_filepath = filepath[:-5] + '_rand_color_{0}.urdf'.format(np.random.uniform())
+        copyfile(filepath, rand_filepath)
+        color_line = '    <color rgba="{0} {1} {2} {3}"/>'.format(rgba[0],rgba[1],rgba[2], rgba[3])
+        replace_line(rand_filepath, 3, color_line)
+        try:
+            body = p.loadURDF(rand_filepath, globalScaling=scale)
+            p.changeVisualShape(body, -1, rgbaColor=rgba)
+        finally:
+            os.remove(rand_filepath)
+    else:
+        body = p.loadURDF(filepath, globalScaling=scale)
+
+    p.resetBasePositionAndOrientation(body, pos, quat)
+    return body
+
+def load_urdf(filepath, pos=[0, 0, 0], quat=[0, 0, 0, 1], scale=1, rgba=None, useFixedBase=False):
+    body = p.loadURDF(filepath, globalScaling=scale, useFixedBase=useFixedBase)
     p.resetBasePositionAndOrientation(body, pos, quat)
     if rgba is not None:
         p.changeVisualShape(body, -1, rgbaColor=rgba)
@@ -74,7 +102,7 @@ def load_urdf(filepath, pos=[0, 0, 0], quat=[0, 0, 0, 1], scale=1, rgba=None):
     return body
 
 def load_obj(filepathcollision, filepathvisual, pos=[0, 0, 0], quat=[0, 0, 0, 1], scale=1, rgba=None):
-    collisionid= p.createCollisionShape(p.GEOM_MESH, fileName=filepathcollision, meshScale=scale * np.array([1, 1, 1]))
+    collisionid = p.createCollisionShape(p.GEOM_MESH, fileName=filepathcollision, meshScale=scale * np.array([1, 1, 1]))
     visualid = p.createVisualShape(p.GEOM_MESH, fileName=filepathvisual, meshScale=scale * np.array([1, 1, 1]))
     body = p.createMultiBody(0.05, collisionid, visualid)
     if rgba is not None:
@@ -112,7 +140,7 @@ def get_projection_matrix(height, width, fov=60, near_plane=0.1, far_plane=2):
     return projection_matrix
 
 def render(height, width, view_matrix, projection_matrix, 
-           shadow=1, light_direction=[1,1,1], renderer=p.ER_BULLET_HARDWARE_OPENGL, gaussian_width=5):
+           shadow=1, light_direction=[1,1,1], renderer=p.ER_BULLET_HARDWARE_OPENGL, gaussian_width=5, lights_off=False):
     ## ER_BULLET_HARDWARE_OPENGL
     img_tuple = p.getCameraImage(width,
                                  height,
@@ -128,6 +156,8 @@ def render(height, width, view_matrix, projection_matrix,
     img = img[:,:,:-1]
     if gaussian_width > 0:
         img = cv2.GaussianBlur(img, (gaussian_width, gaussian_width), 0)
+    if lights_off:
+        img = img // 2
     return img, depth, segmentation
 
 ############################
