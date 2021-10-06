@@ -6,95 +6,6 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
         'entry_point': ('roboverse.envs.sawyer_base:SawyerBaseEnv'),
     },
     {
-        'id': 'SawyerLift-v0',
-        'entry_point': ('roboverse.envs.sawyer_lift:SawyerLiftEnv'),
-    },
-    {
-        'id': 'SawyerGraspOne-v0',
-        'entry_point': ('roboverse.envs.sawyer_grasp:SawyerGraspOneEnv'),
-        'kwargs': {'max_force': 100, 'action_scale': 0.05}
-    },
-    {
-        'id': 'SawyerGraspOneV2-v0',
-        'entry_point': ('roboverse.envs.sawyer_grasp_v2:SawyerGraspV2Env'),
-        'kwargs': {'max_force': 100,
-                   'action_scale': 0.05,
-                   'pos_init': [0.7, 0.2, -0.2],
-                   'pos_low': [.5, -.05, -.38],
-                   'pos_high': [.9, .30, -.15],
-                   'object_position_low': (.65, .10, -.20),
-                   'object_position_high': (.80, .25, -.20),
-                   'num_objects': 1,
-                   'object_ids': [1]
-                   }
-    },
-    {
-        'id': 'SawyerGraspV2-v0',
-        'entry_point': ('roboverse.envs.sawyer_grasp_v2:SawyerGraspV2Env'),
-        'kwargs': {'max_force': 100,
-                   'action_scale': 0.05,
-                   'pos_init': [0.7, 0.2, -0.2],
-                   'pos_low': [.5, -.05, -.38],
-                   'pos_high': [.9, .30, -.15],
-                   'num_objects': 5,
-                   }
-    },
-    {
-        'id': 'SawyerGraspTenV2-v0',
-        'entry_point': ('roboverse.envs.sawyer_grasp_v2:SawyerGraspV2Env'),
-        'kwargs': {'max_force': 100,
-                   'action_scale': 0.05,
-                   'pos_init': [0.7, 0.2, -0.2],
-                   'pos_low': [.5, -.05, -.38],
-                   'pos_high': [.9, .30, -.15],
-                   'num_objects': 10,
-                   }
-    },
-    {
-        'id': 'SawyerGraspOneV3-v0',
-        'entry_point': ('roboverse.envs.sawyer_grasp_v3:SawyerGraspV3Env'),
-        'kwargs': {'max_force': 100,
-                   'action_scale': 0.05,
-                   'pos_init': [0.7, 0.2, -0.2],
-                   'pos_low': [.5, -.05, -.38],
-                   'pos_high': [.9, .30, -.15],
-                   'object_position_low': (.65, .10, -.20),
-                   'object_position_high': (.80, .25, -.20),
-                   'num_objects': 1,
-                   'height_threshold': -0.3,
-                   'object_ids': [1]
-                   }
-    },
-    {
-        'id': 'SawyerGraspOneV4-v0',
-        'entry_point': ('roboverse.envs.sawyer_grasp_v4:SawyerGraspV4Env'),
-        'kwargs': {'max_force': 100,
-                   'action_scale': 0.05,
-                   'pos_init': [0.7, 0.2, -0.2],
-                   'pos_low': [.5, -.05, -.38],
-                   'pos_high': [.9, .30, -.15],
-                   'object_position_low': (.65, .10, -.20),
-                   'object_position_high': (.80, .25, -.20),
-                   'num_objects': 10,
-                   # 'height_threshold': -0.3,
-                   # 'object_ids': [1]
-                   }
-    },
-    {
-        'id': 'SawyerRigGrasp-v0',
-        'entry_point': ('roboverse.envs.sawyer_rig_grasp_v0:SawyerRigGraspV0Env'),
-        'kwargs': {'max_force': 100,
-                   'action_scale': 0.05,
-                   }
-    },
-    {
-        'id': 'SawyerRigGR-v0',
-        'entry_point': ('roboverse.envs.sawyer_rig_gr_v0:SawyerRigGRV0Env'),
-        'kwargs': {'max_force': 100,
-                   'action_scale': 0.05,
-                   }
-    },
-    {
         'id': 'SawyerRigMultiobj-v0',
         'entry_point': ('roboverse.envs.sawyer_rig_multiobj_v0:SawyerRigMultiobjV0'),
         'kwargs': {'max_force': 100,
@@ -129,88 +40,6 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    }
     },
     {
-        'id': 'SawyerRigEasyAffordances-v0',
-        'entry_point': ('roboverse.envs.sawyer_rig_easy_affordances_v0:SawyerRigEasyAffordancesV0'),
-        'kwargs': {'max_force': 100,
-                   'action_scale': 0.05,
-                   'pos_low': [0.5,-0.2,-.36],
-                   'pos_high': [0.85,0.2,-0.1],
-                   'pos_init': [0.6, -0.15, -0.2],
-                   }
-    },
-    {
-        'id': 'SawyerDistractorReaching-v0',
-        'entry_point': ('roboverse.envs.disco.sawyer_distractor_reaching_v0:SawyerDistractorReachingV0'),
-        'kwargs': {'max_force': 100,
-                   'action_scale': 0.05,
-                   }
-    },
-    {
-        'id': 'SawyerRigVae-v0',
-        'entry_point': ('roboverse.envs.sawyer_rig_vae:SawyerRigVaeEnv'),
-        'kwargs': {'max_force': 100,
-                   'action_scale': 0.05,
-                   }
-    },
-    {
-        'id': 'SawyerRigGrasp-v1',
-        'entry_point': ('roboverse.envs.sawyer_rig_grasp_v1:SawyerRigGraspV1Env'),
-        'kwargs': {'max_force': 100,
-                   'action_scale': 0.05,
-                   'pos_init': [0.7, 0.2, -0.2],
-                   'pos_low': [.5, -.05, -.38],
-                   'pos_high': [.9, .30, -.15],
-                   'object_position_low': (.65, .10, -.20),
-                   'object_position_high': (.80, .25, -.20),
-                   'num_objects': 1,
-                   # 'height_threshold': -0.3,
-                   # 'object_ids': [1]
-                   }
-    },
-    {
-        'id': 'SawyerGraspOneObjectSetTenV3-v0',
-        'entry_point': ('roboverse.envs.sawyer_grasp_v3:SawyerGraspV3ObjectSetEnv'),
-        'kwargs': {'max_force': 100,
-                   'action_scale': 0.05,
-                   'pos_init': [0.7, 0.2, -0.2],
-                   'pos_low': [.5, -.05, -.38],
-                   'pos_high': [.9, .30, -.15],
-                   'object_position_low': (.65, .10, -.20),
-                   'object_position_high': (.80, .25, -.20),
-                   'num_objects': 1,
-                   'height_threshold': -0.3,
-                   }
-    },
-    {
-        'id': 'SawyerReach-v0',
-        'entry_point': ('roboverse.envs.sawyer_reach:SawyerReachEnv'),
-        'kwargs': {'max_force': 100, 'action_scale': 0.05}
-    },
-    {
-        'id': 'SawyerLid-v0',
-        'entry_point': ('roboverse.envs.sawyer_lid:SawyerLidEnv'),
-    },
-    {
-        'id': 'SawyerSoup-v0',
-        'entry_point': ('roboverse.envs.sawyer_soup:SawyerSoupEnv'),
-    },
-    {
-
-        'id': 'WidowBase-v0',
-        'entry_point': ('roboverse.envs.widow_base:WidowBaseEnv'),
-    },
-    {
-        'id': 'WidowX200Grasp-v0',
-        'entry_point': ('roboverse.envs.widow200_grasp:Widow200GraspEnv'),
-        'kwargs': {'max_force': 100, 'action_scale': 0.05}
-    },
-    {
-        'id': 'Widow200GraspV2-v0',
-        'entry_point': ('roboverse.envs.widow200_grasp_v2:Widow200GraspV2Env'),
-        'kwargs': {'max_force': 100, 'action_scale': 0.05}
-    },
-
-    {
         'id': 'BridgeKitchenBase-v0',
         'entry_point': ('roboverse.envs.kitchen.bridge_kitchen_base_v0:BridgeKitchenBaseV0'),
         'kwargs': {'max_force': 100,
@@ -220,18 +49,28 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    'pos_init': [0.6, -0.15, -0.2],
                    }
     },
-
     {
         'id': 'BridgeKitchen-v0',
         'entry_point': ('roboverse.envs.kitchen.bridge_kitchen_v0:BridgeKitchenVO'),
-        # 'kwargs': {'max_force': 100,
-        #            'action_scale': 0.05,
-        #            'pos_low': [0.5,-0.2,-.36],
-        #            'pos_high': [0.85,0.2,-0.1],
-        #            'pos_init': [0.6, -0.15, -0.2],
-        #            }
     },
 
+    ### SUBSET TASKS ###
+    {
+        'id': 'RemoveLid-v0',
+        'entry_point': ('roboverse.envs.kitchen.remove_lid_v0:RemoveLidVO'),
+    },
+    {
+        'id': 'MugDishRack-v0',
+        'entry_point': ('roboverse.envs.kitchen.mug_dishrack_v0:MugDishRackVO'),
+    },
+    {
+        'id': 'CarrotPlate-v0',
+        'entry_point': ('roboverse.envs.kitchen.carrot_plate_v0:CarrotPlateVO'),
+    },
+    {
+        'id': 'FlipPot-v0',
+        'entry_point': ('roboverse.envs.kitchen.flip_pot_v0:FlipPotV0'),
+    },
 )
 
 GRASP_V3_ENV_SPECS = []

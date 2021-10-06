@@ -9,28 +9,42 @@ from IPython.display import clear_output
 import os
 from PIL import Image
 import argparse
+import time
 images = []
 plt.ion()
 
+#change to done 2 seperate
+#spacemouse = rv.devices.SpaceMouse(DoF=6)
+#env = rv.make('CarrotPlate-v0', gui=False)
+#env = rv.make('RemoveLid-v0', gui=True)
+env = rv.make('MugDishRack-v0', gui=True)
+#env = rv.make('FlipPot-v0', gui=True)
 
-spacemouse = rv.devices.SpaceMouse(DoF=6)
 
-#env = rv.make('WidowBase-v0', gui=True)
-env = rv.make('BridgeKitchen-v0', DoF=6, use_bounding_box=False, gui=True)
-#env = rv.make('SawyerRigAffordances-v0', DoF=4, use_bounding_box=False, gui=True)
-
-for j in range(5):
-	env.reset()
-
-	for i in range(1000):
-		img = Image.fromarray(np.uint8(env.render_obs()))
-		images.append(img)
-		action = spacemouse.get_action()
+start = time.time()
+num_traj = 5
+for j in range(num_traj):
+	#env.reset()
+	env.demo_reset()
+	if j > 0: print(returns)
+	returns = 0
+	for i in range(50):
+		#img = Image.fromarray(np.uint8(env.render_obs()))
+		#images.append(img)
+		#human_action = spacemouse.get_action()
+		action, noisy_action = env.get_demo_action()
 
 		# clear_output(wait=True)
 		# img = env.render_obs()
 		# plt.imshow(img)
 		# plt.show()
 		# plt.pause(0.01)
-		#action = env.get_demo_action()
-		next_observation, reward, done, info = env.step(action)
+		next_observation, reward, done, info = env.step(noisy_action)
+		returns += reward
+		#print(returns)
+
+print('Simulation Time:', (time.time() - start) / num_traj)
+
+# images[0].save('/Users/sasha/Desktop/rollout.gif',
+#                        format='GIF', append_images=images[1:],
+#                        save_all=True, duration=100, loop=0)

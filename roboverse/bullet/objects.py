@@ -58,7 +58,7 @@ widowx_200 = loader(
 
 widowx_250 = loader(
   ASSET_PATH,
-  'interbotix_descriptions/urdf/wx250.urdf',
+  'interbotix_descriptions/urdf/wx250s.urdf',
   pos=[0.6, 0, -0.4],
   deg=[0,0,0],
   scale=1

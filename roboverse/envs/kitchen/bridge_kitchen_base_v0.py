@@ -122,33 +122,40 @@ class BridgeKitchenBaseV0(SawyerBaseEnv):
             rgba=[0.9, 0.9, 0.9, 1.])
 
         ### POT OBJECTS ###
-        # self._objects['pot'] = load_obj(
-        #     '/Users/sasha/Desktop/cooking_pot/models/model_vhacd.obj',
-        #     '/Users/sasha/Desktop/cooking_pot/models/model_normalized.obj',
-        #     pos=[2.035, -.235, -0.45],
-        #     quat=deg_to_quat([90, 0, 0]),
-        #     scale=0.22,
-        #     )
+        self._objects['pot'] = load_obj(
+            self.shapenet_func('Objects/cooking_pot/models/model_vhacd.obj'),
+            self.shapenet_func('Objects/cooking_pot/models/model_normalized.obj'),
+            pos=[2.035, -.235, -0.45],
+            quat=deg_to_quat([90, 0, 0]),
+            scale=0.22,
+            )
 
-        # self._objects['lid'] = bullet.objects.lid(
-        #     pos=[2.035, -.277, -0.35],
-        #     scale=0.082,
-        #     rgba=[.815, .84, .875, 1],
-        #     )
+        self._objects['lid'] = bullet.objects.lid(
+            pos=[2.035, -.277, -0.35],
+            scale=0.082,
+            rgba=[.815, .84, .875, 1],
+            )
 
         ### SINK OBJECTS ###
+        # self._objects['moving_faucet'] = load_urdf(
+        #     self.shapenet_func('Furniture/moving_faucet/moving_faucet.urdf'),
+        #     pos=[1.96, 0.17, -0.49],
+        #     quat=deg_to_quat([0, 0, 180]),
+        #     scale=0.15,
+        #     useFixedBase=True)
+
         # self._objects['soap'] = load_obj(
-        #     '/Users/sasha/Desktop/dish_soap/models/model_vhacd.obj',
-        #     '/Users/sasha/Desktop/dish_soap/models/model_normalized.obj',
-        #     pos=[1.95, 0.07, -0.45],
+        #     self.shapenet_func('Objects/dish_soap/models/model_vhacd.obj'),
+        #     self.shapenet_func('Objects/dish_soap/models/model_normalized.obj'),
+        #     pos=[1.95, 0.07, -0.5],
         #     quat=deg_to_quat([90, 0, 0]),
         #     scale=0.11,
         #     rgba=[0.2, 1., 0.6, 1]
         #     )
 
         # self._objects['bowl'] = load_obj(
-        #     '/Users/sasha/Desktop/bowl/models/model_vhacd.obj',
-        #     '/Users/sasha/Desktop/bowl/models/model_normalized.obj',
+        #     self.shapenet_func('Objects/bowl/models/model_vhacd.obj'),
+        #     self.shapenet_func('Objects/bowl/models/model_normalized.obj'),
         #     pos=[2.05, 0.13, -0.65],
         #     quat=deg_to_quat([90, 0, 0]),
         #     scale=0.2,
@@ -157,8 +164,8 @@ class BridgeKitchenBaseV0(SawyerBaseEnv):
 
         ### DISH RACK OBJECTS ###
         # self._objects['mug'] = load_obj(
-        #     '/Users/sasha/Desktop/mug/models/model_vhacd.obj',
-        #     '/Users/sasha/Desktop/mug/models/model_normalized.obj',
+        #     self.shapenet_func('Objects/mug/models/model_vhacd.obj'),
+        #     self.shapenet_func('Objects/mug/models/model_normalized.obj'),
         #     pos=[2.1, 0.45, -0.45],
         #     quat=deg_to_quat([90, 0, 0]),
         #     scale=0.11,
@@ -166,16 +173,16 @@ class BridgeKitchenBaseV0(SawyerBaseEnv):
         #     )
 
         # self._objects['red_plate'] = load_obj(
-        #     '/Users/sasha/Desktop/red_plate/models/model_vhacd.obj',
-        #     '/Users/sasha/Desktop/red_plate/models/model_normalized.obj',
+        #     self.shapenet_func('Objects/red_plate/models/model_vhacd.obj'),
+        #     self.shapenet_func('Objects/red_plate/models/model_normalized.obj'),
         #     pos=[2.25, 0.42, -0.35],
         #     quat=deg_to_quat([200, 0, 90]),
         #     scale=0.2,
         #     )
 
         # self._objects['knife'] = load_obj(
-        #     '/Users/sasha/Desktop/knife/models/model_vhacd.obj',
-        #     '/Users/sasha/Desktop/knife/models/model_normalized.obj',
+        #     self.shapenet_func('Objects/knife/models/model_vhacd.obj'),
+        #     self.shapenet_func('Objects/knife/models/model_normalized.obj'),
         #     pos=[2.015, 0.34, -0.45],
         #     quat=deg_to_quat([90, -10, -10]),
         #     scale=0.18,
@@ -184,40 +191,40 @@ class BridgeKitchenBaseV0(SawyerBaseEnv):
 
         ### COLANDER OBJECTS ###
         # self._objects['colander'] = load_obj(
-        #     '/Users/sasha/Desktop/colander/models/model_vhacd.obj',
-        #     '/Users/sasha/Desktop/colander/models/model_normalized.obj',
+        #     self.shapenet_func('Objects/colander/models/model_vhacd.obj'),
+        #     self.shapenet_func('Objects/colander/models/model_normalized.obj'),
         #     pos=[2.45, 0.42, -0.45],
         #     quat=deg_to_quat([90, 0, 0]),
         #     scale=0.23,
         #     )
 
-        # x,y,z = 0.1, 0.05, 0.05
+        # x,y,z = 0.02, 0.05, 0.05
         # self._objects['fruit_basket'] = load_obj(
-        #     '/Users/sasha/Desktop/fruit_basket/models/model_vhacd.obj',
-        #     '/Users/sasha/Desktop/fruit_basket/models/model_normalized.obj',
-        #     pos=[2.45 + y, 0.42 + z, -0.45],
+        #     self.shapenet_func('Objects/fruit_basket/models/model_vhacd.obj'),
+        #     self.shapenet_func('Objects/fruit_basket/models/model_normalized.obj'),
+        #     pos=[2.45 + y, 0.42 + z, -0.5],
         #     quat=deg_to_quat([90, 0, 0]),
         #     scale=0.25,
         #     )
 
 
         # self._objects['orange'] = load_obj(
-        #     '/Users/sasha/Desktop/orange/models/model_vhacd.obj',
-        #     '/Users/sasha/Desktop/orange/models/model_normalized.obj',
+        #     self.shapenet_func('Objects/orange/models/model_vhacd.obj'),
+        #     self.shapenet_func('Objects/orange/models/model_normalized.obj'),
         #     pos=[2.45 + y, 0.41 + z, -0.42 + x],
         #     scale=0.09,
         #     )
 
         # self._objects['apple'] = load_obj(
-        #     '/Users/sasha/Desktop/apple/models/model_vhacd.obj',
-        #     '/Users/sasha/Desktop/apple/models/model_normalized.obj',
+        #     self.shapenet_func('Objects/apple/models/model_vhacd.obj'),
+        #     self.shapenet_func('Objects/apple/models/model_normalized.obj'),
         #     pos=[2.45 + y, 0.43 + z, -0.45 + x],
         #     scale=0.07,
         #     )
 
         # self._objects['banana'] = load_obj(
-        #     '/Users/sasha/Desktop/banana/models/model_vhacd.obj',
-        #     '/Users/sasha/Desktop/banana/models/model_normalized.obj',
+        #     self.shapenet_func('Objects/banana/models/model_vhacd.obj'),
+        #     self.shapenet_func('Objects/banana/models/model_normalized.obj'),
         #     pos=[2.45 + y, 0.42 + z, -0.38 + x],
         #     quat=deg_to_quat([90, 0, -20]),
         #     rgba=[1.,1.,0.,1.],
@@ -226,8 +233,8 @@ class BridgeKitchenBaseV0(SawyerBaseEnv):
 
         ### TRASH OBJECTS ###
         # self._objects['swiffer'] = load_obj(
-        #     '/Users/sasha/Desktop/swiffer/models/model_vhacd.obj',
-        #     '/Users/sasha/Desktop/swiffer/models/model_normalized.obj',
+        #     self.shapenet_func('Objects/swiffer/models/model_vhacd.obj'),
+        #     self.shapenet_func('Objects/swiffer/models/model_normalized.obj'),
         #     pos=[2.65, -0.45, -0.5],
         #     quat=deg_to_quat([180, 0, 0]),
         #     rgba=[.545, 0, .545, 1.],
@@ -235,24 +242,23 @@ class BridgeKitchenBaseV0(SawyerBaseEnv):
         #     )
 
         # self._objects['crushed_can'] = load_obj(
-        #     '/Users/sasha/Desktop/crushed_can/models/model_vhacd.obj',
-        #     '/Users/sasha/Desktop/crushed_can/models/model_normalized.obj',
+        #     self.shapenet_func('Objects/crushed_can/models/model_vhacd.obj'),
+        #     self.shapenet_func('Objects/crushed_can/models/model_normalized.obj'),
         #     pos=[2.63, -0.53, -0.4],
         #     scale=0.1,
         #     rgba=[.78, .78, .78, 1],
         #     )
 
         # self._objects['crushed_foil'] = load_obj(
-        #     '/Users/sasha/Desktop/crushed_foil/models/model_vhacd.obj',
-        #     '/Users/sasha/Desktop/crushed_foil/models/model_normalized.obj',
+        #     self.shapenet_func('Objects/crushed_foil/models/model_vhacd.obj'),
+        #     self.shapenet_func('Objects/crushed_foil/models/model_normalized.obj'),
         #     pos=[2.67, -0.53, -0.4],
         #     scale=0.1,
-        #     #rgba=[.83, .83, .83, 1],
         #     )
 
         # self._objects['plastic_bottle'] = load_obj(
-        #     '/Users/sasha/Desktop/plastic_bottle/models/model_vhacd.obj',
-        #     '/Users/sasha/Desktop/plastic_bottle/models/model_normalized.obj',
+        #     self.shapenet_func('Objects/plastic_bottle/models/model_vhacd.obj'),
+        #     self.shapenet_func('Objects/plastic_bottle/models/model_normalized.obj'),
         #     pos=[2.65, -0.28, -0.6],
         #     quat=deg_to_quat([90, 90, 0]),
         #     scale=0.13,
@@ -266,47 +272,47 @@ class BridgeKitchenBaseV0(SawyerBaseEnv):
         #     )
 
         # self._objects['wine'] = load_obj(
-        #     '/Users/sasha/Desktop/wine/models/model_vhacd.obj',
-        #     '/Users/sasha/Desktop/wine/models/model_normalized.obj',
-        #     pos=[2.00, -0.52, -0.38],
-        #     quat=deg_to_quat([0, 0, 0]),
-        #     scale=0.125,
-        #     rgba=[.83, .83, .83, 1],
-        #     )
+            # self.shapenet_func('Objects/wine/models/model_vhacd.obj'),
+            # self.shapenet_func('Objects/wine/models/model_normalized.obj'),
+            # pos=[2.00, -0.52, -0.38],
+            # quat=deg_to_quat([0, 0, 0]),
+            # scale=0.125,
+            # rgba=[.83, .83, .83, 1],
+            # )
 
         ### CUTTING BOARD OBJECTS ###
         # self._objects['yellow_plate'] = load_obj(
-        #     '/Users/sasha/Desktop/yellow_plate/models/model_vhacd.obj',
-        #     '/Users/sasha/Desktop/yellow_plate/models/model_normalized.obj',
+        #     self.shapenet_func('Objects/yellow_plate/models/model_vhacd.obj'),
+        #     self.shapenet_func('Objects/yellow_plate/models/model_normalized.obj'),
         #     pos=[2.238, -0.05, -0.55],
         #     quat=deg_to_quat([90, 0, 0]),
         #     scale=0.2,
         #     )
 
         # self._objects['plant'] = load_obj(
-        #     '/Users/sasha/Desktop/plant/models/model_vhacd.obj',
-        #     '/Users/sasha/Desktop/plant/models/model_normalized.obj',
+        #     self.shapenet_func('Objects/plant/models/model_vhacd.obj'),
+        #     self.shapenet_func('Objects/plant/models/model_normalized.obj'),
         #     pos=[2.238, -0.17, -0.45],
         #     quat=deg_to_quat([0, 0, 60]),
         #     scale=0.14,
         #     )
 
         # self._objects['leaves'] = load_obj(
-        #     '/Users/sasha/Desktop/leaves/models/model_vhacd.obj',
-        #     '/Users/sasha/Desktop/leaves/models/model_normalized.obj',
+        #     self.shapenet_func('Objects/leaves/models/model_vhacd.obj'),
+        #     self.shapenet_func('Objects/leaves/models/model_normalized.obj'),
         #     pos=[2.238, -0.28, -0.45],
         #     quat=deg_to_quat([0, 90, 80]),
         #     scale=0.18,
         #     )
 
         # self._objects['carrot'] = load_obj(
-        #     '/Users/sasha/Desktop/carrot/models/model_vhacd.obj',
-        #     '/Users/sasha/Desktop/carrot/models/model_normalized.obj',
+        #     self.shapenet_func('Objects/carrot/models/model_vhacd.obj'),
+        #     self.shapenet_func('Objects/carrot/models/model_vhacd.obj'),
         #     pos=[2.243, -0.02, -0.45],
         #     quat=deg_to_quat([0, 0, -20]),
+        #     rgba=[1., .5, 0., 1.],
         #     scale=0.15,
         #     )
-
 
         # Allow the objects to land softly in low gravity
         p.setGravity(0, 0, -1)
@@ -333,146 +339,169 @@ class BridgeKitchenBaseV0(SawyerBaseEnv):
             self._sawyer, 'link_name', 'gripper_site')
 
         ### WALLS ###
-        load_urdf('/Users/sasha/Desktop/tile_wall/tile_wall.urdf',
+        tile_wall = load_urdf(self.shapenet_func('Furniture/tile_wall/tile_wall.urdf'),
             pos=[1.78, -0.3, -0.215],
             quat=deg_to_quat([180, 180, 90]),
             scale=2.5,
             useFixedBase=True)
+        p.setCollisionFilterGroupMask(tile_wall, -1, 1, 0)
 
-        load_urdf('/Users/sasha/Desktop/tile_wall/tile_wall.urdf',
+        tile_wall = load_urdf(self.shapenet_func('Furniture/tile_wall/tile_wall.urdf'),
             pos=[2.55, -0.82, -0.215],
             quat=deg_to_quat([180, 180, 180]),
             scale=2.5,
             useFixedBase=True)
+        p.setCollisionFilterGroupMask(tile_wall, -1, 1, 0)
 
-        load_urdf('/Users/sasha/Desktop/tile_wall/tile_wall.urdf',
+        tile_wall = load_urdf(self.shapenet_func('Furniture/tile_wall/tile_wall.urdf'),
             pos=[2.25, 0.82, -0.215],
             quat=deg_to_quat([180, 180, 0]),
             scale=2.5,
             useFixedBase=True)
+        p.setCollisionFilterGroupMask(tile_wall, -1, 1, 0)
+
+        ### MARBLE TABELS ###
+        marble_table = load_urdf(self.shapenet_func('Furniture/marble_table/marble_table.urdf'),
+            pos=[2.2, 0.745, -0.765],
+            quat=deg_to_quat([90, 0, 180]),
+            scale=1.75,
+            useFixedBase=True)
+        p.setCollisionFilterGroupMask(marble_table, -1, 1, 0)
+
+        marble_table = load_urdf(self.shapenet_func('Furniture/marble_table/marble_table.urdf'),
+            pos=[2.2, -0.765, -0.765],
+            quat=deg_to_quat([90, 0, 180]),
+            scale=1.75,
+            useFixedBase=True)
+        p.setCollisionFilterGroupMask(marble_table, -1, 1, 0)
+
+        cabinets = load_urdf(self.shapenet_func('Furniture/cabinets/cabinets.urdf'),
+            pos=[2.2, 0.375, -0.83],
+            quat=deg_to_quat([90, 0, 180]),
+            scale=1.4,
+            useFixedBase=True)
+        p.setCollisionFilterGroupMask(cabinets, -1, 0, 0)
+
+        cabinets = load_urdf(self.shapenet_func('Furniture/cabinets/cabinets.urdf'),
+            pos=[2.2, -0.395, -0.83],
+            quat=deg_to_quat([90, 0, 0]),
+            scale=1.4,
+            useFixedBase=True)
+        p.setCollisionFilterGroupMask(cabinets, -1, 0, 0)
 
         ### SINK ###
-        load_urdf('/Users/sasha/Desktop/stovetop/stovetop.urdf',
+        stovetop = load_urdf(self.shapenet_func('Furniture/stovetop/stovetop.urdf'),
             pos=[2.035, -.15, -0.5514],
             quat=deg_to_quat([90, 0, 90]),
             scale=0.43,
             useFixedBase=True)
+        p.setCollisionFilterGroupMask(stovetop, -1, 1, 0)
 
-        load_urdf('/Users/sasha/Desktop/wood_table/wood_table.urdf',
+        wood_table = load_urdf(self.shapenet_func('Furniture/wood_table/wood_table.urdf'),
             pos=[2.168, -.184, -0.583],
             quat=deg_to_quat([90, 0, 270]),
             scale=0.48,
             useFixedBase=True)
+        p.setCollisionFilterGroupMask(wood_table, -1, 1, 0)
 
-        load_urdf('/Users/sasha/Desktop/stove_base/stove_base.urdf',
+        stove_base = load_urdf(self.shapenet_func('Furniture/stove_base/stove_base.urdf'),
             pos=[2.02, -.184, -0.5829],
             quat=deg_to_quat([90, 0, 270]),
             scale=0.48,
             useFixedBase=True)
+        p.setCollisionFilterGroupMask(stove_base, -1, 1, 0)
 
-        load_urdf('/Users/sasha/Desktop/table/table.urdf',
+        table = load_urdf(self.shapenet_func('Furniture/table/table.urdf'),
             pos=[2.13, 0, -0.9],
             quat=deg_to_quat([90, 0, 270]),
             scale=1.0,
             useFixedBase=True)
+        p.setCollisionFilterGroupMask(table, -1, 1, 0)
 
-        load_urdf('/Users/sasha/Desktop/faucet/faucet.urdf',
+        faucet = load_urdf(self.shapenet_func('Furniture/faucet/faucet.urdf'),
             pos=[2.01, 0.175, -0.505],
             quat=deg_to_quat([90, 0, 270]),
             scale=0.2,
             rgba=[189 / 255, 195 / 255, 199 / 255, 1],
             useFixedBase=True)
+        p.setCollisionFilterGroupMask(faucet, -1, 1, 0)
 
-        # load_urdf('/Users/sasha/Desktop/oven/oven.urdf',
-        #     pos=[2.34, -.165, -0.68],
-        #     quat=deg_to_quat([90, 0, 270]),
-        #     scale=0.65,
-        #     useFixedBase=True)
-
-        # load_urdf('/Users/sasha/Desktop/sink_drawer/sink_drawer.urdf',
-        #     pos=[2.3175, 0.175, -0.885],
-        #     quat=deg_to_quat([90, 0, 270]),
-        #     scale=0.71,
-        #     useFixedBase=True)
-
-        ### MARBLE TABELS ###
-        load_urdf('/Users/sasha/Desktop/marble_table/marble_table.urdf',
-            pos=[2.2, 0.745, -0.765],
-            quat=deg_to_quat([90, 0, 180]),
-            scale=1.75,
+        oven = load_urdf(self.shapenet_func('Furniture/oven/oven.urdf'),
+            pos=[2.34, -.165, -0.68],
+            quat=deg_to_quat([90, 0, 270]),
+            scale=0.65,
             useFixedBase=True)
+        p.setCollisionFilterGroupMask(oven, -1, 0, 0)
 
-        load_urdf('/Users/sasha/Desktop/marble_table/marble_table.urdf',
-            pos=[2.2, -0.765, -0.765],
-            quat=deg_to_quat([90, 0, 180]),
-            scale=1.75,
+        sink_drawer = load_urdf(self.shapenet_func('Furniture/sink_drawer/sink_drawer.urdf'),
+            pos=[2.3175, 0.175, -0.885],
+            quat=deg_to_quat([90, 0, 270]),
+            scale=0.71,
             useFixedBase=True)
+        p.setCollisionFilterGroupMask(sink_drawer, -1, 0, 0)
 
-        # load_urdf('/Users/sasha/Desktop/cabinets/cabinets.urdf',
-        #     pos=[2.2, 0.375, -0.83],
-        #     quat=deg_to_quat([90, 0, 180]),
-        #     scale=1.4,
-        #     useFixedBase=True)
-
-        # load_urdf('/Users/sasha/Desktop/cabinets/cabinets.urdf',
-        #     pos=[2.2, -0.395, -0.83],
-        #     quat=deg_to_quat([90, 0, 0]),
-        #     scale=1.4,
-        #     useFixedBase=True)
 
         ### DISH RACK ###
-        # load_urdf('/Users/sasha/Desktop/dish_rack/dish_rack.urdf',
-        #     pos=[2.13, 0.425, -0.61],
-        #     quat=deg_to_quat([90, 0, 270]),
-        #     scale=0.4,
-        #     useFixedBase=True)
+        dish_rack = load_urdf(self.shapenet_func('Furniture/dish_rack/dish_rack.urdf'),
+            pos=[2.13, 0.425, -0.61],
+            quat=deg_to_quat([90, 0, 270]),
+            scale=0.4,
+            useFixedBase=True)
+        p.setCollisionFilterGroupMask(dish_rack, -1, 1, 0)
 
-        # load_urdf('/Users/sasha/Desktop/utensil_holder/utensil_holder.urdf',
-        #     pos=[2.015, 0.34, -0.53],
-        #     quat=deg_to_quat([90, 0, 90]),
-        #     scale=0.1,
-        #     useFixedBase=True)
+        utensil_holder = load_urdf(self.shapenet_func('Furniture/utensil_holder/utensil_holder.urdf'),
+            pos=[2.015, 0.34, -0.53],
+            quat=deg_to_quat([90, 0, 90]),
+            scale=0.1,
+            useFixedBase=True)
+        p.setCollisionFilterGroupMask(utensil_holder, -1, 1, 0)
 
         ### DRAWER ###
-        # load_urdf('/Users/sasha/Desktop/drawer_cabinet/drawer_cabinet.urdf',
-        #     pos=[2.0795, -0.52, -0.249],
-        #     quat=deg_to_quat([90, 180, 270]),
-        #     scale=0.637,
-        #     useFixedBase=True,
-        #     rgba=[0.9, 0.9, 0.9, 1.])
+        drawer_cabinet = load_urdf(self.shapenet_func('Furniture/drawer_cabinet/drawer_cabinet.urdf'),
+            pos=[2.0795, -0.52, -0.249],
+            quat=deg_to_quat([90, 180, 270]),
+            scale=0.637,
+            useFixedBase=True,
+            rgba=[0.9, 0.9, 0.9, 1.])
+        p.setCollisionFilterGroupMask(drawer_cabinet, -1, 1, 0)
 
         ### TRASH CAN ###
-        # load_urdf('/Users/sasha/Desktop/trash_can/trash_can.urdf',
-        #     pos=[2.65, -0.27, -0.7],
-        #     quat=deg_to_quat([90, 0, 180]),
-        #     scale=0.4,
-        #     rgba=[.5,.8,.9,1],
-        #     useFixedBase=True)
+        trash_can = load_urdf(self.shapenet_func('Furniture/trash_can/trash_can.urdf'),
+            pos=[2.65, -0.27, -0.7],
+            quat=deg_to_quat([90, 0, 180]),
+            scale=0.4,
+            rgba=[.5,.8,.9,1],
+            useFixedBase=True)
+        p.setCollisionFilterGroupMask(trash_can, -1, 1, 0)
 
         ## DECOR ###
-        # load_urdf('/Users/sasha/Desktop/microwave_wall/microwave_wall.urdf',
-        #     pos=[2.08, 0.681, -0.55],
-        #     quat=deg_to_quat([90, 0, 180]),
-        #     scale=1.0,
-        #     useFixedBase=True)
+        microwave_wall = load_urdf(self.shapenet_func('Furniture/microwave_wall/microwave_wall.urdf'),
+            pos=[2.08, 0.681, -0.55],
+            quat=deg_to_quat([90, 0, 180]),
+            scale=1.0,
+            useFixedBase=True)
+        p.setCollisionFilterGroupMask(microwave_wall, -1, 0, 0)
 
-        # load_urdf('/Users/sasha/Desktop/microwave/microwave.urdf',
-        #     pos=[2.16, 0.7, -0.4],
-        #     quat=deg_to_quat([90, 0, 180]),
-        #     scale=0.4,
-        #     useFixedBase=True)
+        microwave = load_urdf(self.shapenet_func('Furniture/microwave/microwave.urdf'),
+            pos=[2.16, 0.7, -0.4],
+            quat=deg_to_quat([90, 0, 180]),
+            scale=0.4,
+            useFixedBase=True)
+        p.setCollisionFilterGroupMask(microwave, -1, 0, 0)
 
-        # load_urdf('/Users/sasha/Desktop/painting/painting.urdf',
-        #     pos=[2.7, -0.68, -0.175],
-        #     quat=deg_to_quat([90, 0, 0]),
-        #     scale=0.4,
-        #     useFixedBase=True)
+        painting = load_urdf(self.shapenet_func('Furniture/painting/painting.urdf'),
+            pos=[2.7, -0.68, -0.175],
+            quat=deg_to_quat([90, 0, 0]),
+            scale=0.4,
+            useFixedBase=True)
+        p.setCollisionFilterGroupMask(painting, -1, 0, 0)
 
-        # load_urdf('/Users/sasha/Desktop/clock/clock.urdf',
-        #     pos=[2.54, 0.68, -0.215],
-        #     quat=deg_to_quat([90, 0, 0]),
-        #     scale=0.25,
-        #     useFixedBase=True)
+        clock = load_urdf(self.shapenet_func('Furniture/clock/clock.urdf'),
+            pos=[2.54, 0.68, -0.215],
+            quat=deg_to_quat([90, 0, 0]),
+            scale=0.25,
+            useFixedBase=True)
+        p.setCollisionFilterGroupMask(clock, -1, 0, 0)
 
     def sample_object_location(self):
         if self._randomize:

@@ -199,6 +199,11 @@ def apply_action_ik(target_ee_pos, target_ee_quat, target_gripper_state,
     for _ in range(num_sim_steps):
         p.stepSimulation()
 
+def reset_robot(robot_id, reset_joint_indices, reset_joint_values):
+    assert len(reset_joint_indices) == len(reset_joint_values)
+    for i, value in zip(reset_joint_indices, reset_joint_values):
+        p.resetJointState(robot_id, i, value)
+
 def step_ik(gripper_range=range(20, 25), body=0):
     '''
         enforces joint limits for gripper fingers

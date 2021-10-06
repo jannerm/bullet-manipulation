@@ -8,11 +8,17 @@
     <color rgba="0.15 0.15 0.15 1.0"/>
   </material>
   <material name="red">
+    <color rgba="0.15 0.15 0.15 1.0"/>
+  </material>
+  <material name="grey">
+    <color rgba="0.15 0.15 0.15 1.0"/>
+  </material>
+<!--   <material name="red">
     <color rgba="0.4 0.1 0.1 1.0"/>
   </material>
   <material name="grey">
     <color rgba="0.4 0.4 0.4 1.0"/>
-  </material>
+  </material> -->
 
   <material name="interbotix_black">
     <texture filename="package://interbotix_descriptions/meshes/interbotix_black.png"/>
@@ -395,7 +401,7 @@
       <spinning_friction value="1000.0"/>
     </contact>
     <axis xyz="0 1 0"/>
-    <limit effort="10" lower="-0.037" upper="-0.015" velocity="1"/>
+    <limit effort="10" lower="-0.037" upper="-0.05" velocity="1"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>
     <parent link="/fingers_link"/>
     <child link="/right_finger_link"/>
