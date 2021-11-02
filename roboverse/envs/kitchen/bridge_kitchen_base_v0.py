@@ -5,7 +5,6 @@ from gym.spaces import Box, Dict
 from collections import OrderedDict
 from roboverse.envs.sawyer_base import SawyerBaseEnv
 from roboverse.bullet.misc import load_obj, load_urdf, deg_to_quat, quat_to_deg
-from bullet_objects import loader, metadata
 from roboverse.bullet.drawer_utils import *
 from roboverse.bullet.button_utils import *
 import os.path as osp

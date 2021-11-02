@@ -158,7 +158,7 @@ def get_movable_joints(body_id):
 def apply_action_ik(target_ee_pos, target_ee_quat, target_gripper_state,
                     robot_id, end_effector_index, movable_joints,
                     lower_limit, upper_limit, rest_pose, joint_range,
-                    num_sim_steps=5):
+                    num_sim_steps=5, max_force=500):
     joint_poses = p.calculateInverseKinematics(robot_id,
                                                end_effector_index,
                                                target_ee_pos,
@@ -178,7 +178,7 @@ def apply_action_ik(target_ee_pos, target_ee_quat, target_gripper_state,
                                 controlMode=p.POSITION_CONTROL,
                                 targetPositions=joint_poses,
                                 # targetVelocity=0,
-                                forces=[500] * len(movable_joints),
+                                forces=[max_force] * len(movable_joints),
                                 positionGains=[0.03] * len(movable_joints),
                                 # velocityGain=1
                                 )
@@ -187,13 +187,13 @@ def apply_action_ik(target_ee_pos, target_ee_quat, target_gripper_state,
                             movable_joints[-2],
                             controlMode=p.POSITION_CONTROL,
                             targetPosition=target_gripper_state[0],
-                            force=500,
+                            force=max_force,
                             positionGain=0.03)
     p.setJointMotorControl2(robot_id,
                             movable_joints[-1],
                             controlMode=p.POSITION_CONTROL,
                             targetPosition=target_gripper_state[1],
-                            force=500,
+                            force=max_force,
                             positionGain=0.03)
 
     for _ in range(num_sim_steps):

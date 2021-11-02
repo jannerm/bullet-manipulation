@@ -5,7 +5,6 @@ from gym.spaces import Box, Dict
 from collections import OrderedDict
 from roboverse.envs.kitchen.bridge_kitchen_v0 import BridgeKitchenVO
 from roboverse.bullet.misc import load_obj, load_urdf, deg_to_quat, quat_to_deg
-from bullet_objects import loader, metadata
 from roboverse.bullet.drawer_utils import *
 from roboverse.bullet.button_utils import *
 import os.path as osp
@@ -197,12 +196,14 @@ class FlipPotV0(BridgeKitchenVO):
             quat=deg_to_quat(self.robot_deg),
             )
 
+
+
         ### POT OBJECTS ###
         self._objects['pot'] = load_obj(
             '/Users/sasha/Desktop/pybullet/ShapeNet/Objects/cooking_pot/models/model_vhacd.obj',
             '/Users/sasha/Desktop/pybullet/ShapeNet/Objects/cooking_pot/models/model_normalized.obj',
-            pos=[2.16, 0.24, -0.5],
-            quat=deg_to_quat([60, 0, 0]),
+            pos=[2.16, 0.2, -0.6],
+            quat=deg_to_quat([0, 90, 0]),
             scale=0.22,
             )
 

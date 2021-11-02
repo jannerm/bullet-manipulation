@@ -5,7 +5,6 @@ from gym.spaces import Box, Dict
 from collections import OrderedDict
 from roboverse.envs.sawyer_base import SawyerBaseEnv
 from roboverse.bullet.misc import load_obj, load_urdf, deg_to_quat, quat_to_deg
-from bullet_objects import loader, metadata
 import torchvision.transforms.functional as F
 from torchvision import transforms as T
 from PIL import Image
@@ -53,7 +52,7 @@ class BridgeKitchenVO(SawyerBaseEnv):
                  observation_mode='state',
                  obs_img_dim=128,
                  transpose_image=False,
-                 use_bounding_box=True,
+                 use_bounding_box=False,
                  max_force=10000.,
                  random_color_p=0.5,
                  DoF=6,
@@ -765,6 +764,7 @@ class BridgeKitchenVO(SawyerBaseEnv):
             rest_pose=RESET_JOINT_VALUES,
             joint_range=JOINT_RANGE,
             num_sim_steps=self.num_sim_steps,
+            max_force=500,
             )
 
     def get_end_effector_pos(self):
