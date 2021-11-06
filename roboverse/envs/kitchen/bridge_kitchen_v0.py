@@ -632,7 +632,7 @@ class BridgeKitchenVO(SawyerBaseEnv):
         if self._transpose_image:
             img = np.transpose(img, (2, 0, 1))
         img = Image.fromarray(img, mode='RGB')
-        img = F.resize(img, (96, 128), T.InterpolationMode.LANCZOS)
+        img = F.resize(img, (96, 128), 1)
         return np.array(img)
     
     # def render_obs(self):

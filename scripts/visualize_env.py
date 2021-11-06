@@ -10,6 +10,8 @@ from PIL import Image
 from moviepy.editor import *
 import argparse
 import time
+from gym.wrappers import TimeLimit
+
 images = []
 plt.ion()
 
@@ -21,37 +23,31 @@ cropper = RandomResizedCrop((96, 128), (0.8, 1.0), (0.8, 1.2))
 #change to done 2 seperate
 #spacemouse = rv.devices.SpaceMouse(DoF=6)
 env = rv.make('RemoveLid-v0', gui=True)
-env.reset()
 #env = rv.make('RemoveLid-v0', gui=False)
-#env = rv.make('MugDishRack-v0', gui=False)
-#env = rv.make('FlipPot-v0', gui=True)
+# env = rv.make('MugDishRack-v0', gui=False)
+# env = rv.make('FlipPot-v0', gui=True)
+env = TimeLimit(env, max_episode_steps=50)
 
 
 start = time.time()
-num_traj = 1
+num_traj = 5
 for j in range(num_traj):
+	env.reset()
 	env.demo_reset()
-	if j > 0: print(returns)
+	done = False
 	returns = 0
-	for i in range(50):
+	while not done:
 		img = Image.fromarray(np.uint8(env.render_obs()))
 		images.append(np.array(img))
 		#human_action = spacemouse.get_action()
 		action, noisy_action = env.get_demo_action()
 
-		# clear_output(wait=True)
-		# img = env.render_obs()
-		# plt.imshow(img)
-		# plt.show()
-		# plt.pause(0.01)
 		next_observation, reward, done, info = env.step(noisy_action)
 		returns += reward
-		print(info)
 
 print('Simulation Time:', (time.time() - start) / num_traj)
 
-path = '/Users/sasha/Desktop/rollout.mp4'
-#path = '/iris/u/khazatsky/bridge_codebase/data/visualizations/rollout.gif'
+path = './rollout.mp4'
 
 video = ImageSequenceClip(images, fps=24)
 video.write_videofile(path)
