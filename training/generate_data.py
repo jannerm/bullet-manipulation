@@ -1,12 +1,12 @@
-import roboverse as rv
-import numpy as np
-from PIL import Image
-from moviepy.editor import ImageSequenceClip
-import time
-from gym.wrappers import TimeLimit
 import os
 import shutil
+import time
 
+import numpy as np
+import roboverse as rv
+from gym.wrappers import TimeLimit
+
+from training.chunk_writer import ChunkWriter
 
 #change to done 2 seperate
 #spacemouse = rv.devices.SpaceMouse(DoF=6)
@@ -14,57 +14,49 @@ env = rv.make('RemoveLid-v0', gui=False)
 #env = rv.make('RemoveLid-v0', gui=False)
 # env = rv.make('MugDishRack-v0', gui=False)
 # env = rv.make('FlipPot-v0', gui=True)
-env = TimeLimit(env, max_episode_steps=50)
 
-lengths = []
+time_limit = 50
+env = TimeLimit(env, max_episode_steps=time_limit)
 
 data_folder = 'dataset'
 if os.path.exists(data_folder):
-	shutil.rmtree(data_folder)
+    shutil.rmtree(data_folder)
+os.makedirs(data_folder, exist_ok=True)
+
+num_traj = 10
+chunk_writter = ChunkWriter(data_folder, (time_limit + 1) * num_traj)
 
 start = time.time()
-num_traj = 5
 for j in range(num_traj):
-	traj_folder = os.path.join(data_folder, str(j))
-	os.makedirs(traj_folder, exist_ok=True)
-	env.reset()
-	env.demo_reset()
-	done = False
-	returns = 0
-	i = 0
-	actions = []
-	rewards = []
-	while not done:
-		img = Image.fromarray(np.uint8(env.render_obs()))
-		img.save(os.path.join(traj_folder, f'{i}.png'))
-		# human_action = spacemouse.get_action()
-		action, noisy_action = env.get_demo_action()
-		# noisy_action = env.action_space.sample()
+    env.reset()
+    env.demo_reset()
+    done = False
+    returns = 0
+    while not done:
+        img = env.render_obs()
+        # human_action = spacemouse.get_action()
+        action, noisy_action = env.get_demo_action()
+        # noisy_action = env.action_space.sample()
 
-		next_observation, reward, done, info = env.step(noisy_action)
+        next_observation, reward, done, info = env.step(noisy_action)
+        if not done or 'TimeLimit.truncated' in info:
+            mask = 1.0
+        else:
+            mask = 0.0
 
-		actions.append(noisy_action)
-		rewards.append(reward)
+        chunk_writter.add_transiton(img, action, reward, mask, done)
 
-		returns += reward
-		i += 1
-	
-	img = Image.fromarray(np.uint8(env.render_obs()))
-	img.save(os.path.join(traj_folder, f'{i}.png'))
+        returns += reward
 
-	actions = np.stack(actions, 0)
-	rewards = np.stack(rewards, 0)
-	
-	with open(os.path.join(traj_folder, 'data.npz'), 'wb') as f:
-		np.savez(f, actions=actions, rewards=rewards)
+    img = env.render_obs()
+    chunk_writter.add_transiton(img,
+                                np.zeros_like(action),
+                                0,
+                                0,
+                                False,
+                                dummy=True)
 
-	lengths.append(len(actions))
-
-	print(f"Episode {j} returns {returns}")
-
-
-with open(os.path.join(data_folder, 'lengths.np'), 'wb') as f:
-	np.save(f, lengths)
+    print(f"Episode {j} returns {returns}")
 
 print('Simulation Time:', (time.time() - start) / num_traj)
 
