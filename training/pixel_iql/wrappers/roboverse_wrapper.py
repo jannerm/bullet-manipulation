@@ -14,3 +14,13 @@ class Roboverse(gym.ObservationWrapper):
 
     def observation(self, observation: np.ndarray) -> np.ndarray:
         return self.unwrapped.render_obs()
+
+
+class SuccessWrapper(gym.Wrapper):
+    def __init__(self, env):
+        super().__init__(env)
+
+    def step(self, action):
+        obs, reward, done, info = self.env.step(action)
+        info['success'] = (reward == 0)
+        return obs, reward, done, info

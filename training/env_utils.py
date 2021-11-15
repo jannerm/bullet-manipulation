@@ -34,6 +34,7 @@ def make_env_and_dataset(env_name: str,
         pluginId = pybullet.loadPlugin("eglRendererPlugin")
 
     env = wrappers.Roboverse(env)
+    env = wrappers.SuccessWrapper(env)
     env = gym.wrappers.TimeLimit(env, max_episode_steps=max_episode_steps)
     env = wrappers.EpisodeMonitor(env)
 
