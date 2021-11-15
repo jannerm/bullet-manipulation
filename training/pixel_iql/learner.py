@@ -75,6 +75,7 @@ class Learner(object):
                  value_lr: float = 3e-4,
                  critic_lr: float = 3e-4,
                  cnn_features: Sequence[int] = (32, 32, 32, 32),
+                 cnn_filters: Sequence[int] = (3, 3, 3, 3),
                  cnn_strides: Sequence[int] = (2, 1, 1, 1),
                  cnn_padding: str = 'VALID',
                  hidden_dims: Sequence[int] = (256, 256),
@@ -106,6 +107,7 @@ class Learner(object):
         actor_def = DrQPolicy(hidden_dims,
                               action_dim,
                               cnn_features,
+                              cnn_filters,
                               cnn_strides,
                               cnn_padding,
                               latent_dim,
@@ -123,14 +125,14 @@ class Learner(object):
                              inputs=[actor_key, observations],
                              tx=optimiser)
 
-        critic_def = DrQDoubleCritic(hidden_dims, cnn_features, cnn_strides,
-                                     cnn_padding, latent_dim)
+        critic_def = DrQDoubleCritic(hidden_dims, cnn_features, cnn_filters,
+                                     cnn_strides, cnn_padding, latent_dim)
         critic = Model.create(critic_def,
                               inputs=[critic_key, observations, actions],
                               tx=optax.adam(learning_rate=critic_lr))
 
-        value_def = DrQValueCritic(hidden_dims, cnn_features, cnn_strides,
-                                   cnn_padding, latent_dim)
+        value_def = DrQValueCritic(hidden_dims, cnn_features, cnn_filters,
+                                   cnn_strides, cnn_padding, latent_dim)
         value = Model.create(value_def,
                              inputs=[value_key, observations],
                              tx=optax.adam(learning_rate=value_lr))

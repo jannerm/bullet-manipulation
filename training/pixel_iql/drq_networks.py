@@ -14,7 +14,8 @@ from pixel_iql.value_net import DoubleCritic, ValueCritic
 
 class Encoder(nn.Module):
     features: Sequence[int] = (32, 32, 32, 32)
-    strides: Sequence[int] = (2, 1, 1, 1)
+    filters: Sequence[int] = (3, 3, 3, 2)
+    strides: Sequence[int] = (2, 2, 3, 3)
     padding: str = 'VALID'
 
     @nn.compact
@@ -22,9 +23,10 @@ class Encoder(nn.Module):
         assert len(self.features) == len(self.strides)
 
         x = observations.astype(jnp.float32) / 255.0
-        for features, stride in zip(self.features, self.strides):
+        for features, filter, stride in zip(self.features, self.filters,
+                                            self.strides):
             x = nn.Conv(features,
-                        kernel_size=(3, 3),
+                        kernel_size=(filter, filter),
                         strides=(stride, stride),
                         kernel_init=default_init(),
                         padding=self.padding)(x)
@@ -40,6 +42,7 @@ class Encoder(nn.Module):
 class DrQDoubleCritic(nn.Module):
     hidden_dims: Sequence[int]
     cnn_features: Sequence[int] = (32, 32, 32, 32)
+    cnn_filters: Sequence[int] = (3, 3, 3, 3)
     cnn_strides: Sequence[int] = (2, 1, 1, 1)
     cnn_padding: str = 'VALID'
     latent_dim: int = 50
@@ -48,6 +51,7 @@ class DrQDoubleCritic(nn.Module):
     def __call__(self, observations: jnp.ndarray,
                  actions: jnp.ndarray) -> Tuple[jnp.ndarray, jnp.ndarray]:
         x = Encoder(self.cnn_features,
+                    self.cnn_filters,
                     self.cnn_strides,
                     self.cnn_padding,
                     name='SharedEncoder')(observations)
@@ -62,6 +66,7 @@ class DrQDoubleCritic(nn.Module):
 class DrQValueCritic(nn.Module):
     hidden_dims: Sequence[int]
     cnn_features: Sequence[int] = (32, 32, 32, 32)
+    cnn_filters: Sequence[int] = (3, 3, 3, 3)
     cnn_strides: Sequence[int] = (2, 1, 1, 1)
     cnn_padding: str = 'VALID'
     latent_dim: int = 50
@@ -69,6 +74,7 @@ class DrQValueCritic(nn.Module):
     @nn.compact
     def __call__(self, observations: jnp.ndarray) -> jnp.ndarray:
         x = Encoder(self.cnn_features,
+                    self.cnn_filters,
                     self.cnn_strides,
                     self.cnn_padding,
                     name='SharedEncoder')(observations)
@@ -84,6 +90,7 @@ class DrQPolicy(nn.Module):
     hidden_dims: Sequence[int]
     action_dim: int
     cnn_features: Sequence[int] = (32, 32, 32, 32)
+    cnn_filters: Sequence[int] = (3, 3, 3, 3)
     cnn_strides: Sequence[int] = (2, 1, 1, 1)
     cnn_padding: str = 'VALID'
     latent_dim: int = 50
@@ -96,6 +103,7 @@ class DrQPolicy(nn.Module):
                  temperature: float = 1.0,
                  training: bool = False) -> tfd.Distribution:
         x = Encoder(self.cnn_features,
+                    self.cnn_filters,
                     self.cnn_strides,
                     self.cnn_padding,
                     name='SharedEncoder')(observations)
