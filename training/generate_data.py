@@ -33,7 +33,7 @@ def main():
     time_limit = 50
     env = TimeLimit(env, max_episode_steps=time_limit)
 
-    num_traj = 1
+    num_traj = 1000
     data_folder = os.path.join('dataset', f'traj_{num_traj}')
     if os.path.exists(data_folder):
         shutil.rmtree(data_folder)
