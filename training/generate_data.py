@@ -1,4 +1,6 @@
 import os
+os.environ['MESA_GL_VERSION_OVERRIDE'] = '3.3'
+os.environ['MESA_GLSL_VERSION_OVERRIDE'] = '330'
 import shutil
 import time
 
@@ -7,14 +9,23 @@ import roboverse as rv
 from gym.wrappers import TimeLimit
 from moviepy.editor import ImageSequenceClip
 from tqdm import tqdm
+import pkgutil
+import pybullet
 
 from training.chunk_writer import ChunkWriter
-
 
 def main():
     #change to done 2 seperate
     #spacemouse = rv.devices.SpaceMouse(DoF=6)
     env = rv.make('RemoveLid-v0', gui=False)
+
+
+    egl = pkgutil.get_loader('eglRenderer')
+    if (egl):
+        pluginId = pybullet.loadPlugin(egl.get_filename(), "_eglRendererPlugin")
+    else:
+        pluginId = pybullet.loadPlugin("eglRendererPlugin")
+
     #env = rv.make('RemoveLid-v0', gui=False)
     # env = rv.make('MugDishRack-v0', gui=False)
     # env = rv.make('FlipPot-v0', gui=True)
