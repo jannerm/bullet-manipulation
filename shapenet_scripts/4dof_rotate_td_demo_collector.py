@@ -21,12 +21,15 @@ parser.add_argument("--video_save_frequency", type=int,
 
 args = parser.parse_args()
 #prefix = "/2tb/home/patrickhaoy/data/affordances/data/antialias_reset_free_v5_rotated_top_drawer/"
-prefix = "/2tb/home/patrickhaoy/data/test/" #"/2tb/home/patrickhaoy/data/affordances/combined_new/" #prefix = "/home/ashvin/data/sasha/demos"
+prefix = "/media/ashvin/data2/s3doodad/valplus/demos/rotated_drawers/v1/" #"/2tb/home/patrickhaoy/data/affordances/combined_new/" #prefix = "/home/ashvin/data/sasha/demos"
 
 # prefix = "/home/ashvin/data/rail-khazatsky/sasha/affordances/combined/"
 demo_data_save_path = prefix + args.name + "_demos"
 recon_data_save_path = prefix + args.name + "_images.npy"
 video_save_path = prefix + args.name + "_video"
+
+if not os.path.exists(video_save_path) and args.video_save_frequency > 0:
+    os.makedirs(video_save_path)
 
 kwargs = {}
 if args.downsample:
@@ -60,6 +63,7 @@ recon_dataset = {
 }
 
 for j in tqdm(range(args.num_trajectories)):
+    images = []
     env.demo_reset()
     recon_dataset['env'][j, :] = np.uint8(env.render_obs().transpose()).flatten()
     recon_dataset['object'].append(env.curr_object)
@@ -74,8 +78,8 @@ for j in tqdm(range(args.num_trajectories)):
         'object_name': env.curr_object,
     }
     for i in range(args.num_timesteps):
-        import pdb; pdb.set_trace()
         img = np.uint8(env.render_obs())
+        images.append(Image.fromarray(img))
         recon_dataset['observations'][j, i, :] = img.transpose().flatten()
 
         observation = env.get_observation()
