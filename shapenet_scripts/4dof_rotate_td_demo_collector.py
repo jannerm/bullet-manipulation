@@ -1,3 +1,6 @@
+'''
+python shapenet_scripts/4dof_rotate_td_demo_collector.py --name close_drawer_reward --num_trajectories 1002 --downsample --video_save_frequency 10 --reset_interval 1
+'''
 import roboverse
 import numpy as np
 import pickle as pkl
@@ -91,11 +94,12 @@ for j in tqdm(range(args.num_trajectories)):
         trajectory['actions'][i, :] = action
         trajectory['next_observations'].append(next_observation)
         trajectory['rewards'][i] = reward
+    print(j, trajectory['rewards'])
 
     demo_dataset.append(trajectory)
 
-    if args.video_save_frequency > 0 and i % args.video_save_frequency == 0:
-        fpath = '{}/{}.gif'.format(video_save_path, i)
+    if args.video_save_frequency > 0 and j % args.video_save_frequency == 0:
+        fpath = '{}/{}.gif'.format(video_save_path, j)
         images[0].save(fpath,
                        format='GIF', append_images=images[1:],
                        save_all=True, duration=100, loop=0)

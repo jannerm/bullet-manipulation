@@ -221,6 +221,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         else:
             # randomly initialize how open drawer is
             open_drawer(self._top_drawer, num_ts=np.random.random_integers(low=1, high=60))
+        # open_drawer(self._top_drawer, num_ts=60)
 
         self.init_handle_pos = get_drawer_handle_pos(self._top_drawer)[1]
 
@@ -500,29 +501,30 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
 
     def update_drawer_goal(self):
         # case: full open/close drawer initialization/goal
-        if self.full_open_close_init_and_goal:
-            # case: close drawer initialization + open drawer goal
-            if self.current_goal_is_open:
-                td_goal_coeff = td_open_coeff
-            # case: open drawer initialization + close drawer goal
-            else:
-                td_goal_coeff = td_close_coeff
-        # case: uniform random drawer initialization/goal
-        else:
-            if self.handle_more_open_than_closed():
-                td_goal_coeff = np.random.uniform(low=(td_close_coeff+td_open_coeff)/2, high=td_open_coeff)
-            else:
-                td_goal_coeff = np.random.uniform(low=td_close_coeff, high=(td_close_coeff+td_open_coeff)/2)
+        # if self.full_open_close_init_and_goal:
+        #     # case: close drawer initialization + open drawer goal
+        #     if self.current_goal_is_open:
+        #         td_goal_coeff = td_open_coeff
+        #     # case: open drawer initialization + close drawer goal
+        #     else:
+        #         td_goal_coeff = td_close_coeff
+        # # case: uniform random drawer initialization/goal
+        # else:
+        #     if self.handle_more_open_than_closed():
+        #         td_goal_coeff = np.random.uniform(low=(td_close_coeff+td_open_coeff)/2, high=td_open_coeff)
+        #     else:
+        #         td_goal_coeff = np.random.uniform(low=td_close_coeff, high=(td_close_coeff+td_open_coeff)/2)
+        td_goal_coeff = td_open_coeff # td_close_coeff
         
         drawer_handle_goal_pos = self.get_drawer_handle_future_pos(td_goal_coeff)
-        drawer_handle_pos = self.get_td_handle_pos()
+        # drawer_handle_pos = self.get_td_handle_pos()
 
         # if sampled goal is already achieved by drawer initialization, then set goal to be drawer full open/close
-        if self.drawer_done(drawer_handle_pos, drawer_handle_goal_pos):
-            assert not self.full_open_close_init_and_goal
+        # if self.drawer_done(drawer_handle_pos, drawer_handle_goal_pos):
+            # assert not self.full_open_close_init_and_goal
 
-            td_goal_coeff = td_close_coeff if self.handle_more_open_than_closed() else td_open_coeff
-            drawer_handle_goal_pos = self.get_drawer_handle_future_pos(td_goal_coeff)
+            # td_goal_coeff = td_close_coeff if self.handle_more_open_than_closed() else td_open_coeff
+            # drawer_handle_goal_pos = self.get_drawer_handle_future_pos(td_goal_coeff)
         
         self.td_goal = drawer_handle_goal_pos
         
