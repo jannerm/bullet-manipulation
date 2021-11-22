@@ -48,7 +48,9 @@ renderer_kwargs=dict(
         output_image_format='CWH',
         width=imsize,
         height=imsize,
-        flatten_image=True,)
+        flatten_image=True,
+        normalize_image=False,
+)
 
 renderer = EnvRenderer(init_camera=None, **renderer_kwargs)
 env = InsertImageEnv(state_env, renderer=renderer)
