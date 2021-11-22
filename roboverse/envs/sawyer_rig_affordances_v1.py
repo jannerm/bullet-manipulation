@@ -391,7 +391,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         return img
 
     def get_image(self, width, height):
-        image = np.float32(self.render_obs())
+        image = self.render_obs()
         return image
 
     def get_reward(self, info=None, print_stats=False):
