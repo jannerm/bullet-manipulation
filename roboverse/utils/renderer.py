@@ -60,7 +60,7 @@ class Renderer(metaclass=abc.ABCMeta):
             image = Image.fromarray(image).convert('L')
             image = np.array(image)
         if self._normalize_imgs:
-            image = image / 255.0
+            image = np.float32(image) / 255.0
         transpose_index = [self._create_image_format.index(c) for c in
                            self.output_image_format]
 

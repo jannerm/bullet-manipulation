@@ -84,6 +84,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         self.task = task
         self.DoF = DoF
         self.test_env = test_env
+        self.imsize = 48
         self.test_env_seed = kwargs.pop('test_env_seed', None) if self.test_env else None
 
         if self.test_env:
