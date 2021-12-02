@@ -168,8 +168,8 @@ class InsertImagesEnv(gym.Wrapper):
         self._update_obs(obs)
         return obs, reward, done, info
 
-    def reset(self):
-        obs = self.env.reset()
+    def reset(self, seed = None):
+        obs = self.env.reset(seed = seed)
         self._update_obs(obs)
         return obs
 

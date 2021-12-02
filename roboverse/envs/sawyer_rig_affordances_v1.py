@@ -42,6 +42,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
                  object_subset='test',
                  use_bounding_box=True,
                  random_color_p=1.0,
+                 max_episode_steps = 75,
                  spawn_prob=0.75,
                  quat_dict=quat_dict,
                  task='goal_reaching',
@@ -80,6 +81,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         self.random_color_p = random_color_p
         self.object_subset = object_subset
         self.spawn_prob = spawn_prob
+        self.max_episode_steps = max_episode_steps
         self._ddeg_scale = 5
         self.task = task
         self.DoF = DoF
@@ -167,6 +169,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         obs_bound = 100
         obs_high = np.ones(observation_dim) * obs_bound
         state_space = gym.spaces.Box(-obs_high, obs_high)
+        self.state_space = state_space
 
         self.observation_space = Dict([
             ('observation', state_space),
@@ -315,7 +318,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         observation = self.get_observation()
         info = self.get_info()
         reward = self.get_reward(info)
-        done = False
+        done = bool(reward)
 
         return observation, reward, done, info
 
@@ -410,9 +413,11 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         self.update_drawer_goal()
         self.update_goal_state()
 
-    def reset(self):
-        if self.test_env_seed:
-            random.seed(self.test_env_seed)
+    def reset(self, seed = None):
+        if seed is None:
+            seed = np.random.randint(9999999)
+        random.seed(seed)
+        np.random.seed(seed)
         if self.expl:
             self.reset_counter += 1
             if self.reset_interval == self.reset_counter:
@@ -538,10 +543,10 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         return np.array(get_drawer_handle_pos(self._top_drawer))
 
     ### DEMO COLLECTING FUNCTIONS BEYOND THIS POINT ###
-    def demo_reset(self):
+    def demo_reset(self, seed = None):
         self.timestep = 0
         self.grip = -1.
-        reset_obs = self.reset()
+        reset_obs = self.reset(seed = seed)
 
         #print('----Initial----')
         #self.get_reward(print_stats=True)

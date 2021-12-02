@@ -52,6 +52,7 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
                  invisible_robot=False,
                  object_subset='test',
                  use_bounding_box=True,
+                 max_episode_steps = 75,
                  random_color_p=1.0,
                  spawn_prob=0.75,
                  quat_dict=quat_dict,
@@ -80,6 +81,7 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
         is_set = object_subset in ['test', 'train', 'all']
         is_list = type(object_subset) == list
         assert is_set or is_list
+
 
         self.goal_pos = np.asarray(goal_pos)
         self.quat_dict = quat_dict
@@ -119,6 +121,7 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
         self._goal_high = np.array([0.8,0.18,-0.11])
         self._fixed_object_position = np.array([.8, -0.12, -.25])
         self._reset_lego_position = np.array([.775, 0.125, -.25])
+        self.max_episode_steps = max_episode_steps
         self.init_lego_pos = np.array([0.59, 0.125, -0.31])
         # self.start_obj_ind = 4 if (self.DoF == 3) else 8
         self.start_obj_ind = 10 if (env_type == 'bottom_drawer') else 11
@@ -230,6 +233,8 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
         obs_bound = 100
         obs_high = np.ones(observation_dim) * obs_bound
         state_space = gym.spaces.Box(-obs_high, obs_high)
+
+        self.state_space = state_space
 
         self.observation_space = Dict([
             ('observation', state_space),
@@ -561,7 +566,8 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
         observation = self.get_observation()
         info = self.get_info()
         reward = self.get_reward(info)
-        done = False
+        print(reward, "Reward")
+        done = bool(reward)
 
         # reset button and resample rand_obj goal every episode
         if self.final_timestep:
@@ -815,7 +821,10 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
 
         self.update_goal_state()
 
-    def reset(self):
+    def reset(self, seed = None):
+        if seed is None:
+            seed = np.random.randint(9999999)
+        random.seed(seed)
         if self.expl:
             self.reset_counter += 1
             if self.reset_interval == self.reset_counter:
@@ -1029,7 +1038,7 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
 
     ### DEMO COLLECTING FUNCTIONS BEYOND THIS POINT ###
 
-    def demo_reset(self):
+    def demo_reset(self, seed = None):
         self.task_dict = {'drawer': lambda : self.move_drawer(),
                         'button': self.press_button,
                         'hand': self.move_hand,
@@ -1038,7 +1047,7 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
                         }
         self.timestep = 0
         self.grip = -1.
-        reset_obs = self.reset()
+        reset_obs = self.reset(seed = seed)
         self.curr_task = self.sample_task()
 
         # for logging purposes
@@ -1097,6 +1106,8 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
             subtask = random.choice(pnp_options)
         elif sampled_task == 'tray':
             subtask = 'rand_obj'
+
+        print(sampled_task, subtask)
 
         #print('Current Task: ' + subtask)
         return subtask
