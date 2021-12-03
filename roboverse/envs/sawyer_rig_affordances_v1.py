@@ -34,7 +34,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
     def __init__(self,
                  reward_type='shaped',
                  reward_min=-2.5,
-                 randomize=False,
+                 randomize=True,
                  observation_mode='state',
                  obs_img_dim=48,
                  transpose_image=False,
