@@ -175,7 +175,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         self._pos_low = [0.5, -0.2, -.36]
         self._pos_high = [0.85, 0.2, -0.1]
 
-        # # Speed up rendering
+        # Speed up rendering
         # egl = pkgutil.get_loader('eglRenderer')
         # eglPluginId = p.loadPlugin(egl.get_filename(), '_eglRendererPlugin')
 
@@ -610,8 +610,12 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
 
     def render_obs(self):
         img, depth, segmentation = bullet.render(
-            self.env_obs_img_dim, self.env_obs_img_dim, self._view_matrix_obs,
-            self._projection_matrix_obs, shadow=0, gaussian_width=0)
+            self.env_obs_img_dim,
+            self.env_obs_img_dim,
+            self._view_matrix_obs,
+            self._projection_matrix_obs,
+            shadow=0,
+            gaussian_width=0)
 
         if self.downsample:
             im = Image.fromarray(np.uint8(img), 'RGB').resize(
