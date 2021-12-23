@@ -5,3 +5,4 @@ roboverse/envs/assets/ShapeNetCore/*
 roboverse/envs/assets/bullet-objects/*
 data/*
 
+outputs/*
