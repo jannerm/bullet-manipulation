@@ -26,8 +26,8 @@ td_close_coeff = 0.13754340000000412
 td_open_coeff = 0.29387810000002523
 td_offset_coeff = 0.001
 
-gripper_bounding_x = [.46, .84] #[0.4704, 0.8581]
-gripper_bounding_y = [-.19, .19] #[-0.1989, 0.2071]
+#gripper_bounding_x = [.46, .84] #[0.4704, 0.8581]
+#gripper_bounding_y = [-.19, .19] #[-0.1989, 0.2071]
 
 class SawyerRigAffordancesV1(SawyerBaseEnv):
 
@@ -40,10 +40,17 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
                  transpose_image=False,
                  invisible_robot=False,
                  object_subset='test',
+                 claw_spawn_mode='fixed',
                  use_bounding_box=True,
+                 color_range = (0, 255),
+                 max_distractors = 0,
                  random_color_p=1.0,
+                 drawer_yaw_setting = (0, 360),
+                 gripper_bounding_x = [.46, .84],
+                 gripper_bounding_y = [-.19, .19],
                  max_episode_steps = 75,
                  spawn_prob=0.75,
+                 demo_action_variance = 0.3,
                  quat_dict=quat_dict,
                  task='goal_reaching',
                  test_env=False,
@@ -68,7 +75,14 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         is_list = type(object_subset) == list
         assert is_set or is_list
 
+        self.max_distractors = max_distractors
+        self.demo_action_variance = demo_action_variance
+        self.claw_spawn_mode = claw_spawn_mode
+        self.drawer_yaw_setting = drawer_yaw_setting
+        self.gripper_bounding_x = gripper_bounding_x
+        self.gripper_bounding_y = gripper_bounding_y
         self.quat_dict = quat_dict
+        self.color_range = color_range
         self._reward_type = reward_type
         self._reward_min = reward_min
         self._randomize = randomize
@@ -92,7 +106,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
             self.random_color_p = 0.0
             self.object_subset = kwargs.pop('test_object_subset', ['grill_trash_can'])
 
-        self.drawer_thresh = 0.065
+        self.drawer_thresh = 0.05
 
         self.object_dict, self.scaling = self.get_object_info()
         self.curr_object = None
@@ -192,13 +206,12 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
             self.drawer_yaw = 180
             drawer_frame_pos = np.array([.6, -.19, -.34])
         else:
-            self.drawer_yaw = random.uniform(0, 360)
-            
+            self.drawer_yaw = random.uniform(self.drawer_yaw_setting[0], self.drawer_yaw_setting[1])
             while(True):
-                drawer_frame_pos = np.array([random.uniform(gripper_bounding_x[0], gripper_bounding_x[1]), random.uniform(gripper_bounding_y[0], gripper_bounding_y[1]), -.34])
+                drawer_frame_pos = np.array([random.uniform(self.gripper_bounding_x[0], self.gripper_bounding_x[1]), random.uniform(self.gripper_bounding_y[0], self.gripper_bounding_y[1]), -.34])
                 drawer_handle_open_goal_pos = drawer_frame_pos + td_open_coeff * np.array([np.sin(self.drawer_yaw * np.pi / 180) , -np.cos(self.drawer_yaw * np.pi / 180), 0])
-                if gripper_bounding_x[0] <= drawer_handle_open_goal_pos[0] <= gripper_bounding_x[1] \
-                    and gripper_bounding_y[0] <= drawer_handle_open_goal_pos[1] <= gripper_bounding_y[1]:
+                if self.gripper_bounding_x[0] <= drawer_handle_open_goal_pos[0] <= self.gripper_bounding_x[1] \
+                    and self.gripper_bounding_y[0] <= drawer_handle_open_goal_pos[1] <= self.gripper_bounding_y[1]:
                     break
         quat = deg_to_quat([0, 0, self.drawer_yaw])
         
@@ -232,9 +245,10 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         self.init_handle_pos = get_drawer_handle_pos(self._top_drawer)[1]
 
         ## Distractor Objects
-        num_objects = 1 if self.test_env else np.random.randint(3)
-        for _ in range(0, num_objects):
-            self.spawn_object()
+        if self.max_distractors > 0:
+            num_objects = np.random.randint(self.max_distractors)
+            for _ in range(0, num_objects):
+                self.spawn_object()
 
         self._workspace = bullet.Sensor(self._sawyer,
             xyz_min=self._pos_low, xyz_max=self._pos_high,
@@ -281,7 +295,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         if self.test_env:
             obj_pos = np.array([.85, -.15, 0])
         else:
-            obj_pos = np.array([random.uniform(gripper_bounding_x[0], gripper_bounding_x[1]), random.uniform(gripper_bounding_y[0], gripper_bounding_y[1]), 0])
+            obj_pos = np.array([random.uniform(self.gripper_bounding_x[0], self.gripper_bounding_x[1]), random.uniform(self.gripper_bounding_y[0], self.gripper_bounding_y[1]), 0])
         return obj_pos
 
     def _format_action(self, *action):
@@ -435,7 +449,13 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         self._format_state_query()
 
         # Sample and load starting positions
-        init_pos = np.array(self._pos_init)
+        if self.claw_spawn_mode == 'fixed':
+            init_pos = np.array(self._pos_init)
+        elif self.claw_spawn_mode == 'uniform':
+            init_pos = np.random.uniform(low= self._pos_low, high = self._pos_high)
+        else:
+            raise NotImplementedError
+
         self.sample_goals()
 
         bullet.position_control(self._sawyer, self._end_effector, init_pos, self.default_theta)
@@ -486,7 +506,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
     ### Helper Functions
     def sample_object_color(self):
         if np.random.uniform() < self.random_color_p:
-            return list(np.random.choice(range(256), size=3) / 255.0) + [1]
+            return list(np.random.choice(range(self.color_range[0], self.color_range[1]), size=3) / 255.0) + [1]
         return None
 
     def get_drawer_handle_future_pos(self, coeff):
@@ -572,7 +592,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
                 action = np.array([0, 0, 1, 0, -1])
             else:
                 action = np.append(action, [self.grip])
-                action = np.random.normal(action, 0.1)
+                action = np.random.normal(action, self.demo_action_variance) #Increase Variance of Collected Policy
         else:
             if done:
                 #self.get_reward(print_stats=True)
@@ -581,7 +601,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
                 action = np.array([0, 0, 1, 0, -1])
             else:
                 action = np.append(action, [self.grip])
-                action = np.random.normal(action, 0.1)
+                action = np.random.normal(action, self.demo_action_variance)
 
         action = np.clip(action, a_min=-1, a_max=1)
         self.timestep += 1
