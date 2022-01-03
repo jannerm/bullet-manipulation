@@ -51,10 +51,13 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
                  transpose_image=False,
                  invisible_robot=False,
                  object_subset='test',
+                 claw_spawn_mode='fixed',
                  use_bounding_box=True,
+                 color_range = (0, 255),
                  max_episode_steps = 75,
                  random_color_p=1.0,
                  spawn_prob=0.75,
+                 demo_action_variance = 0.3,
                  quat_dict=quat_dict,
                  task='goal_reaching',
                  test_env=False,
@@ -85,6 +88,9 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
 
         self.goal_pos = np.asarray(goal_pos)
         self.quat_dict = quat_dict
+        self.demo_action_variance = demo_action_variance
+        self.claw_spawn_mode = claw_spawn_mode
+        self.color_range = color_range
         self._reward_type = reward_type
         self._reward_min = reward_min
         self._randomize = randomize
@@ -136,7 +142,7 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
         self.dt = 0.1
 
         # Reset-free
-        self.reset_interval = kwargs.pop('reset_interval', 10)
+        self.reset_interval = kwargs.pop('reset_interval', 1)
         self.reset_counter = self.reset_interval-1
         self.expl = kwargs.pop('expl', False)
         self.trajectory_done = False
@@ -404,7 +410,7 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
 
     def sample_object_color(self):
         if np.random.uniform() < self.random_color_p:
-            return list(np.random.choice(range(256), size=3) / 255.0) + [1]
+            return list(np.random.choice(range(self.color_range[0], self.color_range[1]), size=3) / 255.0) + [1]
         return None
 
     def sample_quat(self, object_name):
@@ -566,7 +572,7 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
         observation = self.get_observation()
         info = self.get_info()
         reward = self.get_reward(info)
-        print(reward, "Reward")
+        #print(reward, "Reward")
         done = bool(reward)
 
         # reset button and resample rand_obj goal every episode
@@ -825,6 +831,7 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
         if seed is None:
             seed = np.random.randint(9999999)
         random.seed(seed)
+        np.random.seed(seed)
         if self.expl:
             self.reset_counter += 1
             if self.reset_interval == self.reset_counter:
@@ -860,7 +867,13 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
         self._format_state_query()
 
         # Sample and load starting positions
-        init_pos = np.array(self._pos_init)
+        if self.claw_spawn_mode == 'fixed':
+            init_pos = np.array(self._pos_init)
+        elif self.claw_spawn_mode == 'uniform':
+            init_pos = np.random.uniform(low= self._pos_low, high = self._pos_high)
+        else:
+            raise NotImplementedError
+
         self.goal_pos = np.random.uniform(low=self._goal_low, high=self._goal_high)
         self.sample_goals()
 
@@ -1134,7 +1147,7 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
                 action = np.array([0, 0, 1, -1])
             else:
                 action = np.append(action, [self.grip])
-                action = np.random.normal(action, 0.1)
+                action = np.random.normal(action, self.demo_action_variance)
         else:
             if done:
                 #self.get_reward(print_stats=True)
@@ -1147,7 +1160,7 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
                 action = np.array([0, 0, 1, -1])
             else:
                 action = np.append(action, [self.grip])
-                action = np.random.normal(action, 0.1)
+                action = np.random.normal(action, self.demo_action_variance)
 
         action = np.clip(action, a_min=-1, a_max=1)
         self.timestep += 1
