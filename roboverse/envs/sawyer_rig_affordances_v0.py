@@ -272,7 +272,7 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
         #     color = [np.random.uniform() for i in range(3)] + [1]
         #     self._table = bullet.objects.table(rgba=color)
         # else:
-        self._table = bullet.objects.table(rgba=[.92,.85,.7,1])
+        self._table = bullet.objects.table(rgba=[0, 0, 0 , 0]) #Table Gone
 
         # Drawer
         if self.affordance_dict['drawer']:
