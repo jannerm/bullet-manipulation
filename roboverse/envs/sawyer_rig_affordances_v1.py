@@ -199,7 +199,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         self._sensors = {}
 
         self._sawyer = bullet.objects.drawer_sawyer()
-        self._table = bullet.objects.table(rgba=[.92,.85,.7,1])
+        self._table = bullet.objects.table(rgba=[0, 0, 0 , 0]) #Table Gone
 
         ## Top Drawer
         if self.test_env and not self.test_env_seed:
