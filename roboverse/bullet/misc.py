@@ -151,7 +151,11 @@ def render(height, width, view_matrix, projection_matrix,
     _, _, img, depth, segmentation = img_tuple
     # import ipdb; ipdb.set_trace()
     # Here, if I do len(img), I get 9216.
-    # img = np.reshape(np.array(img), (48, 48, 4))
+    #import pdb; pdb.set_trace()
+    #if len(img) == 64 * 64 * 4:
+        #img = np.uint8(np.reshape(np.array(img), (64, 64, 4)))
+        #print(img)
+    #import pdb; pdb.set_trace()
     img = img[:,:,:-1]
     if gaussian_width > 0:
         img = cv2.GaussianBlur(img, (gaussian_width, gaussian_width), 0)
