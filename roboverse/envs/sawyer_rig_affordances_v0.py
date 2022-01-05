@@ -1153,6 +1153,7 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
         #print(sampled_task, subtask)
 
         #print('Current Task: ' + subtask)
+        subtask = 'rand_obj'
         return subtask
 
     def get_demo_action(self, first_timestep=False, final_timestep=False):
@@ -1283,7 +1284,7 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
     def move_obj(self, obj, goal):
         ee_pos = self.get_end_effector_pos()
         s = self.affordance_dict['side_sign']
-        adjustment = np.array([0.00, 0.01, 0]) if obj == 'lego' else np.array([0.00, -0.011, 0])
+        adjustment = np.array([0.00, 0.01, 0]) if obj == 'lego' else np.array([0.00, 0, 0])
         target_pos = self.get_object_pos(obj) + s * adjustment
         aligned = np.linalg.norm(target_pos[:2] - ee_pos[:2]) < 0.055
         enclosed = np.linalg.norm(target_pos[2] - ee_pos[2]) < 0.025
