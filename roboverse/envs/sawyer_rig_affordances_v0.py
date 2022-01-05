@@ -1153,7 +1153,6 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
         #print(sampled_task, subtask)
 
         #print('Current Task: ' + subtask)
-        subtask = 'rand_obj'
         return subtask
 
     def get_demo_action(self, first_timestep=False, final_timestep=False):
