@@ -164,7 +164,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         self.full_open_close_init_and_goal = kwargs.pop(
             'full_open_close_init_and_goal', False)
         if self.full_open_close_init_and_goal:
-            self.current_goal_is_open = False
+            self.current_goal_is_open = True
 
         super().__init__(*args, **kwargs)
 
@@ -289,12 +289,15 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         # case: full open/close drawer initialization/goal
         if self.full_open_close_init_and_goal:
             # flip goals/initializations between open/close drawer
-            self.current_goal_is_open = not self.current_goal_is_open
+            # self.current_goal_is_open = not self.current_goal_is_open
             # case: close drawer initialization + open drawer goal
             if self.current_goal_is_open:
                 pass
+                print('Open drawer by 10')
+                # drawer_utils.open_drawer(self._top_drawer, num_ts=10)
             # case: open drawer initialization + close drawer goal
             else:
+                print('Open drawer by 60')
                 drawer_utils.open_drawer(self._top_drawer, num_ts=60)
         # case: uniform random drawer initialization/goal
         else:

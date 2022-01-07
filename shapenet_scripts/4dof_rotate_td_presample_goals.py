@@ -34,31 +34,34 @@ obs_dim = env.observation_space.spaces['state_achieved_goal'].low.size
 imlength = env.obs_img_dim * env.obs_img_dim * 3
 
 dataset = {
-        'initial_latent_state': np.zeros((args.num_trajectories * args.num_timesteps, 720), dtype=np.float),
-        'latent_desired_goal': np.zeros((args.num_trajectories * args.num_timesteps, 720), dtype=np.float),
-        'state_desired_goal': np.zeros((args.num_trajectories * args.num_timesteps,
-            obs_dim), dtype=np.float),
-        'image_desired_goal': np.zeros((args.num_trajectories * args.num_timesteps, imlength), dtype=np.float),
-        'initial_image_observation': np.zeros((args.num_trajectories * args.num_timesteps, imlength), dtype=np.float),
-        }
+    'initial_latent_state': np.zeros((args.num_trajectories * args.num_timesteps, 720), dtype=np.float),
+    'latent_desired_goal': np.zeros((args.num_trajectories * args.num_timesteps, 720), dtype=np.float),
+    'state_desired_goal': np.zeros((args.num_trajectories * args.num_timesteps,
+                                    obs_dim), dtype=np.float),
+    'image_desired_goal': np.zeros((args.num_trajectories * args.num_timesteps, imlength), dtype=np.float),
+    'initial_image_observation': np.zeros((args.num_trajectories * args.num_timesteps, imlength), dtype=np.float),
+}
 
 for i in tqdm(range(args.num_trajectories)):
     env.demo_reset()
     init_img = np.uint8(env.render_obs()).transpose() / 255.0
-    
+
     for k in range(40):
         action = env.get_demo_action()
         obs, reward, done, info = env.step(action)
-    
+
     for j in range(args.num_timesteps):
         action = env.get_demo_action()
         obs, reward, done, info = env.step(action)
 
         img = np.uint8(env.render_obs()).transpose() / 255.0
 
-        dataset['state_desired_goal'][i * args.num_timesteps + j] = obs['state_achieved_goal']
-        dataset['image_desired_goal'][i * args.num_timesteps + j] = img.flatten()
-        dataset['initial_image_observation'][i * args.num_timesteps + j] = init_img.flatten()
+        dataset['state_desired_goal'][i *
+                                      args.num_timesteps + j] = obs['state_achieved_goal']
+        dataset['image_desired_goal'][i *
+                                      args.num_timesteps + j] = img.flatten()
+        dataset['initial_image_observation'][i *
+                                             args.num_timesteps + j] = init_img.flatten()
 
 file = open(data_save_path, 'wb')
 pkl.dump(dataset, file)
