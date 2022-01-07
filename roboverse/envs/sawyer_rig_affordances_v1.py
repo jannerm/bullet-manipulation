@@ -163,8 +163,15 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         # Debugging
         self.full_open_close_init_and_goal = kwargs.pop(
             'full_open_close_init_and_goal', False)
+        self.always_goal_is_open = kwargs.pop(
+            'always_goal_is_open', False)
+        print('always_goal_is_open: ', self.always_goal_is_open)
         if self.full_open_close_init_and_goal:
-            self.current_goal_is_open = True
+            if self.always_goal_is_open:
+                self.current_goal_is_open = True
+            else:
+                # This goal will be flipped during the reset.
+                self.current_goal_is_open = False
 
         super().__init__(*args, **kwargs)
 
@@ -289,16 +296,22 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         # case: full open/close drawer initialization/goal
         if self.full_open_close_init_and_goal:
             # flip goals/initializations between open/close drawer
-            # self.current_goal_is_open = not self.current_goal_is_open
+
+            if not self.always_goal_is_open:
+                self.current_goal_is_open = not self.current_goal_is_open
+            else:
+                assert self.current_goal_is_open
+
             # case: close drawer initialization + open drawer goal
             if self.current_goal_is_open:
-                pass
-                print('Open drawer by 10')
-                # drawer_utils.open_drawer(self._top_drawer, num_ts=10)
+                drawer_utils.open_drawer(
+                    self._top_drawer,
+                    num_ts=np.random.random_integers(low=0, high=10))
             # case: open drawer initialization + close drawer goal
             else:
-                print('Open drawer by 60')
-                drawer_utils.open_drawer(self._top_drawer, num_ts=60)
+                drawer_utils.open_drawer(
+                    self._top_drawer,
+                    num_ts=np.random.random_integers(low=50, high=60))
         # case: uniform random drawer initialization/goal
         else:
             # randomly initialize how open drawer is
@@ -648,8 +661,10 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
     def reset(self):
         if self.use_multiple_goals:
             self.test_env_seed = np.random.choice(self.test_env_seeds)
+
         if self.test_env_seed:
             random.seed(self.test_env_seed)
+
         if self.expl:
             self.reset_counter += 1
             if self.reset_interval == self.reset_counter:
@@ -833,6 +848,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
                 self.trajectory_done = False
                 self.gripper_has_been_above = False
                 action = np.array([0, 0, 1, 0])
+
             if done or final_timestep:
                 self.trajectory_done = True
 
@@ -841,6 +857,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
             else:
                 action = np.append(action, [self.grip])
                 action = np.random.normal(action, self.expert_policy_std)
+
         else:
             if done:
                 # self.get_reward(print_stats=True)

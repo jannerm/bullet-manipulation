@@ -11,11 +11,12 @@ import matplotlib.pyplot as plt  # NOQA
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--output_dir', type=str)
-parser.add_argument('--num_trajectories', type=int, default=8)
-parser.add_argument('--num_pre_steps', type=int, default=70)
+parser.add_argument('--num_trajectories', type=int, default=100)
+parser.add_argument('--num_pre_steps', type=int, default=50)
 parser.add_argument('--num_post_steps', type=int, default=1)
 parser.add_argument('--downsample', action='store_true')
 parser.add_argument("--full_open_close", action="store_true")
+parser.add_argument("--always_goal_is_open", action="store_true")
 parser.add_argument('--test_env_seeds', nargs='+', type=int)
 parser.add_argument('--gui', dest='gui', action='store_true', default=False)
 parser.add_argument('--video_save_frequency', type=int,
@@ -39,6 +40,8 @@ def presample_goal(args, test_env_seed):
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
+    print('always_goal_is_open: ', args.always_goal_is_open)
+
     kwargs = {
         'drawer_sliding': args.drawer_sliding,
         'fix_drawer_orientation': args.fix_drawer_orientation,
@@ -49,6 +52,7 @@ def presample_goal(args, test_env_seed):
         'red_drawer_base': args.red_drawer_base,
 
         'full_open_close_init_and_goal': args.full_open_close,
+        'always_goal_is_open': args.always_goal_is_open,
         'expl': True if args.full_open_close else False,
     }
 
@@ -93,46 +97,32 @@ def presample_goal(args, test_env_seed):
         plt.figure()
 
     for i in tqdm(range(args.num_trajectories)):
-        print('reset')
         env.demo_reset()
         init_img = np.uint8(env.render_obs()).transpose() / 255.0
 
-        # if args.debug:
-        #     print('pre-step')
-        #     img = np.uint8(env.render_obs()).transpose() / 255.0
-        #     img = img.transpose(2, 1, 0)
-        #     plt.imshow(img)
-        #     plt.show()
+        for t in range(args.num_pre_steps + args.num_post_steps):
+            # action = env.get_demo_action()
+            action = env.get_demo_action(
+                first_timestep=(
+                    t == 0),
+                final_timestep=(
+                    t == args.num_pre_steps + args.num_post_steps - 1))
 
-        for t in range(args.num_pre_steps):
-            action = env.get_demo_action()
             obs, reward, done, info = env.step(action)
 
             if args.debug:
                 if t % 10 == 0:
-                    print('pre-step')
                     img = np.uint8(env.render_obs()).transpose() / 255.0
                     img = img.transpose(2, 1, 0)
                     plt.imshow(img)
                     plt.show()
 
-        for t in range(args.num_post_steps):
-            action = env.get_demo_action()
-            obs, reward, done, info = env.step(action)
-
-            if args.debug:
-                if t % 10 == 0:
-                    print('post-step')
-                    img = np.uint8(env.render_obs()).transpose() / 255.0
-                    img = img.transpose(2, 1, 0)
-                    plt.imshow(img)
-                    plt.show()
-
-            img = np.uint8(env.render_obs()).transpose() / 255.0
-            ind = i * args.num_post_steps + t
-            dataset['initial_image_observation'][ind] = init_img.flatten()
-            dataset['state_desired_goal'][ind] = obs['state_achieved_goal']
-            dataset['image_desired_goal'][ind] = img.flatten()
+            if t >= args.num_pre_steps:
+                img = np.uint8(env.render_obs()).transpose() / 255.0
+                ind = i * args.num_post_steps + t - args.num_pre_steps
+                dataset['initial_image_observation'][ind] = init_img.flatten()
+                dataset['state_desired_goal'][ind] = obs['state_achieved_goal']
+                dataset['image_desired_goal'][ind] = img.flatten()
 
     file = open(output_path, 'wb')
     pkl.dump(dataset, file)
