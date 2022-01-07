@@ -306,12 +306,12 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
             if self.current_goal_is_open:
                 drawer_utils.open_drawer(
                     self._top_drawer,
-                    num_ts=np.random.random_integers(low=0, high=10))
+                    num_ts=np.random.random_integers(low=1, high=10))
             # case: open drawer initialization + close drawer goal
             else:
                 drawer_utils.open_drawer(
                     self._top_drawer,
-                    num_ts=np.random.random_integers(low=50, high=60))
+                    num_ts=np.random.random_integers(low=51, high=60))
         # case: uniform random drawer initialization/goal
         else:
             # randomly initialize how open drawer is
