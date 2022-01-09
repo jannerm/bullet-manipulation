@@ -48,6 +48,9 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
                  drawer_yaw_setting = (0, 360),
                  gripper_bounding_x = [.46, .84],
                  gripper_bounding_y = [-.19, .19],
+                 drawer_bounding_x = [.46, .84],
+                 drawer_bounding_y = [-.19, .19],
+                 view_distance = 0.425,
                  max_episode_steps = 75,
                  spawn_prob=0.75,
                  demo_action_variance = 0.3,
@@ -81,6 +84,9 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         self.drawer_yaw_setting = drawer_yaw_setting
         self.gripper_bounding_x = gripper_bounding_x
         self.gripper_bounding_y = gripper_bounding_y
+
+        self.drawer_bounding_x = drawer_bounding_x
+        self.drawer_bounding_y = drawer_bounding_y
         self.quat_dict = quat_dict
         self.color_range = color_range
         self._reward_type = reward_type
@@ -113,7 +119,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         self.default_theta = bullet.deg_to_quat([180, 0, 0])
         self.obs_img_dim = obs_img_dim
         self._view_matrix_obs = bullet.get_view_matrix(
-            target_pos=[.7, 0, -0.25], distance=0.425,
+            target_pos=[.7, 0, -0.25], distance=view_distance,
             yaw=90, pitch=-37, roll=0, up_axis_index=2)
         self._projection_matrix_obs = bullet.get_projection_matrix(
             self.obs_img_dim, self.obs_img_dim)
@@ -206,9 +212,17 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
             self.drawer_yaw = 180
             drawer_frame_pos = np.array([.6, -.19, -.34])
         else:
-            self.drawer_yaw = random.uniform(self.drawer_yaw_setting[0], self.drawer_yaw_setting[1])
+            if len(self.drawer_yaw_setting) == 4:
+                coin = np.random.uniform()
+                if coin > 0.5:
+                    self.drawer_yaw = random.uniform(self.drawer_yaw_setting[0], self.drawer_yaw_setting[1])
+                else:
+                    self.drawer_yaw = random.uniform(self.drawer_yaw_setting[2], self.drawer_yaw_setting[3])
+            else:
+                self.drawer_yaw = random.uniform(self.drawer_yaw_setting[0], self.drawer_yaw_setting[1])
+                
             while(True):
-                drawer_frame_pos = np.array([random.uniform(self.gripper_bounding_x[0], self.gripper_bounding_x[1]), random.uniform(self.gripper_bounding_y[0], self.gripper_bounding_y[1]), -.34])
+                drawer_frame_pos = np.array([random.uniform(self.drawer_bounding_x[0], self.drawer_bounding_x[1]), random.uniform(self.drawer_bounding_y[0], self.drawer_bounding_y[1]), -.34])
                 drawer_handle_open_goal_pos = drawer_frame_pos + td_open_coeff * np.array([np.sin(self.drawer_yaw * np.pi / 180) , -np.cos(self.drawer_yaw * np.pi / 180), 0])
                 if self.gripper_bounding_x[0] <= drawer_handle_open_goal_pos[0] <= self.gripper_bounding_x[1] \
                     and self.gripper_bounding_y[0] <= drawer_handle_open_goal_pos[1] <= self.gripper_bounding_y[1]:
@@ -453,6 +467,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
             init_pos = np.array(self._pos_init)
         elif self.claw_spawn_mode == 'uniform':
             init_pos = np.random.uniform(low= self._pos_low, high = self._pos_high)
+            init_pos[2] = self._pos_init[2]
         else:
             raise NotImplementedError
 
