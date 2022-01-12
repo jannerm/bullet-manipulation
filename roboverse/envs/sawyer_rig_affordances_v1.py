@@ -49,7 +49,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
                  drawer_yaw_setting = (0, 360),
                  gripper_bounding_x = [.46, .84],
                  gripper_bounding_y = [-.19, .19],
-                 drawer_bounding_x = [.46, .84],
+                 drawer_bounding_x = [.65, .84],
                  drawer_bounding_y = [-.19, .19],
                  view_distance = 0.55,
                  max_episode_steps = 75,
@@ -215,15 +215,9 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
             self.drawer_yaw = 180
             drawer_frame_pos = np.array([.6, -.19, -.34])
         else:
-            if len(self.drawer_yaw_setting) == 4:
-                coin = np.random.uniform()
-                if coin > 0.5:
-                    self.drawer_yaw = random.uniform(self.drawer_yaw_setting[0], self.drawer_yaw_setting[1])
-                else:
-                    self.drawer_yaw = random.uniform(self.drawer_yaw_setting[2], self.drawer_yaw_setting[3])
-            else:
-                self.drawer_yaw = random.uniform(self.drawer_yaw_setting[0], self.drawer_yaw_setting[1])
+            self.update_drawer_yaw()
                 
+            tries = 0
             while(True):
                 #drawer_frame_pos = np.array([random.uniform(self.gripper_bounding_x[0], self.drawer_bounding_x[1]), random.uniform(self.drawer_bounding_y[0], self.drawer_bounding_y[1]), -.34])
                 drawer_frame_pos = np.array([random.uniform(self.drawer_bounding_x[0], self.drawer_bounding_x[1]), random.uniform(self.drawer_bounding_y[0], self.drawer_bounding_y[1]), -.34])
@@ -236,6 +230,9 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
                 if self.gripper_bounding_x[0] <= drawer_handle_open_goal_pos[0] <= self.gripper_bounding_x[1] \
                     and self.gripper_bounding_y[0] <= drawer_handle_open_goal_pos[1] <= self.gripper_bounding_y[1]:
                     break
+                tries += 1
+                if (tries > 25):
+                    self.update_drawer_yaw()
         quat = deg_to_quat([0, 0, self.drawer_yaw])
         
         # For debugging: hardcode drawer_yaw and drawer_frame_pos
@@ -281,6 +278,16 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         self._end_effector = bullet.get_index_by_attribute(
             self._sawyer, 'link_name', 'gripper_site')
     
+    def update_drawer_yaw(self):
+        if len(self.drawer_yaw_setting) == 4:
+            coin = np.random.uniform()
+            if coin > 0.5:
+                self.drawer_yaw = random.uniform(self.drawer_yaw_setting[0], self.drawer_yaw_setting[1])
+            else:
+                self.drawer_yaw = random.uniform(self.drawer_yaw_setting[2], self.drawer_yaw_setting[3])
+        else:
+            self.drawer_yaw = random.uniform(self.drawer_yaw_setting[0], self.drawer_yaw_setting[1])
+
     def sample_quat(self, object_name):
         if object_name in self.quat_dict:
             return self.quat_dict[self.curr_object]
