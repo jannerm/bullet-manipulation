@@ -49,7 +49,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
                  drawer_yaw_setting = (0, 360),
                  gripper_bounding_x = [.46, .84],
                  gripper_bounding_y = [-.19, .19],
-                 drawer_bounding_x = [.65, .84],
+                 drawer_bounding_x = [.46, .84],
                  drawer_bounding_y = [-.19, .19],
                  view_distance = 0.55,
                  max_episode_steps = 75,
