@@ -26,8 +26,9 @@ td_close_coeff = 0.13754340000000412
 td_open_coeff = 0.29387810000002523
 td_offset_coeff = 0.001
 
-#gripper_bounding_x = [.46, .84] #[0.4704, 0.8581]
-#gripper_bounding_y = [-.19, .19] #[-0.1989, 0.2071]
+tight_butch = lambda bottom, top, ref: all([top[i] > ref[i] and bottom[i] < ref[i] for i in range(len(ref))])
+gripper_bounding_x = [.46, .84] #[0.4704, 0.8581]
+gripper_bounding_y = [-.19, .19] #[-0.1989, 0.2071]
 
 class SawyerRigAffordancesV1(SawyerBaseEnv):
 
@@ -50,7 +51,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
                  gripper_bounding_y = [-.19, .19],
                  drawer_bounding_x = [.46, .84],
                  drawer_bounding_y = [-.19, .19],
-                 view_distance = 0.425,
+                 view_distance = 0.55,
                  max_episode_steps = 75,
                  spawn_prob=0.75,
                  demo_action_variance = 0.3,
@@ -87,6 +88,8 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
 
         self.drawer_bounding_x = drawer_bounding_x
         self.drawer_bounding_y = drawer_bounding_y
+        self.drawer_bounding_low = [drawer_bounding_x[0], drawer_bounding_y[0]] 
+        self.drawer_bounding_high = [drawer_bounding_x[1], drawer_bounding_y[1]]
         self.quat_dict = quat_dict
         self.color_range = color_range
         self._reward_type = reward_type
@@ -222,7 +225,13 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
                 self.drawer_yaw = random.uniform(self.drawer_yaw_setting[0], self.drawer_yaw_setting[1])
                 
             while(True):
+                #drawer_frame_pos = np.array([random.uniform(self.gripper_bounding_x[0], self.drawer_bounding_x[1]), random.uniform(self.drawer_bounding_y[0], self.drawer_bounding_y[1]), -.34])
                 drawer_frame_pos = np.array([random.uniform(self.drawer_bounding_x[0], self.drawer_bounding_x[1]), random.uniform(self.drawer_bounding_y[0], self.drawer_bounding_y[1]), -.34])
+                #drawer_frame_pos = np.array([random.uniform(self.gripper_bounding_x[0], self.gripper_bounding_x[1]), random.uniform(self.gripper_bounding_y[0], self.gripper_bounding_y[1]), -.34])
+                
+                #while not tight_butch(self.drawer_bounding_low, self.drawer_bounding_high, drawer_frame_pos[:2]):
+                    #drawer_frame_pos = np.array([random.uniform(self.gripper_bounding_x[0], self.gripper_bounding_x[1]), random.uniform(self.gripper_bounding_y[0], self.gripper_bounding_y[1]), -.34])
+                
                 drawer_handle_open_goal_pos = drawer_frame_pos + td_open_coeff * np.array([np.sin(self.drawer_yaw * np.pi / 180) , -np.cos(self.drawer_yaw * np.pi / 180), 0])
                 if self.gripper_bounding_x[0] <= drawer_handle_open_goal_pos[0] <= self.gripper_bounding_x[1] \
                     and self.gripper_bounding_y[0] <= drawer_handle_open_goal_pos[1] <= self.gripper_bounding_y[1]:
@@ -235,6 +244,8 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         # quat = rot.as_quat()
         # drawer_frame_pos = np.array(list((0.6351875030272269, -0.10053104435094253, -0.34)))
         #drawer_yaw:  160.10009720998795 , drawer_frame_pos:  (0.6351875030272269, -0.10053104435094253, -0.34)
+
+        #drawer_frame_pos = np.array([random.uniform(self.drawer_bounding_x[0], self.drawer_bounding_x[1]), random.uniform(self.drawer_bounding_y[0], self.drawer_bounding_y[1]), -.34])
 
         if self.drawer_sliding:
             self._top_drawer = bullet.objects.drawer_sliding(quat=quat, pos=drawer_frame_pos, rgba=self.sample_object_color())
