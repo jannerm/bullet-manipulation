@@ -864,17 +864,17 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
         self.update_goal_state()
 
     def reset(self, seed = None):
-        if seed is None:
-            seed = np.random.randint(9999999)
-        random.seed(seed)
-        np.random.seed(seed)
-
         if seed != self.prev_seed and self.test_env and self.swap_eval_task:
             self.prev_seed = seed
             if self.env_type == 'top_drawer':
                 self.env_type = 'bottom_drawer'
             else:
                 self.env_type = 'top_drawer'
+
+        if seed is None:
+            seed = np.random.randint(9999999)
+        random.seed(seed)
+        np.random.seed(seed)
 
         if self.expl:
             self.reset_counter += 1
