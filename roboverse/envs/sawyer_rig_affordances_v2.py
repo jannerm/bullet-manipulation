@@ -30,7 +30,7 @@ tight_butch = lambda bottom, top, ref: all([top[i] > ref[i] and bottom[i] < ref[
 gripper_bounding_x = [.46, .84] #[0.4704, 0.8581]
 gripper_bounding_y = [-.19, .19] #[-0.1989, 0.2071]
 
-class SawyerRigAffordancesV1(SawyerBaseEnv):
+class SawyerRigAffordancesV2(SawyerBaseEnv):
 
     def __init__(self,
                  reward_type='shaped',
@@ -43,6 +43,8 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
                  object_subset='test',
                  claw_spawn_mode='fixed',
                  use_bounding_box=True,
+                 yaw_jitter_var = 4,
+                 translation_jitter_var = [0.04, 0.04],
                  color_range = (0, 255),
                  max_distractors = 0,
                  random_color_p=1.0,
@@ -51,7 +53,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
                  gripper_bounding_y = [-.19, .19],
                  drawer_bounding_x = [.46, .84],
                  drawer_bounding_y = [-.19, .19],
-                 view_distance = 0.425,
+                 view_distance = 0.55,
                  max_episode_steps = 75,
                  spawn_prob=0.75,
                  demo_action_variance = 0.3,
@@ -116,6 +118,8 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
             self.object_subset = kwargs.pop('test_object_subset', ['grill_trash_can'])
 
         self.drawer_thresh = 0.05
+        self.yaw_jitter_var = yaw_jitter_var
+        self.translation_jitter_var = translation_jitter_var
 
         self.object_dict, self.scaling = self.get_object_info()
         self.curr_object = None
@@ -156,6 +160,8 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         self._pos_init = [0.6, -0.15, -0.2]
         self._pos_low = [0.5,-0.2,-.36]
         self._pos_high = [0.85,0.2,-0.1]
+
+        self.force_state = False
 
         # # Speed up rendering
         # egl = pkgutil.get_loader('eglRenderer')
@@ -209,12 +215,20 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
 
         self._sawyer = bullet.objects.drawer_sawyer()
         self._table = bullet.objects.table(rgba=[0, 0, 0 , 0]) #Table Gone
-        #self._table = bullet.objects.table(rgba=[.92,.85,.7,1])
 
         ## Top Drawer
         if self.test_env and not self.test_env_seed:
             self.drawer_yaw = 180
             drawer_frame_pos = np.array([.6, -.19, -.34])
+        elif self.force_state:
+
+            self.drawer_yaw = np.clip(np.random.normal(self.prior_drawer_yaw, self.yaw_jitter_var), 0, 360)
+            drawer_frame_pos = self.prior_drawer_pos.copy()
+            drawer_frame_pos[0] = np.clip(np.random.normal(drawer_frame_pos[0], self.translation_jitter_var[0]), self.drawer_bounding_x[0], self.drawer_bounding_x[1])
+            drawer_frame_pos[1] = np.clip(np.random.normal(drawer_frame_pos[1], self.translation_jitter_var[1]), self.drawer_bounding_y[0], self.drawer_bounding_y[1])
+            self.init_handle_pos = self.prior_init_handle_pos
+
+
         else:
             self.update_drawer_yaw()
                 
@@ -265,7 +279,17 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
             # randomly initialize how open drawer is
             open_drawer(self._top_drawer, num_ts=np.random.random_integers(low=1, high=60))
 
-        self.init_handle_pos = get_drawer_handle_pos(self._top_drawer)[1]
+        if not self.force_state:
+            self.init_handle_pos = get_drawer_handle_pos(self._top_drawer)[1]
+            self.prior_drawer_pos = drawer_frame_pos.copy()
+            self.prior_drawer_yaw = self.drawer_yaw
+            self.prior_init_handle_pos = self.init_handle_pos
+
+        else:
+            self.force_state = False
+            #self.prior_drawer_pos = None
+            #self.prior_yaw = None
+            #self.prior_init_handle_pos = None
 
         ## Distractor Objects
         if self.max_distractors > 0:
@@ -460,7 +484,11 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         self.update_drawer_goal()
         self.update_goal_state()
 
-    def reset(self, seed = None):
+    def reset(self, seed = None, force_state = False):
+
+        if force_state:
+            self.force_state = True
+
         if seed is None:
             seed = np.random.randint(9999999)
         random.seed(seed)
@@ -597,10 +625,10 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         return np.array(get_drawer_handle_pos(self._top_drawer))
 
     ### DEMO COLLECTING FUNCTIONS BEYOND THIS POINT ###
-    def demo_reset(self, seed = None):
+    def demo_reset(self, seed = None, force_state = False):
         self.timestep = 0
         self.grip = -1.
-        reset_obs = self.reset(seed = seed)
+        reset_obs = self.reset(seed = seed, force_state = force_state)
 
         #print('----Initial----')
         #self.get_reward(print_stats=True)
