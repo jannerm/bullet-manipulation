@@ -155,6 +155,10 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
         self.tasks_done = 0
         self.tasks_done_names = []
 
+        # Goalbisim
+        self.swap_eval_task = kwargs.pop('swap_eval_task', False)
+        self.prev_seed = -1
+
         # Debug
         self.debug = kwargs.pop('debug', None)
 
@@ -275,7 +279,7 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
         self._table = bullet.objects.table(rgba=[0, 0, 0 , 0]) #Table Gone
 
         # Drawer
-        if self.affordance_dict['drawer']:
+        if self.test_env or self.affordance_dict['drawer']:
             self._bottom_drawer = bullet.objects.drawer_no_handle(
                     pos=np.array([0.6, s * 0.125, -.34]), rgba=self.sample_object_color())
             self._objects['lego'] = bullet.objects.drawer_lego(pos=self.init_lego_pos)
@@ -284,10 +288,10 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
             self.init_drawer_pos = get_drawer_bottom_pos(self._bottom_drawer)[0]
 
         # Handle drawer
-        if self.affordance_dict['handle_drawer']:
+        if self.test_env or self.affordance_dict['handle_drawer']:
             quat = [0, 0, 0, 1] if s == 1 else [0, 0, 1, 0]
 
-            if self.affordance_dict['drawer']:
+            if self.test_env or self.affordance_dict['drawer']:
                 self._top_drawer = bullet.objects.drawer(quat=quat, pos=np.array([0.6, s * 0.125, -.22]),
                     rgba=self.sample_object_color())
             else:
@@ -303,8 +307,8 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
             self.init_handle_pos = get_drawer_handle_pos(self._top_drawer)[1]
 
         # Button
-        if self.affordance_dict['button']:
-            num_drawers = self.affordance_dict['handle_drawer'] + self.affordance_dict['drawer']
+        if self.test_env or self.affordance_dict['button']:
+            num_drawers = int(self.test_env or self.affordance_dict['handle_drawer']) + int(self.test_env or self.affordance_dict['drawer'])
             if num_drawers == 2:
                 pos = np.array([0.6, s * 0.125, -.14])
             elif num_drawers == 1:
@@ -332,14 +336,16 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
         }
 
         # Tray
-        if self.affordance_dict['tray']:
+        if self.test_env or self.affordance_dict['tray']:
             back_left = self.tray_corners['back_left']
             back_right = self.tray_corners['back_right']
             front_left = self.tray_corners['front_left']
             front_right = self.tray_corners['front_right']
 
             issue_catch = self.affordance_dict['handle_drawer'] and not self.affordance_dict['drawer']
-            if self.test_env and (not self.affordance_dict['drawer']):
+            if self.test_env:
+                tray_pos = front_left
+            elif self.test_env and (not self.affordance_dict['drawer']):
                 tray_pos = front_right
             elif self.test_env and issue_catch:
                 tray_pos = front_left
@@ -360,13 +366,15 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
             self.tray_pos = tray_pos
 
         # Rand obj
-        if self.affordance_dict['rand_obj']:
+        if self.test_env or self.affordance_dict['rand_obj']:
             back_left = self.rand_obj_corners['back_left']
             back_right = self.rand_obj_corners['back_right']
             front_left = self.rand_obj_corners['front_left']
             front_right = self.rand_obj_corners['front_right']
 
-            if self.test_env or self.affordance_dict['drawer'] or self.affordance_dict['handle_drawer']:
+            if self.test_env:
+                self._fixed_object_position = front_left
+            elif self.test_env or self.affordance_dict['drawer'] or self.affordance_dict['handle_drawer']:
                 if self.affordance_dict['drawer'] and self.affordance_dict['handle_drawer']:
                     self._fixed_object_position = back_left
                 elif self.affordance_dict['tray'] and np.array_equal(self.tray_corners['front_left'], self.tray_pos):
@@ -860,6 +868,14 @@ class SawyerRigAffordancesV0(SawyerBaseEnv):
             seed = np.random.randint(9999999)
         random.seed(seed)
         np.random.seed(seed)
+
+        if seed != self.prev_seed and self.test_env and self.swap_eval_task:
+            self.prev_seed = seed
+            if self.env_type == 'top_drawer':
+                self.env_type = 'bottom_drawer'
+            else:
+                self.env_type = 'top_drawer'
+
         if self.expl:
             self.reset_counter += 1
             if self.reset_interval == self.reset_counter:
