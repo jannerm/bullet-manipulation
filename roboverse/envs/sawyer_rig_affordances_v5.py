@@ -115,7 +115,7 @@ class SawyerRigAffordancesV5(SawyerBaseEnv):
         self._ddeg_scale = 5
         self.task = task
         self.DoF = DoF
-        self.test_env = test_env
+        self.test_env = test_env # dummy variable
         #self.test_env_seed = kwargs.pop('test_env_seed', None) if self.test_env else None
 
         # if self.test_env:
@@ -568,7 +568,7 @@ class SawyerRigAffordancesV5(SawyerBaseEnv):
 
     def reset(self, seed = None, force_state = False):
         if not force_state:
-            if not self.test_env or (seed != self.prev_seed and self.test_env):
+            if seed != self.prev_seed:
                 self.prev_seed = seed
                 if self.curr_task == 'drawer':
                     self.curr_task = 'button'
