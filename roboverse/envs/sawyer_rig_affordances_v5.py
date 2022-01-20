@@ -62,7 +62,7 @@ class SawyerRigAffordancesV5(SawyerBaseEnv):
                  demo_action_variance = 0.3,
                  quat_dict=quat_dict,
                  task='goal_reaching',
-                 #test_env=False,
+                 test_env=False,
                  DoF=4,
                  *args,
                  **kwargs
@@ -115,7 +115,7 @@ class SawyerRigAffordancesV5(SawyerBaseEnv):
         self._ddeg_scale = 5
         self.task = task
         self.DoF = DoF
-        #self.test_env = test_env
+        self.test_env = test_env # dummy variable
         #self.test_env_seed = kwargs.pop('test_env_seed', None) if self.test_env else None
 
         # if self.test_env:
