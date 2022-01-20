@@ -60,7 +60,7 @@ class SawyerRigAffordancesV4(SawyerBaseEnv):
                  demo_action_variance = 0.3,
                  quat_dict=quat_dict,
                  task='goal_reaching',
-                 test_env=False,
+                 #test_env=False,
                  DoF=4,
                  *args,
                  **kwargs
@@ -111,7 +111,7 @@ class SawyerRigAffordancesV4(SawyerBaseEnv):
         self._ddeg_scale = 5
         self.task = task
         self.DoF = DoF
-        self.test_env = test_env
+        #self.test_env = test_env
         #self.test_env_seed = kwargs.pop('test_env_seed', None) if self.test_env else None
 
         # if self.test_env:
@@ -536,7 +536,7 @@ class SawyerRigAffordancesV4(SawyerBaseEnv):
         self.update_goal_state()
 
     def reset(self, seed = None):
-        if not self.test_env or (seed != self.prev_seed and self.test_env):
+        if seed != self.prev_seed:
             self.prev_seed = seed
             if self.curr_task == 'drawer':
                 self.curr_task = 'button'
