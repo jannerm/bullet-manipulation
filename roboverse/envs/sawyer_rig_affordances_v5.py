@@ -19,9 +19,12 @@ import pkgutil
 
 # Constants
 # 0.21060003 #0.16298369 #0.20567612 #0.13754340000000412 #0.21567452 #0.13754340000000412
+# td_close_coeff = 0.16146014
+# td_open_coeff = 0.2605  # 0.23250536 #0.2585
 td_close_coeff = 0.13146014
-td_open_coeff = 0.2585  # 0.23250536 #0.2585
+td_open_coeff = 0.2585
 td_offset_coeff = 0.0125
+td_goal_epsl = 0.005
 
 gripper_bounding_x = [.5, .8]  # [.46, .84] #[0.4704, 0.8581]
 gripper_bounding_y = [-.17, .17]  # [-0.1989, 0.2071]
@@ -1281,7 +1284,7 @@ class SawyerRigAffordancesV5(SawyerBaseEnv):
         gripper_above = ee_pos[2] >= -0.105
         if not self.gripper_has_been_above and gripper_above:
             self.gripper_has_been_above = True
-        done = np.linalg.norm(self.td_goal - drawer_handle_pos) < .001
+        done = np.linalg.norm(self.td_goal - drawer_handle_pos) < td_goal_epsl
 
         # Stage 1: if gripper is too low, raise it
         if not self.gripper_in_right_position and not self.gripper_has_been_above:
