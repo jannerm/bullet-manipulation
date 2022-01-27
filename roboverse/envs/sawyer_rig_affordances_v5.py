@@ -24,7 +24,7 @@ import pkgutil
 td_close_coeff = 0.13146014
 td_open_coeff = 0.2585
 td_offset_coeff = 0.0125
-td_goal_epsl = 0.005
+td_goal_epsl = 0.02
 
 gripper_bounding_x = [.5, .8]  # [.46, .84] #[0.4704, 0.8581]
 gripper_bounding_y = [-.17, .17]  # [-0.1989, 0.2071]
@@ -913,12 +913,19 @@ class SawyerRigAffordancesV5(SawyerBaseEnv):
                 init_pos = self.test_env_command['init_pos']
             else:
                 init_pos = np.array(self._pos_init)
+
+            if 'init_theta' in self.test_env_command:
+                init_theta = bullet.deg_to_quat(
+                    self.test_env_command['init_theta'])
+            else:
+                init_theta = self.default_theta
+
         else:
             init_pos = np.array(self._pos_init)
         self.curr_task = self.sample_goals()
 
         bullet.position_control(self._sawyer, self._end_effector,
-                                init_pos, self.default_theta, physicsClientId=self._uid)
+                                init_pos, init_theta, physicsClientId=self._uid)
 
         # Move to starting positions
         action = np.array([0 for i in range(self.DoF)] + [-1])
@@ -1023,7 +1030,8 @@ class SawyerRigAffordancesV5(SawyerBaseEnv):
         if curr_pos.size == 0 or goal_pos.size == 0:
             return 0
         else:
-            return np.linalg.norm(curr_pos - goal_pos) < self.obj_thresh
+            # return np.linalg.norm(curr_pos - goal_pos) < self.obj_thresh
+            return self.get_quadrant(curr_pos) == self.get_quadrant(goal_pos)
 
     def get_obj_pnp_goals(self, task_info=None):
         ## Top Drawer Goal ##
