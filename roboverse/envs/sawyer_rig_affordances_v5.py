@@ -205,7 +205,7 @@ class SawyerRigAffordancesV5(SawyerBaseEnv):
         act_high = np.ones(act_dim) * act_bound
         self.action_space = gym.spaces.Box(-act_high, act_high)
 
-        observation_dim = 23
+        observation_dim = 32
         obs_bound = 100
         obs_high = np.ones(observation_dim) * obs_bound
         state_space = gym.spaces.Box(-obs_high, obs_high)
@@ -520,6 +520,14 @@ class SawyerRigAffordancesV5(SawyerBaseEnv):
                                physicsClientId=self._uid)
             self.grasp_constraint = None
 
+        ## For debugging success metric
+        # goal = self.get_observation()['state_achieved_goal']
+        # rep = np.array([0.70258289, 0.13128127, -0.35201093])
+        # goal[14] = rep[0]
+        # goal[15] = rep[1]
+        # goal[16] = rep[2]
+        # print(self.get_success_metric(np.array(self.get_observation()['state_achieved_goal']), np.array(goal), key='obj_pnp_1'))
+
         # Update position and theta
         pos += delta_pos * self._action_scale
         pos = np.clip(pos, self._pos_low, self._pos_high)
@@ -571,10 +579,12 @@ class SawyerRigAffordancesV5(SawyerBaseEnv):
             goal_pos_2 = goal_state[17:20]
             curr_pos_3 = curr_state[20:23]
             goal_pos_3 = goal_state[20:23]
+            curr_pos_extra = curr_state[23:32]
+            goal_pos_extra = goal_state[23:32]
             success = int(self.drawer_done(curr_pos, goal_pos))\
-                and int(self.obj_pnp_done(curr_pos_0, goal_pos_0)) \
-                and int(self.obj_pnp_done(curr_pos_1, goal_pos_1)) \
-                and int(self.obj_pnp_done(curr_pos_2, goal_pos_2)) \
+                and int(self.obj_pnp_done(curr_pos_0, goal_pos_0, curr_pos_extra, goal_pos_extra)) \
+                and int(self.obj_pnp_done(curr_pos_1, goal_pos_1, curr_pos_extra, goal_pos_extra)) \
+                and int(self.obj_pnp_done(curr_pos_2, goal_pos_2, curr_pos_extra, goal_pos_extra)) \
                 and int(self.obj_slide_done(curr_pos_3, goal_pos_3))
         elif key == 'top_drawer':
             curr_pos = curr_state[8:11]
@@ -587,21 +597,32 @@ class SawyerRigAffordancesV5(SawyerBaseEnv):
             goal_pos_1 = goal_state[14:17]
             curr_pos_2 = curr_state[17:20]
             goal_pos_2 = goal_state[17:20]
-            success = int(self.obj_pnp_done(curr_pos_0, goal_pos_0)) \
-                and int(self.obj_pnp_done(curr_pos_1, goal_pos_1)) \
-                and int(self.obj_pnp_done(curr_pos_2, goal_pos_2))
+            curr_pos_extra = curr_state[23:32]
+            goal_pos_extra = goal_state[23:32]
+            success = int(self.obj_pnp_done(curr_pos_0, goal_pos_0, curr_pos_extra, goal_pos_extra)) \
+                and int(self.obj_pnp_done(curr_pos_1, goal_pos_1, curr_pos_extra, goal_pos_extra)) \
+                and int(self.obj_pnp_done(curr_pos_2, goal_pos_2, curr_pos_extra, goal_pos_extra))
         elif key == 'obj_pnp_0':
             curr_pos_0 = curr_state[11:14]
             goal_pos_0 = goal_state[11:14]
-            success = int(self.obj_pnp_done(curr_pos_0, goal_pos_0))
+            curr_pos_extra = curr_state[23:32]
+            goal_pos_extra = goal_state[23:32]
+            success = int(self.obj_pnp_done(
+                curr_pos_0, goal_pos_0, curr_pos_extra, goal_pos_extra))
         elif key == 'obj_pnp_1':
             curr_pos_1 = curr_state[14:17]
             goal_pos_1 = goal_state[14:17]
-            success = int(self.obj_pnp_done(curr_pos_1, goal_pos_1))
+            curr_pos_extra = curr_state[23:32]
+            goal_pos_extra = goal_state[23:32]
+            success = int(self.obj_pnp_done(
+                curr_pos_1, goal_pos_1, curr_pos_extra, goal_pos_extra))
         elif key == 'obj_pnp_2':
             curr_pos_2 = curr_state[17:20]
             goal_pos_2 = goal_state[17:20]
-            success = int(self.obj_pnp_done(curr_pos_2, goal_pos_2))
+            curr_pos_extra = curr_state[23:32]
+            goal_pos_extra = goal_state[23:32]
+            success = int(self.obj_pnp_done(
+                curr_pos_2, goal_pos_2, curr_pos_extra, goal_pos_extra))
         elif key == 'obj_slide':
             curr_pos = curr_state[20:23]
             goal_pos = goal_state[20:23]
@@ -961,12 +982,13 @@ class SawyerRigAffordancesV5(SawyerBaseEnv):
 
         large_obj_pos = self.get_object_pos(self._large_obj)
 
-        #(hand_pos, hand_theta, gripper, td_pos, obj0_pos, obj1_pos, obj2_pos, large_obj_pos)
-        #(3, 4, 1, 3, 3, 3, 3, 3)
+        #(hand_pos, hand_theta, gripper, td_pos, obj0_pos, obj1_pos, obj2_pos, large_obj_pos, on_top_drawer_goal, in_drawer_goal, out_of_drawer_goal)
+        #(3, 4, 1, 3, 3, 3, 3, 3, 3, 3, 3)
         observation = np.concatenate((
             end_effector_pos, hand_theta, gripper_tips_distance,
             top_drawer_pos,
-            obj0_pos, obj1_pos, obj2_pos, large_obj_pos
+            obj0_pos, obj1_pos, obj2_pos, large_obj_pos,
+            self.on_top_drawer_goal, self.in_drawer_goal, self.out_of_drawer_goal,
         ))
 
         obs_dict = dict(
@@ -1020,17 +1042,28 @@ class SawyerRigAffordancesV5(SawyerBaseEnv):
         else:
             return np.linalg.norm(curr_pos - goal_pos) < self.drawer_thresh
 
-    def obj_pnp_done(self, curr_pos, goal_pos):
-        if curr_pos.size == 0 or goal_pos.size == 0:
-            return 0
+    def obj_pnp_done(self, curr_pos, goal_pos, curr_pos_extra, goal_pos_extra):
+        on_top_drawer_goal_pos = goal_pos_extra[0:3]
+        in_drawer_goal_pos = goal_pos_extra[3:6]
+        out_of_drawer_goal_pos = goal_pos_extra[6:9]
+
+        goal_not_on_top = np.linalg.norm(
+            goal_pos - on_top_drawer_goal_pos) > self.obj_thresh
+        goal_not_in = np.linalg.norm(
+            goal_pos - in_drawer_goal_pos) > self.obj_thresh
+        if goal_not_on_top and goal_not_in:
+            not_on_top = np.linalg.norm(
+                curr_pos - on_top_drawer_goal_pos) > self.obj_thresh
+            not_in = np.linalg.norm(
+                curr_pos - in_drawer_goal_pos) > self.obj_thresh
+            return not_on_top and not_in and np.linalg.norm(curr_pos[2] - goal_pos[2]) < 0.01
         else:
-            return np.linalg.norm(curr_pos - goal_pos) < self.obj_thresh
+            return np.linalg.norm(curr_pos - goal_pos) < self.obj_thresh and np.linalg.norm(curr_pos[2] - goal_pos[2]) < 0.01
 
     def obj_slide_done(self, curr_pos, goal_pos):
         if curr_pos.size == 0 or goal_pos.size == 0:
             return 0
         else:
-            # return np.linalg.norm(curr_pos - goal_pos) < self.obj_thresh
             return self.get_quadrant(curr_pos) == self.get_quadrant(goal_pos)
 
     def get_obj_pnp_goals(self, task_info=None):
@@ -1200,7 +1233,14 @@ class SawyerRigAffordancesV5(SawyerBaseEnv):
         obj_goal_state = [0 for _ in range(
             obj_pnp_idx * 3)] + list(self.obj_pnp_goal) + [0 for _ in range((2-obj_pnp_idx) * 3)]
         self.goal_state = np.concatenate(
-            [[0 for _ in range(8)], self.td_goal, obj_goal_state])
+            [
+                [0 for _ in range(8)],
+                self.td_goal,
+                obj_goal_state,
+                self.obj_slide_goal,
+                self.on_top_drawer_goal, self.in_drawer_goal, self.out_of_drawer_goal,
+            ]
+        )
 
     ### DEMO COLLECTING FUNCTIONS BEYOND THIS POINT ###
     def demo_reset(self):
@@ -1475,7 +1515,7 @@ class SawyerRigAffordancesV5(SawyerBaseEnv):
         #     goal_ee_yaw = direction - 180
         # else:
         #     goal_ee_yaw = direction - 360
-        ee_early_stage_goal_pos = obj_pos - 0.06 * \
+        ee_early_stage_goal_pos = obj_pos - 0.11 * \
             np.array([np.sin(direction * np.pi / 180), -
                      np.cos(direction * np.pi / 180), 0])
 
