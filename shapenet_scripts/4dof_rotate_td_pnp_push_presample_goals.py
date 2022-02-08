@@ -9,9 +9,9 @@ import os
 from PIL import Image
 import argparse
 
-from experiments.kuanfang.iql.drawer_pnp_commands import drawer_pnp_commands
-from experiments.kuanfang.iql.drawer_pnp_single_obj_commands import drawer_pnp_single_obj_commands
-from experiments.kuanfang.iql.drawer_pnp_push_commands import drawer_pnp_push_commands
+# from experiments.kuanfang.iql.drawer_pnp_commands import drawer_pnp_commands
+# from experiments.kuanfang.iql.drawer_pnp_single_obj_commands import drawer_pnp_single_obj_commands
+from rlkit.experimental.kuanfang.envs.drawer_pnp_push_commands import drawer_pnp_push_commands
 
 ########################################
 # Args.
@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser()
 # parser.add_argument("--name", type=str)
 parser.add_argument("--num_trajectories", type=int, default=5)
 parser.add_argument("--num_timesteps", type=int, default=85)
-parser.add_argument("--save_last_k_steps", type=int, default=15)
+parser.add_argument("--save_last_k_steps", type=int, default=10)
 parser.add_argument("--no_save_last_w_steps", type=int, default=0)
 parser.add_argument("--downsample", action='store_true')
 parser.add_argument("--drawer_sliding", action='store_true')
@@ -35,7 +35,7 @@ num_timesteps = args.num_timesteps
 num_trajectories = args.num_trajectories
 save_last_k_steps = args.save_last_k_steps
 no_save_last_w_steps = args.no_save_last_w_steps
-ROOT_PATH = "/2tb/home/patrickhaoy/data/affordances/data/env5_td_pnp_push/"
+ROOT_PATH = "/2tb/home/patrickhaoy/data/affordances/data/env5_td_pnp_push_v2/"
 
 for test_env_seed in args.test_env_seeds:
     data_save_path = ROOT_PATH + "td_pnp_push_goals_seed{}.pkl".format(str(test_env_seed))
