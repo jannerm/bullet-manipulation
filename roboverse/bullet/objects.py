@@ -125,6 +125,12 @@ tray = loader(ASSET_PATH, os.path.join(obj_dir, "box_open_top", "box_open_top.ur
               quat=[0, 0, 0, 1],
               scale=0.175)
 
+tray_heavy = loader(ASSET_PATH, os.path.join(obj_dir, "box_open_top", "box_open_top_heavy.urdf"),
+              pos=[.6, -0.2, -.35],
+              rgba=[1, 1, 1, 1],
+              quat=[0, 0, 0, 1],
+              scale=0.175)
+
 tray_teal = loader(ASSET_PATH, os.path.join(obj_dir, "box_open_top", "box_open_top_teal.urdf"),
               pos=[.6, -0.2, -.35],
               rgba=[1, 1, 1, 1],
@@ -181,6 +187,9 @@ drawer_lightblue_base = loader_randomize_color(ASSET_PATH, os.path.join(obj_dir,
               pos=drawer_pos + np.array([0, 0, 0.12]),
               scale=0.125)
 drawer_sliding_lightblue_base = loader_randomize_color(ASSET_PATH, os.path.join(obj_dir, "drawer", "drawer_sliding_lightblue_base.urdf"),
+              pos=drawer_pos + np.array([0, 0, 0.12]),
+              scale=0.125)
+drawer_lightblue_base_longhandle = loader_randomize_color(ASSET_PATH, os.path.join(obj_dir, "drawer", "drawer_lightblue_base_longhandle.urdf"),
               pos=drawer_pos + np.array([0, 0, 0.12]),
               scale=0.125)
 drawer_no_handle = loader_randomize_color(ASSET_PATH, os.path.join(obj_dir, "drawer", "drawer_no_handle.urdf"),

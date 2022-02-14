@@ -7,19 +7,19 @@ import skvideo.io
 from rlkit.experimental.kuanfang.envs.drawer_pnp_push_commands import drawer_pnp_push_commands
 
 ts = 75
-num_traj = 1
+num_traj = 100
 
 #obs_img_dim=196, 
 env = rv.make(
-    "SawyerRigAffordances-v5", 
-    gui=False, 
+    "SawyerRigAffordances-v6", 
+    gui=True, 
     expl=True, 
-    reset_interval=3, 
+    reset_interval=4, 
     drawer_sliding=False, 
     env_obs_img_dim=196, 
     random_color_p=0.0, 
-    test_env=True, 
-    test_env_command=drawer_pnp_push_commands[1],
+    # test_env=True, 
+    # test_env_command=drawer_pnp_push_commands[14],
     use_single_obj_idx=1,
     #large_obj=False,
     demo_num_ts=ts,
@@ -29,14 +29,14 @@ env = rv.make(
     # fixed_drawer_yaw=24.18556394023222,
     # fixed_drawer_position=np.array([0.50850424, 0.11416014, -0.34]),
     expert_policy_std=.05,
-    #downsample=True,
+    downsample=False,
 )
 
-save_video = True
+save_video = False
 
 if save_video:
     video_save_path = '/2tb/home/patrickhaoy/data/test/'
-    num_traj = 1
+    num_traj = 2
     observations = np.zeros((num_traj*ts, 196, 196, 3))
 
 tasks_success = dict()

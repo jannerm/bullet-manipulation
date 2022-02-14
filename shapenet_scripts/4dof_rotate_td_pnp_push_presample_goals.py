@@ -35,7 +35,7 @@ num_timesteps = args.num_timesteps
 num_trajectories = args.num_trajectories
 save_last_k_steps = args.save_last_k_steps
 no_save_last_w_steps = args.no_save_last_w_steps
-ROOT_PATH = "/2tb/home/patrickhaoy/data/affordances/data/env5_td_pnp_push_v2/"
+ROOT_PATH = "/2tb/home/patrickhaoy/data/affordances/data/env6_td_pnp_push/"
 
 for test_env_seed in args.test_env_seeds:
     data_save_path = ROOT_PATH + "td_pnp_push_goals_seed{}.pkl".format(str(test_env_seed))
@@ -53,7 +53,7 @@ for test_env_seed in args.test_env_seeds:
     if args.downsample:
         kwargs['downsample'] = True
         kwargs['env_obs_img_dim'] = 196
-    env = roboverse.make('SawyerRigAffordances-v5', test_env=True, expl=True, use_single_obj_idx=1, **kwargs)
+    env = roboverse.make('SawyerRigAffordances-v6', test_env=True, expl=True, use_single_obj_idx=1, **kwargs)
 
     ########################################
     # Rollout in Environment and Collect Data.
