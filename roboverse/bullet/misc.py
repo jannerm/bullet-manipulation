@@ -74,13 +74,47 @@ def reset(physicsClientId=0):
     p.resetSimulation(physicsClientId=physicsClientId)
 
 
+def replace_lines(filename, line_nums, texts):
+    lines = open(filename, 'r').readlines()
+    for line_num, text in zip(line_nums, texts):
+        lines[line_num] = text
+    out = open(filename, 'w')
+    out.writelines(lines)
+    out.close()
+
+def load_urdf_randomize_color_custom(filepath, pos=[0, 0, 0], quat=[0, 0, 0, 1], scale=1, rgba=None, physicsClientId=0):
+    from shutil import copyfile
+
+    rgbas = rgba
+    if rgbas is not None:
+        rand_filepath = filepath[:-5] + \
+            '_rand_color_{0}.urdf'.format(np.random.uniform())
+        copyfile(filepath, rand_filepath)
+        line_nums = [3, 6, 9, 12]
+        color_lines = ['    <color rgba="{0} {1} {2} {3}"/>'.format(
+            rgba[0], rgba[1], rgba[2], rgba[3]) for rgba in rgbas]
+        replace_lines(rand_filepath, line_nums, color_lines)
+        try:
+            body = p.loadURDF(rand_filepath, globalScaling=scale)
+            p.changeVisualShape(body, -1, rgbaColor=rgbas[0],
+                                physicsClientId=physicsClientId)
+        finally:
+            pass
+            # os.remove(rand_filepath)
+    else:
+        body = p.loadURDF(filepath, globalScaling=scale,
+                          physicsClientId=physicsClientId)
+
+    p.resetBasePositionAndOrientation(
+        body, pos, quat, physicsClientId=physicsClientId)
+    return body
+
 def replace_line(filename, line_num, text):
     lines = open(filename, 'r').readlines()
     lines[line_num] = text
     out = open(filename, 'w')
     out.writelines(lines)
     out.close()
-
 
 def load_urdf_randomize_color(filepath, pos=[0, 0, 0], quat=[0, 0, 0, 1], scale=1, rgba=None, physicsClientId=0):
     from shutil import copyfile

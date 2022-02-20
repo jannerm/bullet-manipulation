@@ -8,8 +8,24 @@ import math
 from roboverse.bullet.misc import (
   load_urdf,
   load_urdf_randomize_color,
+  load_urdf_randomize_color_custom,
   deg_to_quat,
 )
+
+def loader_randomize_color_custom(*filepath, **defaults):
+    filepath = os.path.join(*filepath)
+    def fn(*args, **kwargs):
+        defaults.update(kwargs)
+
+        if 'deg' in defaults:
+          assert 'quat' not in defaults
+          if 'physicsClientId' in defaults:
+            defaults['quat'] = deg_to_quat(defaults['deg'], physicsClientId=defaults['physicsClientId'])
+          else:
+            defaults['quat'] = deg_to_quat(defaults['deg'])
+          del defaults['deg']
+        return load_urdf_randomize_color_custom(filepath, **defaults)
+    return fn
 
 def loader_randomize_color(*filepath, **defaults):
     filepath = os.path.join(*filepath)
@@ -137,6 +153,12 @@ tray_teal = loader(ASSET_PATH, os.path.join(obj_dir, "box_open_top", "box_open_t
               quat=[0, 0, 0, 1],
               scale=0.175)
 
+tray_teal_rgba = loader_randomize_color(ASSET_PATH, os.path.join(obj_dir, "box_open_top", "box_open_top_teal_rgba.urdf"),
+              pos=[.6, -0.2, -.35],
+              rgba=[1, 1, 1, 1],
+              quat=[0, 0, 0, 1],
+              scale=0.175)
+
 wall = loader(ASSET_PATH, os.path.join(obj_dir, "wall", "wall.urdf"),
               pos=[.68, 0, -.3],
               rgba=[1, 1, 1, 1],
@@ -190,6 +212,9 @@ drawer_sliding_lightblue_base = loader_randomize_color(ASSET_PATH, os.path.join(
               pos=drawer_pos + np.array([0, 0, 0.12]),
               scale=0.125)
 drawer_lightblue_base_longhandle = loader_randomize_color(ASSET_PATH, os.path.join(obj_dir, "drawer", "drawer_lightblue_base_longhandle.urdf"),
+              pos=drawer_pos + np.array([0, 0, 0.12]),
+              scale=0.125)
+drawer_lightblue_base_longhandle_rgba = loader_randomize_color_custom(ASSET_PATH, os.path.join(obj_dir, "drawer", "drawer_lightblue_base_longhandle_rgba.urdf"),
               pos=drawer_pos + np.array([0, 0, 0.12]),
               scale=0.125)
 drawer_no_handle = loader_randomize_color(ASSET_PATH, os.path.join(obj_dir, "drawer", "drawer_no_handle.urdf"),
