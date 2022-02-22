@@ -12,10 +12,10 @@ parser.add_argument('--obs_img_dim', type=int, default=256)
 parser.add_argument('--seeds', type=int, default=256)
 args = parser.parse_args()
 
-video_save_path = '/2tb/home/patrickhaoy/data/test/'
-num_traj = 1
-obs_img_dim = 256
-seed = 0
+video_save_path = args.video_save_path
+num_traj = args.num_traj
+obs_img_dim = args.obs_img_dim
+seeds = args.seeds
 
 env = rv.make(
     "SawyerRigAffordances-v1", 
@@ -34,27 +34,28 @@ env = rv.make(
     max_distractors = 4
 )
 
-ts = env.max_episode_steps
-observations = np.zeros((num_traj*ts, obs_img_dim, obs_img_dim, 3))
+for seed in seeds:
+    ts = env.max_episode_steps
+    observations = np.zeros((num_traj*ts, obs_img_dim, obs_img_dim, 3))
 
-count = 0
-for _ in range(num_traj):
-    env.demo_reset(seed=seed)
-    for t in range(ts):
-        if count >= num_traj*ts:
-            break
-        img = np.uint8(env.render_obs())
-        observations[count, :] = img
-        count += 1
-        action = env.get_demo_action(first_timestep=(t == 0), final_timestep=(t == ts - 1))
-        next_observation, reward, done, info = env.step(action)
-        if done:
-            break
-            #import pdb; pdb.set_trace()
+    count = 0
+    for _ in range(num_traj):
+        env.demo_reset(seed=seed)
+        for t in range(ts):
+            if count >= num_traj*ts:
+                break
+            img = np.uint8(env.render_obs())
+            observations[count, :] = img
+            count += 1
+            action = env.get_demo_action(first_timestep=(t == 0), final_timestep=(t == ts - 1))
+            next_observation, reward, done, info = env.step(action)
+            if done:
+                break
+                #import pdb; pdb.set_trace()
 
-observations = observations[:count]
+    observations = observations[:count]
 
-writer = skvideo.io.FFmpegWriter(os.path.join(video_save_path, "rollout_seed{}.mp4".format(seed)))
-for i in range(count):
-    writer.writeFrame(observations[i, :, :, :])
-writer.close()
+    writer = skvideo.io.FFmpegWriter(os.path.join(video_save_path, "rollout_seed{}.mp4".format(seed)))
+    for i in range(count):
+        writer.writeFrame(observations[i, :, :, :])
+    writer.close()
