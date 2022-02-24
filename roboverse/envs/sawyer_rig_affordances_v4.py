@@ -497,14 +497,18 @@ class SawyerRigAffordancesV4(SawyerBaseEnv):
 
         return diagnostics
 
-    def render_obs(self):
-        img, depth, segmentation = bullet.render(
-            self.env_obs_img_dim, self.env_obs_img_dim, self._view_matrix_obs,
-            self._projection_matrix_obs, shadow=0, gaussian_width=0)
-        
-        if self.downsample:
-            im = Image.fromarray(np.uint8(img), 'RGB').resize(self.image_shape, resample=Image.ANTIALIAS)
-            img = np.array(im)       
+    def render_obs(self, force_img_dim = None):
+        if force_img_dim is not None:
+            _projection_matrix_obs_high = bullet.get_projection_matrix(
+                force_img_dim, force_img_dim)
+            img, depth, segmentation = bullet.render(
+            force_img_dim, force_img_dim, self._view_matrix_obs,
+            _projection_matrix_obs_high, shadow=0, gaussian_width=0)
+        else:
+            img, depth, segmentation = bullet.render(
+                self.env_obs_img_dim, self.env_obs_img_dim, self._view_matrix_obs,
+                self._projection_matrix_obs, shadow=0, gaussian_width=0)
+              
         if self._transpose_image:
             img = np.transpose(img, (2, 0, 1))
         return img
