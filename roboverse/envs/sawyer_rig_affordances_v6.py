@@ -19,7 +19,7 @@ import pkgutil
 
 # Constants
 # 0.21060003 #0.16298369 #0.20567612 #0.13754340000000412 #0.21567452 #0.13754340000000412
-td_close_coeff = 0.15134 #0.13146014
+td_close_coeff = 0.15134  # 0.13146014
 td_open_coeff = 0.2695  # 0.23250536 #0.2585
 td_offset_coeff = 0.0125
 
@@ -289,7 +289,8 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
 
         # Tray acts as stopper for drawer closing
         tray_pos = self.get_drawer_handle_future_pos(-.05)
-        self._tray = bullet.objects.tray_heavy(quat=quat, pos=tray_pos, scale=0.001, physicsClientId=self._uid)
+        self._tray = bullet.objects.tray_heavy(
+            quat=quat, pos=tray_pos, scale=0.001, physicsClientId=self._uid)
 
         if self.test_env:
             if not self.test_env_command['drawer_open']:
@@ -609,19 +610,22 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             goal_pos_0 = goal_state[11:14]
             curr_pos_extra = curr_state[23:32]
             goal_pos_extra = goal_state[23:32]
-            success = int(self.obj_pnp_done(curr_pos_0, goal_pos_0, curr_pos_extra, goal_pos_extra))
+            success = int(self.obj_pnp_done(
+                curr_pos_0, goal_pos_0, curr_pos_extra, goal_pos_extra))
         elif key == 'obj_pnp_1':
             curr_pos_1 = curr_state[14:17]
             goal_pos_1 = goal_state[14:17]
             curr_pos_extra = curr_state[23:32]
             goal_pos_extra = goal_state[23:32]
-            success = int(self.obj_pnp_done(curr_pos_1, goal_pos_1, curr_pos_extra, goal_pos_extra))
+            success = int(self.obj_pnp_done(
+                curr_pos_1, goal_pos_1, curr_pos_extra, goal_pos_extra))
         elif key == 'obj_pnp_2':
             curr_pos_2 = curr_state[17:20]
             goal_pos_2 = goal_state[17:20]
             curr_pos_extra = curr_state[23:32]
             goal_pos_extra = goal_state[23:32]
-            success = int(self.obj_pnp_done(curr_pos_2, goal_pos_2, curr_pos_extra, goal_pos_extra))
+            success = int(self.obj_pnp_done(
+                curr_pos_2, goal_pos_2, curr_pos_extra, goal_pos_extra))
         elif key == 'obj_slide':
             curr_pos = curr_state[20:23]
             goal_pos = goal_state[20:23]
@@ -729,10 +733,29 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         state_key = "state_observation"
         goal_key = "state_desired_goal"
 
-        success_keys = ["overall", "top_drawer", "obj_pnp", "obj_pnp_0", "obj_pnp_1", "obj_pnp_2", "obj_slide", "gripper_position",
-                        "gripper_rotation_roll", "gripper_rotation_pitch", "gripper_rotation_yaw", "gripper_rotation", "gripper"]
-        distance_keys = ["top_drawer", "obj_pnp", "obj_pnp_0", "obj_pnp_1", "obj_pnp_2", "obj_slide", "gripper_position",
-                         "gripper_rotation_roll", "gripper_rotation_pitch", "gripper_rotation_yaw", "gripper_rotation"]
+        success_keys = ["overall",
+                        "top_drawer",
+                        "obj_pnp",
+                        "obj_pnp_0",
+                        "obj_pnp_1",
+                        "obj_pnp_2",
+                        "obj_slide",
+                        "gripper_position",
+                        "gripper_rotation_roll",
+                        "gripper_rotation_pitch",
+                        "gripper_rotation_yaw",
+                        "gripper_rotation", "gripper"]
+        distance_keys = ["top_drawer",
+                         "obj_pnp",
+                         "obj_pnp_0",
+                         "obj_pnp_1",
+                         "obj_pnp_2",
+                         "obj_slide",
+                         "gripper_position",
+                         "gripper_rotation_roll",
+                         "gripper_rotation_pitch",
+                         "gripper_rotation_yaw",
+                         "gripper_rotation"]
 
         dict_of_success_lists = {}
         for k in success_keys:
@@ -742,6 +765,15 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         for k in distance_keys:
             dict_of_distance_lists[k] = []
 
+        dict_of_length_lists_1 = {}
+        for k in success_keys:
+            dict_of_length_lists_1[k] = []
+
+        dict_of_length_lists_2 = {}
+        for k in success_keys:
+            dict_of_length_lists_2[k] = []
+
+        # ---------------------------------------------------------
         for i in range(len(paths)):
             curr_obs = paths[i]["observations"][-1][state_key]
             goal_obs = contexts[i][goal_key]
@@ -751,6 +783,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             for k in distance_keys:
                 self.get_distance_metric(
                     curr_obs, goal_obs, distance_list=dict_of_distance_lists[k], key=k)
+
         for k in success_keys:
             diagnostics.update(create_stats_ordered_dict(
                 goal_key + f"/final/{k}_success", dict_of_success_lists[k]))
@@ -758,16 +791,24 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             diagnostics.update(create_stats_ordered_dict(
                 goal_key + f"/final/{k}_distance", dict_of_distance_lists[k]))
 
+        # ---------------------------------------------------------
         for i in range(len(paths)):
-            for j in range(len(paths[i]["observations"])):
-                curr_obs = paths[i]["observations"][j][state_key]
+            for t in range(len(paths[i]["observations"])):
+                curr_obs = paths[i]["observations"][t][state_key]
                 goal_obs = contexts[i][goal_key]
                 for k in success_keys:
                     self.get_success_metric(
-                        curr_obs, goal_obs, success_list=dict_of_success_lists[k], key=k)
+                        curr_obs,
+                        goal_obs,
+                        success_list=dict_of_success_lists[k],
+                        key=k)
                 for k in distance_keys:
                     self.get_distance_metric(
-                        curr_obs, goal_obs, distance_list=dict_of_distance_lists[k], key=k)
+                        curr_obs,
+                        goal_obs,
+                        distance_list=dict_of_distance_lists[k],
+                        key=k)
+
         for k in success_keys:
             diagnostics.update(create_stats_ordered_dict(
                 goal_key + f"/{k}_success", dict_of_success_lists[k]))
@@ -775,12 +816,13 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             diagnostics.update(create_stats_ordered_dict(
                 goal_key + f"/{k}_distance", dict_of_distance_lists[k]))
 
+        # ---------------------------------------------------------
         gripper_rotation_roll_list = []
         gripper_rotation_pitch_list = []
         gripper_rotation_yaw_list = []
         for i in range(len(paths)):
-            for j in range(len(paths[i]["observations"])):
-                curr_obs = paths[i]["observations"][j][state_key]
+            for t in range(len(paths[i]["observations"])):
+                curr_obs = paths[i]["observations"][t][state_key]
                 self.get_gripper_deg(curr_obs, roll_list=gripper_rotation_roll_list,
                                      pitch_list=gripper_rotation_pitch_list, yaw_list=gripper_rotation_yaw_list)
 
@@ -790,6 +832,37 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             state_key + "/gripper_rotation_pitch", gripper_rotation_pitch_list))
         diagnostics.update(create_stats_ordered_dict(
             state_key + "/gripper_rotation_yaw", gripper_rotation_yaw_list))
+
+        # ---------------------------------------------------------
+        for k in success_keys:
+            for i in range(len(paths)):
+                success = False
+                goal_obs = contexts[i][goal_key]
+                for t in range(len(paths[i]["observations"])):
+                    curr_obs = paths[i]["observations"][t][state_key]
+                    success = self.get_success_metric(
+                        curr_obs,
+                        goal_obs,
+                        success_list=None,
+                        key=k)
+                    if success:
+                        break
+
+                dict_of_length_lists_1[k].append(t)
+
+                if success:
+                    dict_of_length_lists_2[k].append(t)
+
+            if len(dict_of_length_lists_2[k]) == 0:
+                dict_of_length_lists_2[k] = [int(1e3 - 1)]
+
+        for k in success_keys:
+            diagnostics.update(create_stats_ordered_dict(
+                goal_key + f"/{k}_length_inclusive",
+                dict_of_length_lists_1[k]))
+            diagnostics.update(create_stats_ordered_dict(
+                goal_key + f"/{k}_length_exclusive",
+                dict_of_length_lists_2[k]))
 
         return diagnostics
 
@@ -1039,11 +1112,15 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         in_drawer_goal_pos = goal_pos_extra[3:6]
         out_of_drawer_goal_pos = goal_pos_extra[6:9]
 
-        goal_not_on_top = np.linalg.norm(goal_pos - on_top_drawer_goal_pos) > self.obj_thresh
-        goal_not_in = np.linalg.norm(goal_pos - in_drawer_goal_pos) > self.obj_thresh
+        goal_not_on_top = np.linalg.norm(
+            goal_pos - on_top_drawer_goal_pos) > self.obj_thresh
+        goal_not_in = np.linalg.norm(
+            goal_pos - in_drawer_goal_pos) > self.obj_thresh
         if goal_not_on_top and goal_not_in:
-            not_on_top = np.linalg.norm(curr_pos - on_top_drawer_goal_pos) > self.obj_thresh
-            not_in = np.linalg.norm(curr_pos - in_drawer_goal_pos) > self.obj_thresh
+            not_on_top = np.linalg.norm(
+                curr_pos - on_top_drawer_goal_pos) > self.obj_thresh
+            not_in = np.linalg.norm(
+                curr_pos - in_drawer_goal_pos) > self.obj_thresh
             return not_on_top and not_in and np.linalg.norm(curr_pos[2] - goal_pos[2]) < 0.01
         else:
             return np.linalg.norm(curr_pos - goal_pos) < self.obj_thresh and np.linalg.norm(curr_pos[2] - goal_pos[2]) < 0.01
@@ -1222,8 +1299,8 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             obj_pnp_idx * 3)] + list(self.obj_pnp_goal) + [0 for _ in range((2-obj_pnp_idx) * 3)]
         self.goal_state = np.concatenate(
             [
-                [0 for _ in range(8)], 
-                self.td_goal, 
+                [0 for _ in range(8)],
+                self.td_goal,
                 obj_goal_state,
                 self.obj_slide_goal,
                 self.on_top_drawer_goal, self.in_drawer_goal, self.out_of_drawer_goal,
