@@ -7,19 +7,18 @@ from matplotlib import pyplot as plt  # NOQA
 
 import roboverse
 
-from rlkit.experimental.kuanfang.envs.drawer_pnp_push_commands import drawer_pnp_push_commands  # NOQA
-
 ########################################
 # Args.
 ########################################
 parser = argparse.ArgumentParser()
 parser.add_argument('--output_dir', type=str)
 parser.add_argument("--num_trajectories", type=int, default=32)
-parser.add_argument("--max_steps_per_stage", type=int, default=160)
-parser.add_argument("--num_subgoals", type=int, default=16)
+parser.add_argument("--max_steps_per_stage", type=int, default=75)
+parser.add_argument("--num_subgoals", type=int, default=10)
 parser.add_argument("--subgoal_interval", type=int, default=15)
 parser.add_argument("--downsample", action='store_true')
 parser.add_argument("--drawer_sliding", action='store_true')
+parser.add_argument("--full_open_close_init_and_goal", action='store_true')
 parser.add_argument("--test_env_seeds", nargs='+', type=int)
 parser.add_argument("--video_save_frequency", type=int,
                     default=0, help="Set to zero for no video saving")
@@ -33,6 +32,7 @@ num_trajectories = args.num_trajectories
 max_steps_per_stage = args.max_steps_per_stage
 subgoal_interval = args.subgoal_interval
 num_subgoals = args.num_subgoals
+full_open_close_init_and_goal = args.full_open_close_init_and_goal
 debug = args.debug
 
 for test_env_seed in args.test_env_seeds:  # NOQA
@@ -42,14 +42,17 @@ for test_env_seed in args.test_env_seeds:  # NOQA
     output_path = os.path.join(
         args.output_dir,
         'td_pnp_push_scripted_goals_seed{}.pkl'.format(str(test_env_seed)))
-    command = drawer_pnp_push_commands[test_env_seed]
 
     ########################################
     # Environment.
     ########################################
     kwargs = {
         'drawer_sliding': True if args.drawer_sliding else False,
-        'test_env_command': command,
+        'test_env_seed': test_env_seed,
+        'new_view': True,
+        'close_view': True,
+        'fix_drawer_orientation_semicircle': True,
+        'full_open_close_init_and_goal': full_open_close_init_and_goal,
     }
     if args.downsample:
         kwargs['downsample'] = True
@@ -58,15 +61,15 @@ for test_env_seed in args.test_env_seeds:  # NOQA
     # TODO
     # env = roboverse.make('SawyerRigAffordances-v5', test_env=True,
     #                      expl=True, use_single_obj_idx=1, **kwargs)
-    env = roboverse.make('SawyerRigAffordances-v6', test_env=True,
-                         expl=True, use_single_obj_idx=1, **kwargs)
+    env = roboverse.make('SawyerRigAffordances-v1', test_env=True,
+                         expl=True, random_color_p=0.0, **kwargs)
 
     ########################################
     # Rollout in Environment and Collect Data.
     ########################################
     obs_dim = env.observation_space.spaces['state_achieved_goal'].low.size
     imlength = env.obs_img_dim * env.obs_img_dim * 3
-    num_stages = len(command['command_sequence'])
+    num_stages = 2
 
     dataset = {
         'initial_latent_state': np.zeros((num_trajectories, 720), dtype=np.float),  # NOQA

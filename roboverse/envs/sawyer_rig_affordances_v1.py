@@ -682,7 +682,7 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         #self.get_reward(print_stats=True)
         return reset_obs
 
-    def get_demo_action(self, first_timestep=False, final_timestep=False):
+    def get_demo_action(self, first_timestep=False, final_timestep=False, return_done=False):
         self.final_timestep = final_timestep
         
         if self.drawer_sliding:
@@ -719,6 +719,8 @@ class SawyerRigAffordancesV1(SawyerBaseEnv):
         action = np.clip(action, a_min=-1, a_max=1)
         self.timestep += 1
 
+        if return_done:
+            return action, done
         return action
     
     def move_gripper(self, print_stages=False):
