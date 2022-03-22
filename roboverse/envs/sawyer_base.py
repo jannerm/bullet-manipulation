@@ -13,12 +13,13 @@ class SawyerBaseEnv(gym.Env, Serializable):
                  gui=False,
                  action_scale=.2,
                  action_repeat=10,
-                 timestep=1./240, #1./240 (1./360 is more realistic, but harder)
+                 # 1./240 (1./360 is more realistic, but harder)
+                 timestep=1./240,
                  solver_iterations=150,
-                 gripper_bounds=[-1,1],
-                 pos_init=[0.6, 0.0, -0.2], #[0.5, 0, 0]
-                 pos_low=[0.6,-0.2,-.36], #[.4,-.6,-.36]
-                 pos_high=[0.8,0.2,-0.2], #[1,.4,.25]
+                 gripper_bounds=[-1, 1],
+                 pos_init=[0.6, 0.0, -0.2],  # [0.5, 0, 0]
+                 pos_low=[0.6, -0.2, -.36],  # [.4,-.6,-.36]
+                 pos_high=[0.8, 0.2, -0.2],  # [1,.4,.25]
                  max_force=1000.,
                  visualize=True,
                  ):
@@ -44,7 +45,8 @@ class SawyerBaseEnv(gym.Env, Serializable):
 
         self._img_dim = img_dim
         self._view_matrix = bullet.get_view_matrix()
-        self._projection_matrix = bullet.get_projection_matrix(self._img_dim, self._img_dim)
+        self._projection_matrix = bullet.get_projection_matrix(
+            self._img_dim, self._img_dim)
 
     def get_params(self):
         labels = ['_action_scale', '_action_repeat',
@@ -84,23 +86,27 @@ class SawyerBaseEnv(gym.Env, Serializable):
 
     def reset(self):
         bullet.reset(physicsClientId=self._uid)
-        bullet.setup_headless(self._timestep, solver_iterations=self._solver_iterations, physicsClientId=self._uid)
+        bullet.setup_headless(
+            self._timestep, solver_iterations=self._solver_iterations, physicsClientId=self._uid)
         self._load_meshes()
         self._format_state_query()
 
-
         self._prev_pos = np.array(self._pos_init)
-        bullet.position_control(self._sawyer, self._end_effector, self._prev_pos, self.theta, physicsClientId=self._uid)
+        bullet.position_control(self._sawyer,
+                                self._end_effector,
+                                self._prev_pos,
+                                self.theta,
+                                physicsClientId=self._uid)
         # self._reset_hook(self)
         for _ in range(3):
-            self.step([0.,0.,0.,-1])
+            self.step([0., 0., 0., -1])
         return self.get_observation()
 
     # def set_reset_hook(self, fn=lambda env: None):
     #     self._reset_hook = fn
 
     def open_gripper(self, act_repeat=10):
-        delta_pos = [0,0,0]
+        delta_pos = [0, 0, 0]
         gripper = 0
         for _ in range(act_repeat):
             self.step(delta_pos, gripper)
@@ -116,7 +122,7 @@ class SawyerBaseEnv(gym.Env, Serializable):
 
     def get_end_effector_pos(self):
         return bullet.get_link_state(self._sawyer, self._end_effector, 'pos', physicsClientId=self._uid)
-    
+
     def get_end_effector_theta(self):
         return bullet.get_link_state(self._sawyer, self._end_effector, 'theta', physicsClientId=self._uid)
 
@@ -126,20 +132,21 @@ class SawyerBaseEnv(gym.Env, Serializable):
         self._objects = {}
         self._sensors = {}
         self._workspace = bullet.Sensor(self._sawyer,
-            xyz_min=self._pos_low, xyz_max=self._pos_high,
-            visualize=False, rgba=[0,1,0,.1], physicsClientId=self._uid)
+                                        xyz_min=self._pos_low, xyz_max=self._pos_high,
+                                        visualize=False, rgba=[0, 1, 0, .1], physicsClientId=self._uid)
         self._end_effector = bullet.get_index_by_attribute(
             self._sawyer, 'link_name', 'gripper_site', physicsClientId=self._uid)
 
-
     def _format_state_query(self):
         ## position and orientation of body root
-        bodies = [v for k,v in self._objects.items() if not bullet.has_fixed_root(v, physicsClientId=self._uid)]
+        bodies = [v for k, v in self._objects.items(
+        ) if not bullet.has_fixed_root(v, physicsClientId=self._uid)]
         ## position and orientation of link
         links = [(self._sawyer, self._end_effector)]
         ## position and velocity of prismatic joint
         joints = [(self._sawyer, None)]
-        self._state_query = bullet.format_sim_query(bodies, links, joints, physicsClientId=self._uid)
+        self._state_query = bullet.format_sim_query(
+            bodies, links, joints, physicsClientId=self._uid)
 
     def _format_action(self, *action):
         if len(action) == 1:
@@ -151,22 +158,26 @@ class SawyerBaseEnv(gym.Env, Serializable):
         return np.array(delta_pos), gripper
 
     def get_observation(self):
-        observation = bullet.get_sim_state(*self._state_query, physicsClientId=self._uid)
+        observation = bullet.get_sim_state(
+            *self._state_query, physicsClientId=self._uid)
         return observation
 
     def step(self, *action):
         delta_pos, gripper = self._format_action(*action)
-        pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos', physicsClientId=self._uid)
+        pos = bullet.get_link_state(
+            self._sawyer, self._end_effector, 'pos', physicsClientId=self._uid)
         pos += delta_pos * self._action_scale
         pos = np.clip(pos, self._pos_low, self._pos_high)
 
         self._simulate(pos, self.theta, gripper)
-        if self._visualize: self.visualize_targets(pos)
+        if self._visualize:
+            self.visualize_targets(pos)
 
         observation = self.get_observation()
         reward = self.get_reward(observation)
         done = self.get_termination(observation)
-        self._prev_pos = bullet.get_link_state(self._sawyer, self._end_effector, 'pos', physicsClientId=self._uid)
+        self._prev_pos = bullet.get_link_state(
+            self._sawyer, self._end_effector, 'pos', physicsClientId=self._uid)
         return observation, reward, done, {}
 
     def _simulate(self, pos, theta, gripper):
@@ -206,7 +217,6 @@ class SawyerBaseEnv(gym.Env, Serializable):
         prevents always needing a gym adapter in softlearning
         @TODO : remove need for this method
     '''
+
     def convert_to_active_observation(self, obs):
         return obs
-
-

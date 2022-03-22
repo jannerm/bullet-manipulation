@@ -156,8 +156,9 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         self.expl = kwargs.pop('expl', False)
         self.trajectory_done = False
         self.drawer_sliding = kwargs.pop('drawer_sliding', False)
-        self.reset_gripper_interval = kwargs.pop('reset_gripper_interval', self.reset_interval)
-        self.reset_gripper_counter = self.reset_gripper_interval-1
+        self.reset_gripper_interval = kwargs.pop(
+            'reset_gripper_interval', self.reset_interval)
+        self.reset_gripper_counter = self.reset_gripper_interval - 1
 
         assert self.reset_gripper_interval <= self.reset_interval and self.reset_interval % self.reset_gripper_interval == 0
 
@@ -971,7 +972,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
 
         self.update_goal_state()
         return task
-    
+
     def reset_gripper(self):
         # Sample and load starting positions
         if self.test_env:
@@ -982,12 +983,15 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         else:
             init_pos = np.array(self._pos_init)
 
-
         action = np.array([0, 0, 1, 0, -1])
         for _ in range(10):
             self.step(action)
-        bullet.position_control(self._sawyer, self._end_effector,
-                                init_pos, self.default_theta, physicsClientId=self._uid)
+
+        bullet.position_control(self._sawyer,
+                                self._end_effector,
+                                init_pos,
+                                self.default_theta,
+                                physicsClientId=self._uid)
 
     def reset(self):
         if self.use_multiple_goals:
