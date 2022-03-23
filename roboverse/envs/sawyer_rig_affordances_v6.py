@@ -1010,6 +1010,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             if self.reset_interval == self.reset_counter:
                 self.reset_counter = 0
                 self.reset_gripper_counter = 0
+                self.curr_task = None
             else:
                 self.curr_task = self.sample_goals()
                 if self.reset_gripper_interval == self.reset_gripper_counter:
