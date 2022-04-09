@@ -14,26 +14,26 @@ env = rv.make(
     "SawyerRigAffordances-v6", 
     gui=True, 
     expl=True, 
-    reset_interval=4, 
+    reset_interval=1, 
     #reset_gripper_interval=1,
     drawer_sliding=False, 
     env_obs_img_dim=196, 
     random_color_p=0.0, 
-    test_env=True, 
-    test_env_command=drawer_pnp_push_commands[31],
+    #test_env=True, 
+    #test_env_command=drawer_pnp_push_commands[31],
     use_single_obj_idx=1,
     #large_obj=False,
     demo_num_ts=ts,
     # version=5,
     #move_gripper_task=True,
     # use_trash=True,
-    # fixed_drawer_yaw=24.18556394023222,
-    # fixed_drawer_position=np.array([0.50850424, 0.11416014, -0.34]),
+    fixed_drawer_yaw=171.86987153482346,
+    fixed_drawer_quadrant=1,
     expert_policy_std=.05,
     downsample=False,
 )
 
-save_video = True
+save_video = False
 
 if save_video:
     video_save_path = '/2tb/home/patrickhaoy/data/test/'

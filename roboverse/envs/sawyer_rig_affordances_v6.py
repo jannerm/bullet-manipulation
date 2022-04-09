@@ -165,7 +165,9 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         # Drawer
         self.gripper_has_been_above = False
         self.fixed_drawer_yaw = kwargs.pop('fixed_drawer_yaw', None)
-        self.fixed_drawer_pos = kwargs.pop('fixed_drawer_pos', None)
+        self.fixed_drawer_quadrant = kwargs.pop('fixed_drawer_quadrant', None)
+        if self.fixed_drawer_quadrant is not None:
+            assert self.fixed_drawer_quadrant == 0 or self.fixed_drawer_quadrant == 1
         self.init_obj_in_drawer = False
 
         # Objects
@@ -251,8 +253,9 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         else:
             self.drawer_yaw = self.fixed_drawer_yaw if self.fixed_drawer_yaw else random.uniform(
                 0, 180)
-            if self.fixed_drawer_pos is not None:
-                drawer_frame_pos = self.fixed_drawer_pos
+            if self.fixed_drawer_quadrant is not None:
+                quadrant = quadrants[self.fixed_drawer_quadrant]
+                drawer_frame_pos = [quadrant[0], quadrant[1], -.34]
             else:
                 tries = 0
                 quadrant = quadrants[self.top_drawer_quadrant]
