@@ -187,9 +187,17 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         # Demo
         self.demo_num_ts = kwargs.pop('demo_num_ts', None)
 
-        # Anti-aliasing
+        # Rendering
         self.downsample = kwargs.pop('downsample', False)
         self.env_obs_img_dim = kwargs.pop('env_obs_img_dim', self.obs_img_dim)
+        self.domain_randomization = kwargs.pop('domain_randomization', False)
+        if self.domain_randomization:
+            import torchvision.transforms.functional as F
+            from torchvision.transforms import ColorJitter, RandomResizedCrop
+            self._jitter = ColorJitter((0.75, 1.25), (0.9, 1.1), (0.9, 1.1), (-0.1, 0.1))
+            self._cropper = RandomResizedCrop(self.image_shape, (0.9, 1.0), (0.9, 1.1))
+            self._crop_prob = .95
+            self.get_new_aug_params = True
 
         # Magic Grasp
         self.grasp_constraint = None
@@ -880,11 +888,37 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             self._projection_matrix_obs, shadow=0, gaussian_width=0, physicsClientId=self._uid)
 
         if self.downsample:
-            im = Image.fromarray(np.uint8(img), 'RGB').resize(
-                self.image_shape, resample=Image.ANTIALIAS)
+            if self.domain_randomization:
+                im = Image.fromarray(np.uint8(img), 'RGB')
+                if self.get_new_aug_params:
+                    self.get_new_aug_params = False
+                    self.crop_params = self._cropper.get_params(im, (0.9, 1.0), (0.9, 1.1))
+                    self.jitter_params = self._jitter.get_params((0.75, 1.25), (0.9, 1.1), (0.9, 1.1), (-0.1, 0.1))
+                    self.do_crop = np.random.uniform() < self._crop_prob
+                im = self.augment(im, self.jitter_params, self.crop_params, self.do_crop, self.image_shape[0])
+            else:
+                im = Image.fromarray(np.uint8(img), 'RGB').resize(
+                    self.image_shape, resample=Image.ANTIALIAS)
             img = np.array(im)
+        else:
+            assert not self.domain_randomization, "not implemented yet"
         if self._transpose_image:
             img = np.transpose(img, (2, 0, 1))
+        return img
+
+    def augment(self, x, jitter_params, crop_params, do_crop, size=48):
+        if do_crop:
+            x = F.resized_crop(x,
+                            crop_params[0],
+                            crop_params[1],
+                            crop_params[2],
+                            crop_params[3],
+                            (size, size),
+                            Image.ANTIALIAS)
+        else:
+            x = F.resize(x, (size, size), Image.ANTIALIAS)
+        x = jitter_params(x)
+        img = x
         return img
 
     def get_image(self, width, height):
@@ -906,6 +940,29 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             print('Obj Slide: ', obj_slide_success)
         reward = td_success + obj_pnp_success + obj_slide_success
         return reward
+
+    def process(self, obs):
+        if len(obs.shape) == 1:
+            return obs.reshape(1, -1)
+        return obs
+
+    def compute_reward(self, states, actions, next_states, contexts):
+        state_observation = self.process(next_states['state_observation'])
+        state_desired_goal = self.process(contexts['state_desired_goal'])
+        B = state_observation.shape[0]
+        rewards = np.zeros((B, 1))
+        for i in range(B):
+            curr_state = state_observation[i]
+            goal_state = state_desired_goal[i]
+            td_success = self.get_success_metric(
+                curr_state, goal_state, key='top_drawer')
+            obj_pnp_success = self.get_success_metric(
+                curr_state, goal_state, key='obj_pnp')
+            obj_slide_success = self.get_success_metric(
+                curr_state, goal_state, key='obj_slide')
+            success = td_success and obj_pnp_success and obj_slide_success
+            rewards[i] = success - 1
+        return rewards
 
     def sample_goals(self):
         if self.test_env:
@@ -997,6 +1054,9 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
                                 physicsClientId=self._uid)
 
     def reset(self):
+        if self.domain_randomization:
+            self.get_new_aug_params = True
+
         if self.use_multiple_goals:
             self.test_env_seed = np.random.choice(
                 list(self.test_env_commands.keys()))
