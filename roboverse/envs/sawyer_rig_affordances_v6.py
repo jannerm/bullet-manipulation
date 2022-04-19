@@ -941,6 +941,29 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         reward = td_success + obj_pnp_success + obj_slide_success
         return reward
 
+    def process(self, obs):
+        if len(obs.shape) == 1:
+            return obs.reshape(1, -1)
+        return obs
+
+    def compute_reward(self, states, actions, next_states, contexts):
+        state_observation = self.process(next_states['state_observation'])
+        state_desired_goal = self.process(contexts['state_desired_goal'])
+        B = state_observation.shape[0]
+        rewards = np.zeros((B, 1))
+        for i in range(B):
+            curr_state = state_observation[i]
+            goal_state = state_desired_goal[i]
+            td_success = self.get_success_metric(
+                curr_state, goal_state, key='top_drawer')
+            obj_pnp_success = self.get_success_metric(
+                curr_state, goal_state, key='obj_pnp')
+            obj_slide_success = self.get_success_metric(
+                curr_state, goal_state, key='obj_slide')
+            success = td_success and obj_pnp_success and obj_slide_success
+            rewards[i] = success - 1
+        return rewards
+
     def sample_goals(self):
         if self.test_env:
             task, task_info = self.test_env_command['command_sequence'][self.reset_counter]
