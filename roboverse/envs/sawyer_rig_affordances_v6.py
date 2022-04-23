@@ -25,6 +25,7 @@ td_offset_coeff = 0.0125
 
 gripper_bounding_x = [.5, .8]  # [.46, .84] #[0.4704, 0.8581]
 gripper_bounding_y = [-.17, .17]  # [-0.1989, 0.2071]
+gripper_bounding_z = [-0.35, -0.1]
 
 quadrants = [
     [.525, .1675],
@@ -186,6 +187,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
 
         # Demo
         self.demo_num_ts = kwargs.pop('demo_num_ts', None)
+        self.random_init_gripper_pos = kwargs.pop('random_init_gripper_pos', False)
 
         # Rendering
         self.downsample = kwargs.pop('downsample', False)
@@ -1017,10 +1019,10 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
                 if len(opts) == 0:
                     opts = ['move_drawer']
 
-                if 'move_drawer' in opts and random.uniform(0, 1) > .5:
-                    task = 'move_drawer'
-                else:
-                    task = random.choice(opts)
+                # if 'move_drawer' in opts and random.uniform(0, 1) > .5:
+                #     task = 'move_drawer'
+                # else:
+                task = random.choice(opts)
             else:
                 r = random.uniform(0, 1)
                 if r < 1/3:
@@ -1034,24 +1036,41 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         return task
 
     def reset_gripper(self):
-        # Sample and load starting positions
-        if self.test_env:
-            if 'init_pos' in self.test_env_command:
-                init_pos = self.test_env_command['init_pos']
-            else:
-                init_pos = np.array(self._pos_init)
-        else:
-            init_pos = np.array(self._pos_init)
-
         action = np.array([0, 0, 1, 0, -1])
         for _ in range(10):
             self.step(action)
 
-        bullet.position_control(self._sawyer,
-                                self._end_effector,
-                                init_pos,
-                                self.default_theta,
-                                physicsClientId=self._uid)
+        if self.random_init_gripper_pos:
+            init_pos = [
+                np.random.uniform(gripper_bounding_x[0], gripper_bounding_x[1]),
+                np.random.uniform(gripper_bounding_y[0], gripper_bounding_y[1]),
+                np.random.uniform(gripper_bounding_z[0], gripper_bounding_z[1])
+            ]
+            init_yaw = np.random.uniform(-90, 90)
+            action = np.zeros(5)
+
+            ## Checking for colliding objects doesn't work, so we'll manually move the gripper instead
+            # colliding_objects = [None for _ in range(4)]
+            # while len(colliding_objects) > 3:
+            #     colliding_objects = p.getOverlappingObjects(init_pos, init_pos, physicsClientId=self._uid)
+            
+            for _ in range(100):
+                action[:3] = init_pos - np.array(list(self.get_end_effector_pos()))
+                action[3] = 1 if init_yaw - self.get_end_effector_theta()[2] > 0 else -1
+                action[4] = -1
+                self.step(action)
+        else:
+            # Sample and load starting positions
+            if self.test_env and 'init_pos' in self.test_env_command:
+                init_pos = self.test_env_command['init_pos']
+            else:
+                init_pos = np.array(self._pos_init)
+
+            bullet.position_control(self._sawyer,
+                                    self._end_effector,
+                                    init_pos,
+                                    self.default_theta,
+                                    physicsClientId=self._uid)
 
     def reset(self):
         if self.domain_randomization:

@@ -12,7 +12,7 @@ from multiprocess import Pool
 import gc
 
 def collect(id):
-    state_env = roboverse.make('SawyerRigAffordances-v7', random_color_p=0.0, expl=True, reset_interval=args.reset_interval, **kwargs)
+    state_env = roboverse.make('SawyerRigAffordances-v6', random_color_p=0.0, expl=True, reset_interval=args.reset_interval, **kwargs)
 
     # FOR TESTING, TURN COLORS OFF
     imsize = state_env.obs_img_dim
@@ -91,7 +91,7 @@ def collect(id):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--name", type=str)
-    parser.add_argument("--num_trajectories", type=int, default=8000)
+    parser.add_argument("--num_trajectories", type=int, default=4000)
     parser.add_argument("--num_trajectories_per_demo", type=int, default=200)
     parser.add_argument("--num_threads", type=int, default=8)
     parser.add_argument("--num_timesteps", type=int, default=75)
@@ -104,7 +104,7 @@ if __name__ == '__main__':
                         default=0, help="Set to zero for no video saving")
 
     args = parser.parse_args()
-    prefix = f"/2tb/home/patrickhaoy/data/affordances/data/{args.name}/"
+    prefix = f"/media/ashvin/data1/patrickhaoy/data/{args.name}/"
     #prefix = "/2tb/home/patrickhaoy/data/test/" #"/2tb/home/patrickhaoy/data/affordances/combined_new/" #prefix = "/home/ashvin/data/sasha/demos"
 
     if not os.path.exists(prefix):
@@ -122,6 +122,7 @@ if __name__ == '__main__':
         'use_single_obj_idx': 1,
         'demo_num_ts': args.num_timesteps,
         'expert_policy_std': .05,
+        'random_init_gripper_pos': True,
     }
     if args.downsample:
         kwargs['downsample'] = True
