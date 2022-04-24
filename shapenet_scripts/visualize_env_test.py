@@ -19,8 +19,8 @@ env = rv.make(
     drawer_sliding=False, 
     env_obs_img_dim=196, 
     random_color_p=0.0, 
-    # test_env=True, 
-    # test_env_command=drawer_pnp_push_commands[38],
+    test_env=True, 
+    test_env_command=drawer_pnp_push_commands[38],
     use_single_obj_idx=1,
     #large_obj=False,
     demo_num_ts=ts,
@@ -31,10 +31,11 @@ env = rv.make(
     # fixed_drawer_quadrant=1,
     expert_policy_std=.05,
     downsample=False,
-    random_init_gripper_pos=True,
+    #random_init_gripper_pos=True,
+    #use_cube=True,
 )
 
-save_video = True
+save_video = False
 
 if save_video:
     video_save_path = '/2tb/home/patrickhaoy/data/test/'

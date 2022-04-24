@@ -184,6 +184,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         self.random_pick_offset = 0
         self._large_obj = None
         self._objs = []
+        self.use_cube = kwargs.pop('use_cube', False)
 
         # Demo
         self.demo_num_ts = kwargs.pop('demo_num_ts', None)
@@ -408,13 +409,22 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             self.large_object_quadrant = self.test_env_command['large_object_quadrant']
             quadrant = slide_quadrants[self.large_object_quadrant]
             pos = np.array([quadrant[0], quadrant[1], -0.3525])
-            self._large_obj = bullet.objects.cylinder(
-                pos=pos,
-                quat=deg_to_quat([0, 0, 0]),
-                #rgba=self.obj_rgbas[0],
-                scale=1.4,
-                physicsClientId=self._uid
-            )
+            if self.use_cube:
+                self._large_obj = bullet.objects.cube(
+                    pos=pos, 
+                    quat=deg_to_quat([0, 0, 0]), 
+                    rgba=self.obj_rgbas[0], 
+                    scale=.09, 
+                    physicsClientId=self._uid
+                )
+            else:
+                self._large_obj = bullet.objects.cylinder(
+                    pos=pos,
+                    quat=deg_to_quat([0, 0, 0]),
+                    #rgba=self.obj_rgbas[0],
+                    scale=1.4,
+                    physicsClientId=self._uid
+                )
         else:
             large_object_within_gripper_range = False
             tries = 0
@@ -448,13 +458,22 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
 
                 quadrant = slide_quadrants[self.large_object_quadrant]
                 pos = np.array([quadrant[0], quadrant[1], -0.3525])
-                self._large_obj = bullet.objects.cylinder(
-                    pos=pos,
-                    quat=deg_to_quat([0, 0, 0]),
-                    #rgba=self.obj_rgbas[0],
-                    scale=1.4,
-                    physicsClientId=self._uid
-                )
+                if self.use_cube:
+                    self._large_obj = bullet.objects.cube(
+                        pos=pos, 
+                        quat=deg_to_quat([0, 0, 0]), 
+                        rgba=self.obj_rgbas[0], 
+                        scale=.09, 
+                        physicsClientId=self._uid
+                    )
+                else:
+                    self._large_obj = bullet.objects.cylinder(
+                        pos=pos,
+                        quat=deg_to_quat([0, 0, 0]),
+                        #rgba=self.obj_rgbas[0],
+                        scale=1.4,
+                        physicsClientId=self._uid
+                    )
 
                 large_object_within_gripper_range = True
                 if not (gripper_bounding_x[0] - .1 <= pos[0] and pos[0] <= gripper_bounding_x[1] + .1
@@ -496,8 +515,12 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
 
     def _format_action(self, *action):
         if len(action) == 1:
-            delta_pos, delta_yaw, gripper = action[0][:3], action[0][3:4], action[0][-1]
+            action = np.clip(action[0], a_min=-1, a_max=1)
+            delta_pos, delta_yaw, gripper = action[:3], action[3:4], action[-1]
         elif len(action) == 3:
+            action[0] = np.clip(action[0], a_min=-1, a_max=1)
+            action[1] = np.clip(action[1], a_min=-1, a_max=1)
+            action[2] = np.clip(action[2], a_min=-1, a_max=1)
             delta_pos, delta_yaw, gripper = action[0], action[1], action[2]
         else:
             raise RuntimeError('Unrecognized action: {}'.format(action))

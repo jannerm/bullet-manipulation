@@ -98,6 +98,7 @@ if __name__ == '__main__':
     parser.add_argument("--reset_interval", type=int, default=4)
     parser.add_argument("--downsample", action='store_true')
     parser.add_argument("--drawer_sliding", action='store_true')
+    parser.add_argument("--use_cube", action='store_true')
     parser.add_argument("--demo_offset", type=int, default=0)
     parser.add_argument("--subset", type=str, default='train')
     parser.add_argument("--video_save_frequency", type=int,
@@ -123,6 +124,7 @@ if __name__ == '__main__':
         'demo_num_ts': args.num_timesteps,
         'expert_policy_std': .05,
         'random_init_gripper_pos': True,
+        'use_cube': args.use_cube,
     }
     if args.downsample:
         kwargs['downsample'] = True
