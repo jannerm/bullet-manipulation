@@ -18,7 +18,6 @@ env = rv.make(
     #reset_gripper_interval=1,
     drawer_sliding=False, 
     env_obs_img_dim=196, 
-    random_color_p=0.0, 
     test_env=True, 
     test_env_command=drawer_pnp_push_commands[38],
     use_single_obj_idx=1,
@@ -33,13 +32,14 @@ env = rv.make(
     downsample=False,
     #random_init_gripper_pos=True,
     #use_cube=True,
+    new_env_setting=1,
 )
 
-save_video = False
+save_video = True
 
 if save_video:
-    video_save_path = '/2tb/home/patrickhaoy/data/test/'
-    num_traj = 100
+    video_save_path = '/media/ashvin/data1/patrickhaoy/test/' #'/2tb/home/patrickhaoy/data/test/'
+    num_traj = 2
     observations = np.zeros((num_traj*ts, 196, 196, 3))
 
 tasks_success = dict()
@@ -85,7 +85,7 @@ print(f"Overall success rate: {total_successes/num_traj}, count: {num_traj} \n")
 
 
 if save_video:
-    writer = skvideo.io.FFmpegWriter(video_save_path + "debug.mp4")
+    writer = skvideo.io.FFmpegWriter(video_save_path + "task38.mp4")
     for i in range(num_traj*ts):
         writer.writeFrame(observations[i, :, :, :])
     writer.close()

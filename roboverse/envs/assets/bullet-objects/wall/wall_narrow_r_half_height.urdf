@@ -16,7 +16,7 @@
       <!-- right -->
       <origin rpy="0 0 0" xyz="0 -.315 0"/>
       <geometry>
-        <box size=".65 .01 .2"/>
+        <box size=".65 .01 .1"/>
       </geometry>
       <material name="color"/>
     </visual>
@@ -24,7 +24,7 @@
       <!-- left -->
       <origin rpy="0 0 0" xyz="0 .315 0"/>
       <geometry>
-        <box size=".65 .01 .2"/>
+        <box size=".65 .01 .1"/>
       </geometry>
       <material name="color"/>
     </visual>
@@ -32,7 +32,7 @@
       <!-- back -->
       <origin rpy="0 0 0" xyz="-.325 0 0"/>
       <geometry>
-        <box size=".01 .65 .2"/>
+        <box size=".01 .65 .1"/>
       </geometry>
       <material name="color"/>
     </visual>
@@ -40,21 +40,21 @@
       <!-- right -->
       <origin rpy="0 0 0" xyz="0 -.45 0"/>
       <geometry>
-        <box size="1 .01 .2"/>
+        <box size="1 .01 .1"/>
       </geometry>
     </collision>
     <collision>
       <!-- left -->
       <origin rpy="0 0 0" xyz="0 .45 0"/>
       <geometry>
-        <box size="1 .01 .2"/>
+        <box size="1 .01 .1"/>
       </geometry>
     </collision>
     <collision>
       <!-- back -->
       <origin rpy="0 0 0" xyz="-.45 0 0"/>
       <geometry>
-        <box size=".01 1 .2"/>
+        <box size=".01 1 .1"/>
       </geometry>
     </collision>
   </link>

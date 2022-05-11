@@ -73,7 +73,6 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
                  transpose_image=False,
                  invisible_robot=False,
                  object_subset='test',
-                 random_color_p=0.0,
                  spawn_prob=0.75,
                  task='goal_reaching',
                  test_env=False,
@@ -108,7 +107,6 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         self.image_shape = (obs_img_dim, obs_img_dim)
         self.image_length = np.prod(
             self.image_shape) * 3  # image has 3 channels
-        self.random_color_p = random_color_p
         self.object_subset = object_subset
         self.spawn_prob = spawn_prob
         self._ddeg_scale = 5
@@ -133,9 +131,55 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         self.default_theta = bullet.deg_to_quat([180, 0, 0])
         self.obs_img_dim = obs_img_dim
 
-        self._view_matrix_obs = bullet.get_view_matrix(
-            target_pos=[0.7, 0, -0.25], distance=0.5,
-            yaw=90, pitch=-27, roll=0, up_axis_index=2)
+        self.new_env_setting = kwargs.pop('new_env_setting', False)
+        if self.new_env_setting == 1:
+            self._view_matrix_obs = bullet.get_view_matrix(
+                target_pos=[0.7, 0, -0.25], distance=0.5,
+                yaw=80, pitch=-35, roll=0, up_axis_index=2)
+            self.object_color_dict = {
+                "tray": [1., .65, 0., 1.],
+                # "top_drawer": [
+                #     [1., .75, .8, 1.], # Frame
+                #     [1., 0., 0., 1.], # Bottom Frame
+                #     [.86, .08, .16, 1.], # Bottom
+                #     [.5, .5, .5, 1.], # Handle
+                # ],
+                "large_obj": [0., 0., 1., 1.],
+                "table": [.475, .302, .18, 1],
+                "wall": [.92, .85, .7, 1],
+            }
+            self.obj_rgbas = [[0.93, .294, .169, 1], [
+                1., 1., 0, 1], [0., .502, .502, 1]]  # red, yellow, teal
+            self.wall_object = bullet.objects.wall_narrow_r_half_height
+            self.top_drawer_object = bullet.objects.drawer_envsetting1_longhandle
+            self.large_obj_object = bullet.objects.cube
+            self.large_obj_scale = .09
+            self.small_obj_object = bullet.objects.duck
+            self.small_obj_scale = 1.0
+        else:
+            self._view_matrix_obs = bullet.get_view_matrix(
+                target_pos=[0.7, 0, -0.25], distance=0.5,
+                yaw=90, pitch=-27, roll=0, up_axis_index=2)
+            self.object_color_dict = {
+                "tray": [0.0, .502, .502, 1.],
+                # "top_drawer": [
+                #     [.1, .25, .6, 1.], # Frame
+                #     [.68, .85, .90, 1.], # Bottom Frame
+                #     [.5, .5, .5, 1.], # Bottom
+                #     [.59, .29, 0.0, 1.], # Handle
+                # ],
+                "large_obj": [.93, .294, .169, 1.],
+                "table": [.92, .85, .7, 1],
+                "wall": [.67, .67, .67, 1.],
+            }
+            self.obj_rgbas = [[0.93, .294, .169, 1], [.5, 1., 0., 1], [
+                0., .502, .502, 1]]  # red, yellow green, teal
+            self.wall_object = bullet.objects.wall_narrow_r
+            self.top_drawer_object = bullet.objects.drawer_lightblue_base_longhandle
+            self.large_obj_object = bullet.objects.cylinder
+            self.large_obj_scale = 1.4
+            self.small_obj_object = bullet.objects.drawer_lego
+            self.small_obj_scale = 2
 
         self._projection_matrix_obs = bullet.get_projection_matrix(
             self.obs_img_dim, self.obs_img_dim)
@@ -172,8 +216,6 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         self.init_obj_in_drawer = False
 
         # Objects
-        self.obj_rgbas = [[0.93, .294, .169, 1], [.5, 1., 0., 1], [
-            0., .502, .502, 1]]  # red, yellow green, teal
         self.use_single_obj_idx = kwargs.pop('use_single_obj_idx', 1)
         if self.use_single_obj_idx == None:
             assert False, "Multi-pnp object not implemented"
@@ -184,7 +226,6 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         self.random_pick_offset = 0
         self._large_obj = None
         self._objs = []
-        self.use_cube = kwargs.pop('use_cube', False)
 
         # Demo
         self.demo_num_ts = kwargs.pop('demo_num_ts', None)
@@ -240,9 +281,9 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
 
         self._sawyer = bullet.objects.drawer_sawyer(physicsClientId=self._uid)
         self._table = bullet.objects.table(
-            rgba=[.92, .85, .7, 1], physicsClientId=self._uid)
-        self._wall = bullet.objects.wall_narrow_r(
-            scale=1.0, physicsClientId=self._uid)
+            rgba=self.object_color_dict['table'], physicsClientId=self._uid)
+        self._wall = self.wall_object(
+            scale=1.0, rgba=self.object_color_dict['wall'], physicsClientId=self._uid)
 
         # self._debug1 = bullet.objects.button(pos=[gripper_bounding_x[0], gripper_bounding_y[0], -.35])
         # self._debug2 = bullet.objects.button(pos=[gripper_bounding_x[1], gripper_bounding_y[1], -.35])
@@ -290,10 +331,12 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         if self.drawer_sliding:
             assert False, 'sliding long handle lightblue base drawer not implemented'
             self._top_drawer = bullet.objects.drawer_sliding_lightblue_base(
-                quat=quat, pos=drawer_frame_pos, rgba=self.sample_object_color(), physicsClientId=self._uid, scale=drawer_scale)
+                quat=quat, pos=drawer_frame_pos, rgba=None, physicsClientId=self._uid, scale=drawer_scale)
         else:
-            self._top_drawer = bullet.objects.drawer_lightblue_base_longhandle(
-                quat=quat, pos=drawer_frame_pos, rgba=self.sample_object_color(), physicsClientId=self._uid, scale=drawer_scale)
+            self._top_drawer = self.top_drawer_object(
+                quat=quat, pos=drawer_frame_pos, rgba=None, physicsClientId=self._uid, scale=drawer_scale)
+            # self._top_drawer = bullet.objects.drawer_lightblue_base_longhandle_rgba(
+            #     quat=quat, pos=drawer_frame_pos, rgba=self.object_color_dict['top_drawer'], physicsClientId=self._uid, scale=drawer_scale)
 
         open_drawer(self._top_drawer, 100, physicsClientId=self._uid)
 
@@ -303,8 +346,9 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         ## Tray above top drawer
         # - .01 * np.array([np.sin(self.drawer_yaw * np.pi / 180) , -np.cos(self.drawer_yaw * np.pi / 180), 0])
         top_drawer_tray_pos = drawer_frame_pos + np.array([0, 0, .059])
-        self._top_drawer_tray = bullet.objects.tray_teal(
-            quat=quat, pos=top_drawer_tray_pos, scale=0.165, physicsClientId=self._uid)
+
+        self._top_drawer_tray = bullet.objects.tray_teal_rgba(
+            quat=quat, pos=top_drawer_tray_pos, scale=0.165, rgba=self.object_color_dict['tray'], physicsClientId=self._uid)
 
         # Tray acts as stopper for drawer closing
         tray_pos = self.get_drawer_handle_future_pos(-.05)
@@ -409,22 +453,13 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             self.large_object_quadrant = self.test_env_command['large_object_quadrant']
             quadrant = slide_quadrants[self.large_object_quadrant]
             pos = np.array([quadrant[0], quadrant[1], -0.3525])
-            if self.use_cube:
-                self._large_obj = bullet.objects.cube(
-                    pos=pos, 
-                    quat=deg_to_quat([0, 0, 0]), 
-                    rgba=self.obj_rgbas[0], 
-                    scale=.09, 
-                    physicsClientId=self._uid
-                )
-            else:
-                self._large_obj = bullet.objects.cylinder(
-                    pos=pos,
-                    quat=deg_to_quat([0, 0, 0]),
-                    #rgba=self.obj_rgbas[0],
-                    scale=1.4,
-                    physicsClientId=self._uid
-                )
+            self._large_obj = self.large_obj_object(
+                pos=pos,
+                quat=deg_to_quat([0, 0, 0]),
+                rgba=self.object_color_dict['large_obj'],
+                scale=self.large_obj_scale,
+                physicsClientId=self._uid
+            )
         else:
             large_object_within_gripper_range = False
             tries = 0
@@ -458,22 +493,13 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
 
                 quadrant = slide_quadrants[self.large_object_quadrant]
                 pos = np.array([quadrant[0], quadrant[1], -0.3525])
-                if self.use_cube:
-                    self._large_obj = bullet.objects.cube(
-                        pos=pos, 
-                        quat=deg_to_quat([0, 0, 0]), 
-                        rgba=self.obj_rgbas[0], 
-                        scale=.09, 
-                        physicsClientId=self._uid
-                    )
-                else:
-                    self._large_obj = bullet.objects.cylinder(
-                        pos=pos,
-                        quat=deg_to_quat([0, 0, 0]),
-                        #rgba=self.obj_rgbas[0],
-                        scale=1.4,
-                        physicsClientId=self._uid
-                    )
+                self._large_obj = self.large_obj_object(
+                    pos=pos,
+                    quat=deg_to_quat([0, 0, 0]),
+                    rgba=self.object_color_dict['large_obj'],
+                    scale=self.large_obj_scale,
+                    physicsClientId=self._uid
+                )
 
                 large_object_within_gripper_range = True
                 if not (gripper_bounding_x[0] - .1 <= pos[0] and pos[0] <= gripper_bounding_x[1] + .1
@@ -488,7 +514,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
     def sample_quat(self):
         return deg_to_quat(np.array([random.randint(0, 360), random.randint(0, 360), random.randint(0, 360)]), physicsClientId=self._uid)
 
-    def spawn_object(self, object_position=None, quat=None, rgba=[0, 1, 0, 1], scale=2):
+    def spawn_object(self, object_position=None, quat=None, rgba=[0, 1, 0, 1]):
         # Pick object if necessary and save information
         assert object_position is not None
 
@@ -499,8 +525,8 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         self.obj_yaw = random.uniform(0, 360)
 
         q = deg_to_quat([0, 0, self.obj_yaw], physicsClientId=self._uid)
-        obj = bullet.objects.drawer_lego(
-            pos=object_position, quat=q, rgba=rgba, scale=scale, physicsClientId=self._uid)
+        obj = self.small_obj_object(
+            pos=object_position, quat=q, rgba=rgba, scale=self.small_obj_scale, physicsClientId=self._uid)
 
         # Allow the objects to land softly in low gravity
         p.setGravity(0, 0, -1, physicsClientId=self._uid)
@@ -1196,11 +1222,6 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         return obs_dict
 
     ### Helper Functions
-    def sample_object_color(self):
-        if random.uniform(0, 1) < self.random_color_p:
-            return list(random.choice(range(256), size=3) / 255.0) + [1]
-        return None
-
     def get_drawer_handle_future_pos(self, coeff):
         drawer_frame_pos = get_drawer_frame_pos(
             self._top_drawer, physicsClientId=self._uid)

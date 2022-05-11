@@ -12,7 +12,7 @@ from multiprocess import Pool
 import gc
 
 def collect(id):
-    state_env = roboverse.make('SawyerRigAffordances-v6', random_color_p=0.0, expl=True, reset_interval=args.reset_interval, **kwargs)
+    state_env = roboverse.make('SawyerRigAffordances-v6', expl=True, reset_interval=args.reset_interval, **kwargs)
 
     # FOR TESTING, TURN COLORS OFF
     imsize = state_env.obs_img_dim
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     parser.add_argument("--reset_interval", type=int, default=4)
     parser.add_argument("--downsample", action='store_true')
     parser.add_argument("--drawer_sliding", action='store_true')
-    parser.add_argument("--use_cube", action='store_true')
+    parser.add_argument("--new_env_setting", type=int, default=None)
     parser.add_argument("--demo_offset", type=int, default=0)
     parser.add_argument("--subset", type=str, default='train')
     parser.add_argument("--video_save_frequency", type=int,
@@ -123,8 +123,8 @@ if __name__ == '__main__':
         'use_single_obj_idx': 1,
         'demo_num_ts': args.num_timesteps,
         'expert_policy_std': .05,
-        'random_init_gripper_pos': True,
-        'use_cube': args.use_cube,
+        #'random_init_gripper_pos': True,
+        'new_env_setting': args.new_env_setting,
     }
     if args.downsample:
         kwargs['downsample'] = True

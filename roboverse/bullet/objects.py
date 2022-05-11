@@ -89,7 +89,8 @@ duck = loader(PDATA_PATH, 'duck_vhacd.urdf',
               pos=[.75, -.4, -.3],
               quat=[0, 0, 1, 0],
               #deg=[0,0,0],
-              scale=0.8)
+              scale=0.8,
+              rgba=[0, 0, 0, 1])
 
 lego = loader(PDATA_PATH, 'lego/lego.urdf',
               pos=[.75, .2, -.3],
@@ -171,7 +172,13 @@ wall_narrow = loader(ASSET_PATH, os.path.join(obj_dir, "wall", "wall_narrow.urdf
               deg=[0, 0, 0],
               scale=0.8)
 
-wall_narrow_r = loader(ASSET_PATH, os.path.join(obj_dir, "wall", "wall_narrow_r.urdf"),
+wall_narrow_r = loader_randomize_color(ASSET_PATH, os.path.join(obj_dir, "wall", "wall_narrow_r.urdf"),
+              pos=[.68, 0, -.3],
+              rgba=[1, 1, 1, 1],
+              deg=[0, 0, 0],
+              scale=0.8)
+
+wall_narrow_r_half_height = loader_randomize_color(ASSET_PATH, os.path.join(obj_dir, "wall", "wall_narrow_r_half_height.urdf"),
               pos=[.68, 0, -.3],
               rgba=[1, 1, 1, 1],
               deg=[0, 0, 0],
@@ -212,6 +219,9 @@ drawer_sliding_lightblue_base = loader_randomize_color(ASSET_PATH, os.path.join(
               pos=drawer_pos + np.array([0, 0, 0.12]),
               scale=0.125)
 drawer_lightblue_base_longhandle = loader_randomize_color(ASSET_PATH, os.path.join(obj_dir, "drawer", "drawer_lightblue_base_longhandle.urdf"),
+              pos=drawer_pos + np.array([0, 0, 0.12]),
+              scale=0.125)
+drawer_envsetting1_longhandle = loader_randomize_color(ASSET_PATH, os.path.join(obj_dir, "drawer", "drawer_envsetting1_longhandle.urdf"),
               pos=drawer_pos + np.array([0, 0, 0.12]),
               scale=0.125)
 drawer_lightblue_base_longhandle_rgba = loader_randomize_color_custom(ASSET_PATH, os.path.join(obj_dir, "drawer", "drawer_lightblue_base_longhandle_rgba.urdf"),
