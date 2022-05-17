@@ -5,6 +5,7 @@ import skvideo.io
 # from experiments.kuanfang.iql.drawer_pnp_commands import drawer_pnp_commands
 # from experiments.kuanfang.iql.drawer_pnp_single_obj_commands import drawer_pnp_single_obj_commands
 from rlkit.experimental.kuanfang.envs.drawer_pnp_push_commands import drawer_pnp_push_commands
+from roboverse.envs.configs.drawer_pnp_push_env_configs import drawer_pnp_push_env_configs
 
 ts = 75
 num_traj = 100
@@ -14,16 +15,18 @@ env = rv.make(
     "SawyerRigAffordances-v6", 
     gui=True, 
     expl=True, 
-    reset_interval=2, 
+    reset_interval=1, 
     #reset_gripper_interval=1,
     env_obs_img_dim=196, 
-    test_env=True, 
-    test_env_command=drawer_pnp_push_commands[38],
+    # test_env=True, 
+    # test_env_command=drawer_pnp_push_commands[38],
     demo_num_ts=ts,
     # fixed_drawer_yaw=171.86987153482346,
     # fixed_drawer_quadrant=1,
     expert_policy_std=.05,
     downsample=False,
+    configs=drawer_pnp_push_env_configs[1],
+    fixed_task='move_obj_pnp',
 )
 
 save_video = False
