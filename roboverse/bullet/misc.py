@@ -95,7 +95,7 @@ def load_urdf_randomize_color_custom(filepath, pos=[0, 0, 0], quat=[0, 0, 0, 1],
             rgba[0], rgba[1], rgba[2], rgba[3]) for rgba in rgbas]
         replace_lines(rand_filepath, line_nums, color_lines)
         try:
-            body = p.loadURDF(rand_filepath, globalScaling=scale)
+            body = p.loadURDF(rand_filepath, globalScaling=scale, physicsClientId=physicsClientId)
             p.changeVisualShape(body, -1, rgbaColor=rgbas[0],
                                 physicsClientId=physicsClientId)
         finally:
@@ -127,7 +127,7 @@ def load_urdf_randomize_color(filepath, pos=[0, 0, 0], quat=[0, 0, 0, 1], scale=
             rgba[0], rgba[1], rgba[2], rgba[3])
         replace_line(rand_filepath, 3, color_line)
         try:
-            body = p.loadURDF(rand_filepath, globalScaling=scale)
+            body = p.loadURDF(rand_filepath, globalScaling=scale, physicsClientId=physicsClientId)
             p.changeVisualShape(body, -1, rgbaColor=rgba,
                                 physicsClientId=physicsClientId)
         finally:

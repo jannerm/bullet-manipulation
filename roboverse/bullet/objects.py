@@ -216,6 +216,12 @@ drawer_lightblue_base_longhandle = loader_randomize_color(ASSET_PATH, os.path.jo
               scale=0.125)
 drawer_lightblue_base_longhandle_rgba = loader_randomize_color_custom(ASSET_PATH, os.path.join(obj_dir, "drawer", "drawer_lightblue_base_longhandle_rgba.urdf"),
               pos=drawer_pos + np.array([0, 0, 0.12]),
+              rgba=[
+                [.1, .25, .6, 1.],
+                [.68, .85, .90, 1.],
+                [.5, .5, .5, 1.],
+                [.59, .29, 0.0, 1.],
+              ],
               scale=0.125)
 drawer_no_handle = loader_randomize_color(ASSET_PATH, os.path.join(obj_dir, "drawer", "drawer_no_handle.urdf"),
               pos=drawer_pos,
