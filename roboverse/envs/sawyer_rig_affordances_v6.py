@@ -980,8 +980,6 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
 
         if self.curr_task == None:
             self.curr_task = self.sample_goals()
-            if not self.curr_task:
-                return self.reset()
                 
         self.reset_gripper()
 
@@ -1013,8 +1011,8 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
 
         top_drawer_pos = self.get_td_handle_pos()
 
-        obj0_pos = self.get_object_pos(self._small_obj)
-        obj1_pos = [0, 0, 0]
+        obj0_pos = [0, 0, 0]
+        obj1_pos = self.get_object_pos(self._small_obj)
         obj2_pos = [0, 0, 0]
 
         large_obj_pos = self.get_object_pos(self._large_obj)
