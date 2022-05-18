@@ -25,11 +25,12 @@ env = rv.make(
     # fixed_drawer_quadrant=1,
     expert_policy_std=.05,
     downsample=False,
-    configs=drawer_pnp_push_env_configs[1],
+    #configs=drawer_pnp_push_env_configs[1],
     fixed_task='move_obj_pnp',
+    random_config_every_trajectory=True,
 )
 
-save_video = False
+save_video = True
 
 if save_video:
     video_save_path = '/2tb/home/patrickhaoy/data/test/'

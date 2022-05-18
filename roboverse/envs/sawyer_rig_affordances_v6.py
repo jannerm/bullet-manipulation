@@ -153,6 +153,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         self.fixed_task = kwargs.pop('fixed_task', None)
         if self.fixed_task:
             assert self.reset_interval == 1
+        self.random_config_every_trajectory = kwargs.pop('random_config_every_trajectory', False)
 
         self.random_pick_offset = 0
         self.gripper_in_right_position = False
@@ -1263,6 +1264,29 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             [random.uniform(-1, 1), random.uniform(-1, 1), 0, 0, -1])
         self.gripper_action_num_ts = np.random.randint(0, 16)
         self.grip = -1.
+
+        if self.random_config_every_trajectory:
+            self.configs = {
+                'camera_angle': {
+                    'yaw': np.random.uniform(90-10, 90+10),
+                    'pitch': np.random.uniform(-27-8, -27+8),
+                },
+                'object_rgbs': {
+                    'large_object': list(np.random.choice(range(256), size=3) / 255.0) + [1],
+                    'small_object': list(np.random.choice(range(256), size=3) / 255.0) + [1],
+                    'tray': list(np.random.choice(range(256), size=3) / 255.0) + [1],
+                    'drawer': {
+                        'frame': list(np.random.choice(range(256), size=3) / 255.0) + [1],
+                        'bottom_frame': list(np.random.choice(range(256), size=3) / 255.0) + [1],
+                        'bottom': list(np.random.choice(range(256), size=3) / 255.0) + [1],
+                        'handle': list(np.random.choice(range(256), size=3) / 255.0) + [1],
+                    },
+                }
+            }
+            self._view_matrix_obs = bullet.get_view_matrix(
+                target_pos=[0.7, 0, -0.25], distance=0.5,
+                yaw=self.configs['camera_angle']['yaw'], pitch=self.configs['camera_angle']['pitch'], roll=0, up_axis_index=2)
+
         reset_obs = self.reset()
 
         #print('----Initial----')
