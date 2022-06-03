@@ -131,6 +131,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         self.obj_slide = None
         self._large_obj = None
         self._small_obj = None
+        self.top_drawer_can_close = True
 
         ## Reset-free
         if self.test_env:
@@ -250,6 +251,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             quat=quat, pos=drawer_frame_pos, rgba=[
                 self.configs['object_rgbs']['drawer'][k] for k in ['frame', 'bottom_frame', 'bottom', 'handle']
             ], physicsClientId=self._uid, scale=.11)
+        self.top_drawer_can_close = True
 
         open_drawer(self._top_drawer, 100, physicsClientId=self._uid)
 
@@ -462,6 +464,24 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             p.removeConstraint(self.grasp_constraint,
                                physicsClientId=self._uid)
             self.grasp_constraint = None
+    
+        # Task 31: Drawer can't open if can in front of it
+        # if self.get_quadrant(self.get_object_pos(self._large_obj)) == 1:
+        if self.test_env and self.test_env_command.get("drawer_hack", False):
+            if self.get_quadrant(self.get_object_pos(self._large_obj)) == 1 and self.top_drawer_can_close:
+                self.top_drawer_can_close = False
+                p.changeDynamics(
+                    bodyUniqueId=self._top_drawer,
+                    linkIndex=2,
+                    mass=99999999,
+                )
+            elif self.get_quadrant(self.get_object_pos(self._large_obj)) == 2 and not self.top_drawer_can_close:
+                self.top_drawer_can_close = True
+                p.changeDynamics(
+                    bodyUniqueId=self._top_drawer,
+                    linkIndex=2,
+                    mass=.1,
+                )
 
         # Update position and theta
         pos += delta_pos * self._action_scale
