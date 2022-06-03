@@ -14,19 +14,19 @@ num_traj = 100
 for config in tqdm(drawer_pnp_push_env_configs):
     env = rv.make(
         "SawyerRigAffordances-v6", 
-        gui=False, 
+        gui=True,#False, 
         expl=True, 
         reset_interval=2, 
         env_obs_img_dim=196, 
-        test_env=True, 
-        test_env_command=drawer_pnp_push_commands[31],
+        #test_env=True, 
+        #test_env_command=drawer_pnp_push_commands[31],
         demo_num_ts=ts,
         expert_policy_std=.05,
         downsample=False,
         configs=config,
     )
 
-    save_video = True
+    save_video = False
 
     if save_video:
         video_save_path = '/media/ashvin/data1/patrickhaoy/test/'
