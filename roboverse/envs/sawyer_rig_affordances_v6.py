@@ -952,11 +952,16 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             init_pos = self.test_env_command['init_pos']
         else:
             init_pos = np.array(self._pos_init)
+        
+        if self.test_env and 'init_theta' in self.test_env_command:
+            init_theta = bullet.deg_to_quat(self.test_env_command['init_theta'])
+        else:
+            init_theta = self.default_theta
 
         bullet.position_control(self._sawyer,
                                 self._end_effector,
                                 init_pos,
-                                self.default_theta,
+                                init_theta,
                                 physicsClientId=self._uid)
 
     def reset(self):
