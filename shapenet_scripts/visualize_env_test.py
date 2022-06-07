@@ -19,7 +19,7 @@ env = rv.make(
     #reset_gripper_interval=1,
     env_obs_img_dim=196, 
     test_env=True, 
-    test_env_command=drawer_pnp_push_commands[42],
+    test_env_command=drawer_pnp_push_commands[14],
     demo_num_ts=ts,
     # fixed_drawer_yaw=171.86987153482346,
     # fixed_drawer_quadrant=1,
@@ -32,12 +32,12 @@ env = rv.make(
 save_video = True
 
 if save_video:
-    video_save_path = '/2tb/home/patrickhaoy/data/test/'
-    num_traj = 100
+    video_save_path = '/media/ashvin/data1/patrickhaoy/data/test/'
+    num_traj = 100 #2
     observations = np.zeros((num_traj*ts, 196, 196, 3))
 
-# goal_path = f'/media/ashvin/data1/patrickhaoy/new_goals/td_pnp_push_scripted_goals_timeoutk10_seed42.pkl'
-# goal_state = np.load(goal_path, allow_pickle=True)['state_desired_goal'][0]
+goal_path = f'/media/ashvin/data1/patrickhaoy/data/env6_td_pnp_push/td_pnp_push_scripted_goals_seed14.pkl'
+goal_state = np.load(goal_path, allow_pickle=True)['state_desired_goal'][0]
 
 tasks_success = dict()
 tasks_count = dict()
@@ -56,7 +56,8 @@ for i in range(num_traj):
             observations[i*ts + t, :] = img
         action, done = env.get_demo_action(first_timestep=(t == 0), return_done=True)
         next_observation, reward, _, info = env.step(action)
-        #print(env.get_success_metric(env.get_observation()['state_observation'], goal_state, key='obj_pnp'))
+        print(env.get_success_metric(env.get_observation()['state_observation'], goal_state, key='overall'))
+        import pdb; pdb.set_trace()
         if done and not is_done:
             is_done = True 
             

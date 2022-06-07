@@ -289,6 +289,17 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         self._end_effector = bullet.get_index_by_attribute(
             self._sawyer, 'link_name', 'gripper_site', physicsClientId=self._uid)
 
+        # Task 14/38: Remove collision physics between cylinder and drawer handle
+        if self.test_env and self.test_env_command.get("no_collision_handle_and_cylinder", False):
+            for idx in [2, 3, 4]:
+                p.setCollisionFilterPair(
+                    self._top_drawer, 
+                    self._large_obj, 
+                    idx, 
+                    -1, 
+                    enableCollision=False,
+                    physicsClientId=self._uid)
+
     def _load_table_small_objs(self, is_close_drawer=False):
         ## Small Object(s)
         self._init_objs_pos = []
