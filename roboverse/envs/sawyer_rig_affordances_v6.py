@@ -1118,7 +1118,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         if curr_pos.size == 0 or goal_pos.size == 0:
             return 0
         else:
-            return self.get_quadrant(curr_pos) == self.get_quadrant(goal_pos) or (np.linalg.norm(curr_pos - goal_pos) < self.obj_thresh and np.linalg.norm(curr_pos[2] - goal_pos[2]) < 0.01)
+            return self.get_quadrant(curr_pos) == self.get_quadrant(goal_pos)
 
     def get_obj_pnp_goals(self, task_info=None):
         ## Top Drawer Goal ##

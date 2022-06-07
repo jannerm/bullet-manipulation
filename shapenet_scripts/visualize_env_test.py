@@ -29,7 +29,7 @@ env = rv.make(
     #fixed_task='move_obj_pnp',
 )
 
-save_video = True
+save_video = False
 
 if save_video:
     video_save_path = '/media/ashvin/data1/patrickhaoy/data/test/'
@@ -55,9 +55,10 @@ for i in range(num_traj):
             # exit()
             observations[i*ts + t, :] = img
         action, done = env.get_demo_action(first_timestep=(t == 0), return_done=True)
+        if i % 2 == 1 and t > 40:
+            action[0] -= 1
         next_observation, reward, _, info = env.step(action)
         print(env.get_success_metric(env.get_observation()['state_observation'], goal_state, key='overall'))
-        import pdb; pdb.set_trace()
         if done and not is_done:
             is_done = True 
             
