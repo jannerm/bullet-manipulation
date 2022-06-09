@@ -52,6 +52,7 @@ goal_slide_quadrants = [
         0.2 - slide_offset + goal_slide_offset],
 ]
 
+
 class SawyerRigAffordancesV6(SawyerBaseEnv):
 
     def __init__(self,
@@ -101,23 +102,23 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
 
         ## Camera Angle and Objects
         self.configs = kwargs.pop('configs',
-        {
-            'camera_angle': {
-                'yaw': 90,
-                'pitch': -27,
-            },
-            'object_rgbs': {
-                'large_object': [.93, .294, .169, 1.],
-                'small_object': [.5, 1., 0., 1],
-                'tray': [0.0, .502, .502, 1.],
-                'drawer': {
-                    'frame': [.1, .25, .6, 1.],
-                    'bottom_frame': [.68, .85, .90, 1.],
-                    'bottom': [.5, .5, .5, 1.],
-                    'handle': [.59, .29, 0.0, 1.],
-                },
-            }
-        })
+                                  {
+                                      'camera_angle': {
+                                          'yaw': 90,
+                                          'pitch': -27,
+                                      },
+                                      'object_rgbs': {
+                                          'large_object': [.93, .294, .169, 1.],
+                                          'small_object': [.5, 1., 0., 1],
+                                          'tray': [0.0, .502, .502, 1.],
+                                          'drawer': {
+                                              'frame': [.1, .25, .6, 1.],
+                                              'bottom_frame': [.68, .85, .90, 1.],
+                                              'bottom': [.5, .5, .5, 1.],
+                                              'handle': [.59, .29, 0.0, 1.],
+                                          },
+                                      }
+                                  })
         self._view_matrix_obs = bullet.get_view_matrix(
             target_pos=[0.7, 0, -0.25], distance=0.5,
             yaw=self.configs['camera_angle']['yaw'], pitch=self.configs['camera_angle']['pitch'], roll=0, up_axis_index=2)
@@ -261,10 +262,10 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         ## Tray above top drawer
         top_drawer_tray_pos = drawer_frame_pos + np.array([0, 0, .059])
         self._top_drawer_tray = bullet.objects.tray_teal_rgba(
-            quat=quat, 
+            quat=quat,
             rgba=self.configs['object_rgbs']['tray'],
-            pos=top_drawer_tray_pos, 
-            scale=0.165, 
+            pos=top_drawer_tray_pos,
+            scale=0.165,
             physicsClientId=self._uid
         )
 
@@ -293,10 +294,20 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         if self.test_env and self.test_env_command.get("no_collision_handle_and_cylinder", False):
             for idx in [2, 3, 4]:
                 p.setCollisionFilterPair(
-                    self._top_drawer, 
-                    self._large_obj, 
-                    idx, 
-                    -1, 
+                    self._top_drawer,
+                    self._large_obj,
+                    idx,
+                    -1,
+                    enableCollision=False,
+                    physicsClientId=self._uid)
+
+        if self.test_env and self.test_env_command.get("no_collision_handle_and_small", False):
+            for idx in [2, 3, 4]:
+                p.setCollisionFilterPair(
+                    self._top_drawer,
+                    self._small_obj,
+                    idx,
+                    -1,
                     enableCollision=False,
                     physicsClientId=self._uid)
 
@@ -306,7 +317,8 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         if self.test_env:
             low, high = np.array(self.test_env_command['small_object_pos_randomness']['low']), np.array(
                 self.test_env_command['small_object_pos_randomness']['high'])
-            random_position = self.test_env_command['small_object_pos'] + np.random.uniform(low=low, high=high)
+            random_position = self.test_env_command['small_object_pos'] + np.random.uniform(
+                low=low, high=high)
             self._small_obj = self.spawn_small_object(
                 object_position=random_position, rgba=self.configs['object_rgbs']['small_object'])
         else:
@@ -344,7 +356,8 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             self.large_object_quadrant = self.test_env_command['large_object_quadrant']
             quadrant = slide_quadrants[self.large_object_quadrant]
             pos = np.array([quadrant[0], quadrant[1], -0.3525])
-            self._large_obj = self.spawn_large_object(pos, self.configs['object_rgbs']['large_object'])
+            self._large_obj = self.spawn_large_object(
+                pos, self.configs['object_rgbs']['large_object'])
         else:
             large_object_within_gripper_range = False
             tries = 0
@@ -378,7 +391,8 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
 
                 quadrant = slide_quadrants[self.large_object_quadrant]
                 pos = np.array([quadrant[0], quadrant[1], -0.3525])
-                self._large_obj = self.spawn_large_object(pos, self.configs['object_rgbs']['large_object'])
+                self._large_obj = self.spawn_large_object(
+                    pos, self.configs['object_rgbs']['large_object'])
 
                 large_object_within_gripper_range = True
                 if not (gripper_bounding_x[0] - .1 <= pos[0] and pos[0] <= gripper_bounding_x[1] + .1
@@ -413,7 +427,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             bullet.step(physicsClientId=self._uid)
 
         return obj
-    
+
     def spawn_large_object(self, object_position=None, rgba=[0, 1, 0, 1], scale=1.4):
         assert object_position is not None
 
@@ -475,7 +489,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             p.removeConstraint(self.grasp_constraint,
                                physicsClientId=self._uid)
             self.grasp_constraint = None
-    
+
         # Task 31: Drawer can't open if can in front of it
         # if self.get_quadrant(self.get_object_pos(self._large_obj)) == 1:
         if self.test_env and self.test_env_command.get("drawer_hack", False):
@@ -916,13 +930,14 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             if obj_in_drawer is not None:
                 opts.remove('move_drawer')
             # Object blocks drawer
-            obj_pos, _ = get_object_position(self._small_obj, physicsClientId=self._uid)
+            obj_pos, _ = get_object_position(
+                self._small_obj, physicsClientId=self._uid)
             large_obj_pos = self.get_object_pos(self.obj_slide)
             for base_pos in [self.get_drawer_handle_future_pos(td_open_coeff), self.get_td_handle_pos()]:
                 for offset in [i * self.obj_thresh / 4 for i in range(4+1)]:
                     no_obj_center = base_pos - offset * \
                         np.array([np.sin((self.drawer_yaw+180) * np.pi / 180), -
-                                    np.cos((self.drawer_yaw+180) * np.pi / 180), 0])
+                                  np.cos((self.drawer_yaw+180) * np.pi / 180), 0])
                     if np.linalg.norm(obj_pos[:2] - no_obj_center[:2]) < self.obj_thresh + .02 or np.linalg.norm(large_obj_pos[:2] - no_obj_center[:2]) < self.obj_thresh + .02:
                         if 'move_drawer' in opts:
                             opts.remove('move_drawer')
@@ -936,15 +951,16 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
                     opts.remove('move_obj_slide')
 
             if self.fixed_task:
-                fixed_task = 'move_drawer' if self.fixed_task in ['open_drawer', 'close_drawer'] else self.fixed_task
+                fixed_task = 'move_drawer' if self.fixed_task in [
+                    'open_drawer', 'close_drawer'] else self.fixed_task
                 if self.fixed_task == 'move_obj_slide' and 'move_obj_slide' not in opts:
                     target_quadrant = random.choice([(self.large_object_quadrant - 1) %
-                            4, (self.large_object_quadrant + 1) % 4])
+                                                     4, (self.large_object_quadrant + 1) % 4])
                     self.update_obj_slide_goal({
                         'target_quadrant': target_quadrant,
                     })
                 task = fixed_task
-            else:                    
+            else:
                 if len(opts) == 0:
                     opts = ['move_drawer']
 
@@ -963,9 +979,10 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             init_pos = self.test_env_command['init_pos']
         else:
             init_pos = np.array(self._pos_init)
-        
+
         if self.test_env and 'init_theta' in self.test_env_command:
-            init_theta = bullet.deg_to_quat(self.test_env_command['init_theta'])
+            init_theta = bullet.deg_to_quat(
+                self.test_env_command['init_theta'])
         else:
             init_theta = self.default_theta
 
@@ -1016,7 +1033,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
 
         if self.curr_task == None:
             self.curr_task = self.sample_goals()
-                
+
         self.reset_gripper()
 
         # Move to starting positions
