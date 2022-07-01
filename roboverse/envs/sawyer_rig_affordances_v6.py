@@ -1278,7 +1278,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
 
     def update_goal_state(self):
         ## We save a bunch of zeros at the end to remain consistent with previous environments with had up to 3 objects
-        obj_goal_state = list(self.obj_pnp_goal) + [0 for _ in range(2 * 3)]
+        obj_goal_state = [0 for _ in range(3)] + list(self.obj_pnp_goal) + [0 for _ in range(3)]
         self.goal_state = np.concatenate(
             [
                 [0 for _ in range(8)],
