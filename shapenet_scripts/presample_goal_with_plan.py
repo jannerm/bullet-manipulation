@@ -7,24 +7,25 @@ from matplotlib import pyplot as plt  # NOQA
 
 import roboverse
 
+from rlkit.experimental.kuanfang.envs.drawer_pnp_push_commands import drawer_pnp_push_commands  # NOQA
+
 ########################################
 # Args.
 ########################################
 parser = argparse.ArgumentParser()
 parser.add_argument('--output_dir', type=str)
-parser.add_argument("--num_trajectories", type=int, default=32)
-parser.add_argument("--max_steps_per_stage", type=int, default=75)
-parser.add_argument("--num_subgoals", type=int, default=10)
-parser.add_argument("--subgoal_interval", type=int, default=15)
-parser.add_argument("--downsample", action='store_true')
-parser.add_argument("--drawer_sliding", action='store_true')
-parser.add_argument("--full_open_close_init_and_goal", action='store_true')
-parser.add_argument("--test_env_seeds", nargs='+', type=int)
-parser.add_argument("--video_save_frequency", type=int,
-                    default=0, help="Set to zero for no video saving")
-parser.add_argument("--gui", dest="gui", action="store_true", default=False)
-parser.add_argument("--debug", dest="debug",
-                    action="store_true", default=False)
+parser.add_argument('--num_trajectories', type=int, default=32)
+parser.add_argument('--max_steps_per_stage', type=int, default=160)
+parser.add_argument('--num_subgoals', type=int, default=16)
+parser.add_argument('--subgoal_interval', type=int, default=15)
+parser.add_argument('--downsample', action='store_true')
+parser.add_argument('--test_env_seeds', nargs='+', type=int)
+parser.add_argument('--timeout_k_steps_after_done', type=int, default=10)
+parser.add_argument('--mix_timeout_k', action='store_true')
+parser.add_argument('--debug',
+                    dest='debug',
+                    action='store_true',
+                    default=False)
 
 args = parser.parse_args()
 
@@ -32,8 +33,9 @@ num_trajectories = args.num_trajectories
 max_steps_per_stage = args.max_steps_per_stage
 subgoal_interval = args.subgoal_interval
 num_subgoals = args.num_subgoals
-full_open_close_init_and_goal = args.full_open_close_init_and_goal
 debug = args.debug
+timeout_k_steps_after_done = args.timeout_k_steps_after_done
+mix_timeout_k = args.mix_timeout_k
 
 for test_env_seed in args.test_env_seeds:  # NOQA
     if not os.path.exists(args.output_dir):
@@ -41,45 +43,49 @@ for test_env_seed in args.test_env_seeds:  # NOQA
 
     output_path = os.path.join(
         args.output_dir,
-        'td_pnp_push_scripted_goals_seed{}.pkl'.format(str(test_env_seed)))
+        'td_pnp_push_scripted_goals_{}timeoutk{}_seed{}.pkl'.format("mixed" if mix_timeout_k else "", str(timeout_k_steps_after_done), str(test_env_seed)))
+    print(output_path)
+    command = drawer_pnp_push_commands[test_env_seed]
 
     ########################################
     # Environment.
     ########################################
     kwargs = {
-        'drawer_sliding': True if args.drawer_sliding else False,
-        'test_env_seed': test_env_seed,
-        'new_view': True,
-        'close_view': True,
-        'fix_drawer_orientation_semicircle': True,
-        'full_open_close_init_and_goal': full_open_close_init_and_goal,
+        'test_env_command': command,
     }
     if args.downsample:
         kwargs['downsample'] = True
         kwargs['env_obs_img_dim'] = 196
-
-    # TODO
-    # env = roboverse.make('SawyerRigAffordances-v5', test_env=True,
-    #                      expl=True, use_single_obj_idx=1, **kwargs)
-    env = roboverse.make('SawyerRigAffordances-v1', test_env=True,
-                         expl=True, random_color_p=0.0, **kwargs)
+    env = roboverse.make('SawyerRigAffordances-v6',
+                                    test_env=True,
+                                    expl=True,
+                                    **kwargs)
 
     ########################################
     # Rollout in Environment and Collect Data.
     ########################################
     obs_dim = env.observation_space.spaces['state_achieved_goal'].low.size
     imlength = env.obs_img_dim * env.obs_img_dim * 3
-    num_stages = 2
+    num_stages = len(command['command_sequence'])
 
     dataset = {
-        'initial_latent_state': np.zeros((num_trajectories, 720), dtype=np.float),  # NOQA
-        'latent_desired_goal': np.zeros((num_trajectories, 720), dtype=np.float),  # NOQA
-        'state_desired_goal': np.zeros((num_trajectories, obs_dim), dtype=np.float),  # NOQA
-        'image_desired_goal': np.zeros((num_trajectories, imlength), dtype=np.float),  # NOQA
-        'initial_image_observation': np.zeros((num_trajectories, imlength), dtype=np.float),  # NOQA
-        'image_plan': np.zeros((num_trajectories, num_subgoals, imlength), dtype=np.float),  # NOQA
+        'initial_latent_state':
+        np.zeros((num_trajectories, 720), dtype=np.float),  # NOQA
+        'latent_desired_goal':
+        np.zeros((num_trajectories, 720), dtype=np.float),  # NOQA
+        'state_desired_goal':
+        np.zeros((num_trajectories, obs_dim), dtype=np.float),  # NOQA
+        'image_desired_goal':
+        np.zeros((num_trajectories, imlength), dtype=np.float),  # NOQA
+        'initial_image_observation':
+        np.zeros((num_trajectories, imlength), dtype=np.float),  # NOQA
+        'image_plan':
+        np.zeros((num_trajectories, num_subgoals, imlength),
+                 dtype=np.float),  # NOQA
     }
 
+    if mix_timeout_k:
+        curr_timeout_k = 0
     for i in tqdm(range(num_trajectories)):
         is_done = False
         # If task isn't done, scripted policy failed, so recollect samples.
@@ -101,8 +107,7 @@ for test_env_seed in args.test_env_seeds:  # NOQA
 
                     # Debug
                     if debug:
-                        print('t: ', 0,
-                              'pos: ', env.get_end_effector_pos(),
+                        print('t: ', 0, 'pos: ', env.get_end_effector_pos(),
                               'theta: ', env.get_end_effector_theta())
                         plt.figure()
                         _img = np.reshape(init_img, [3, 48, 48])
@@ -119,8 +124,8 @@ for test_env_seed in args.test_env_seeds:  # NOQA
                     obs, reward, _, info = env.step(action)
                     t += 1
 
-                    if (t % subgoal_interval == 0 and
-                            len(plan_imgs) < num_subgoals - 1):
+                    if (t % subgoal_interval == 0
+                            and len(plan_imgs) < num_subgoals - 1):
                         plan_img = np.uint8(
                             env.render_obs()).transpose() / 255.0
                         plan_img = plan_img.flatten()
@@ -128,9 +133,9 @@ for test_env_seed in args.test_env_seeds:  # NOQA
 
                         # Debug
                         if debug:
-                            print('t: ', t,
-                                  'pos: ', env.get_end_effector_pos(),
-                                  'theta: ', env.get_end_effector_theta())
+                            print('t: ', t, 'pos: ',
+                                  env.get_end_effector_pos(), 'theta: ',
+                                  env.get_end_effector_theta())
                             plt.figure()
                             _img = np.reshape(plan_img, [3, 48, 48])
                             _img = np.transpose(_img, [2, 1, 0])
@@ -139,14 +144,18 @@ for test_env_seed in args.test_env_seeds:  # NOQA
 
                     if done and not has_done:
                         print('done')
-                        timeout = t_i + 10  # Lift up the gripper.
+                        if mix_timeout_k:
+                            timeout_k = curr_timeout_k
+                        else:
+                            timeout_k = timeout_k_steps_after_done
+                        timeout = t_i + timeout_k  # Lift up the gripper.
                         has_done = True
-
+                    
                     if t_i >= timeout:
                         print('timeout')
                         break
 
-                if not has_done:
+                if not has_done or not done:
                     print('valid_traj = False')
                     valid_traj = False
                     # break
@@ -159,8 +168,8 @@ for test_env_seed in args.test_env_seeds:  # NOQA
             goal_img = goal_img.flatten()
             # Debug
             if debug:
-                print('pos: ', env.get_end_effector_pos(),
-                      'theta: ', env.get_end_effector_theta())
+                print('pos: ', env.get_end_effector_pos(), 'theta: ',
+                      env.get_end_effector_theta())
                 plt.figure()
                 _img = np.reshape(goal_img, [3, 48, 48])
                 _img = np.transpose(_img, [2, 1, 0])
@@ -175,6 +184,8 @@ for test_env_seed in args.test_env_seeds:  # NOQA
                 # env.reset()
                 continue
             else:
+                if mix_timeout_k:
+                    curr_timeout_k = (curr_timeout_k + 1) % (timeout_k_steps_after_done + 1)
                 dataset['state_desired_goal'][i] = obs['state_achieved_goal']
                 dataset['image_desired_goal'][i] = goal_img
                 dataset['initial_image_observation'][i] = init_img

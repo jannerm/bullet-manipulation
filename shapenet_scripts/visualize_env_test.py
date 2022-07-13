@@ -15,11 +15,12 @@ env = rv.make(
     "SawyerRigAffordances-v6", 
     gui=True, 
     expl=True, 
-    reset_interval=1, 
+    reset_interval=100, 
     #reset_gripper_interval=1,
     env_obs_img_dim=196, 
     test_env=True, 
     test_env_command=drawer_pnp_push_commands[14],
+    use_test_env_command_sequence=False,
     demo_num_ts=ts,
     # fixed_drawer_yaw=171.86987153482346,
     # fixed_drawer_quadrant=1,
@@ -36,8 +37,8 @@ if save_video:
     num_traj = 100 #2
     observations = np.zeros((num_traj*ts, 196, 196, 3))
 
-goal_path = f'/media/ashvin/data1/patrickhaoy/data/env6_td_pnp_push/td_pnp_push_scripted_goals_seed14.pkl'
-goal_state = np.load(goal_path, allow_pickle=True)['state_desired_goal'][0]
+# goal_path = f'/media/ashvin/data1/patrickhaoy/data/env6_td_pnp_push/td_pnp_push_scripted_goals_seed14.pkl'
+# goal_state = np.load(goal_path, allow_pickle=True)['state_desired_goal'][0]
 
 tasks_success = dict()
 tasks_count = dict()
@@ -58,7 +59,7 @@ for i in range(num_traj):
         if i % 2 == 1 and t > 40:
             action[0] -= 1
         next_observation, reward, _, info = env.step(action)
-        print(env.get_success_metric(env.get_observation()['state_observation'], goal_state, key='overall'))
+        # print(env.get_success_metric(env.get_observation()['state_observation'], goal_state, key='overall'))
         if done and not is_done:
             is_done = True 
             
