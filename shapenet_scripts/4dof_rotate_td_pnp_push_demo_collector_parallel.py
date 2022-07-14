@@ -12,7 +12,7 @@ from multiprocess import Pool
 import gc
 
 def collect(id):
-    state_env = roboverse.make('SawyerRigAffordances-v6', expl=True, reset_interval=args.reset_interval, **kwargs)
+    state_env = roboverse.make('SawyerDrawerPnpPush-v0', expl=True, reset_interval=args.reset_interval, **kwargs)
 
     # FOR TESTING, TURN COLORS OFF
     imsize = state_env.obs_img_dim

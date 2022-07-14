@@ -56,7 +56,7 @@ for test_env_seed in args.test_env_seeds:  # NOQA
     if args.downsample:
         kwargs['downsample'] = True
         kwargs['env_obs_img_dim'] = 196
-    env = roboverse.make('SawyerRigAffordances-v6',
+    env = roboverse.make('SawyerDrawerPnpPush-v0',
                                     test_env=True,
                                     expl=True,
                                     **kwargs)
