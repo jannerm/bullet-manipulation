@@ -37,8 +37,6 @@ if save_video:
     num_traj = 100 #2
     observations = np.zeros((num_traj*ts, 196, 196, 3))
 
-# goal_path = f'/media/ashvin/data1/patrickhaoy/data/env6_td_pnp_push/td_pnp_push_scripted_goals_seed14.pkl'
-# goal_state = np.load(goal_path, allow_pickle=True)['state_desired_goal'][0]
 
 tasks_success = dict()
 tasks_count = dict()
@@ -48,6 +46,7 @@ for i in range(num_traj):
     curr_task = env.curr_task
     is_done = False
     for t in range(ts):
+        # np.uint8(env.render_obs())
         if save_video:
             img = np.uint8(env.render_obs())
             # from PIL import Image
@@ -56,10 +55,12 @@ for i in range(num_traj):
             # exit()
             observations[i*ts + t, :] = img
         action, done = env.get_demo_action(first_timestep=(t == 0), return_done=True)
-        if i % 2 == 1 and t > 40:
-            action[0] -= 1
+        # done = False
+        # if t < 35:
+        #     action = np.array([0, 0, -1, 1, -1])
+        # else:
+        #     action = np.array([0, 0, -1, -1, -1])
         next_observation, reward, _, info = env.step(action)
-        # print(env.get_success_metric(env.get_observation()['state_observation'], goal_state, key='overall'))
         if done and not is_done:
             is_done = True 
             
