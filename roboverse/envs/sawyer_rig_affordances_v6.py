@@ -455,14 +455,14 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             raise RuntimeError('Unrecognized action: {}'.format(action))
 
         # Don't rotate gripper if its turned too far
-        curr_angle = self.get_end_effector_theta()[2]
-        if 0 < curr_angle and curr_angle < 90:
-            pass
-        elif -45 < curr_angle and curr_angle < 0:
-            delta_yaw[0] = max(0, delta_yaw[0]) 
-        #elif -90 < curr_angle and curr_angle < -45
-        else:
-            delta_yaw[0] = min(0, delta_yaw[0])
+        # curr_angle = self.get_end_effector_theta()[2]
+        # if 0 < curr_angle and curr_angle < 90:
+        #     pass
+        # elif -45 < curr_angle and curr_angle < 0:
+        #     delta_yaw[0] = max(0, delta_yaw[0]) 
+        # #elif -90 < curr_angle and curr_angle < -45
+        # else:
+        #     delta_yaw[0] = min(0, delta_yaw[0])
 
 
         # Don't move downwards if gripper too low
