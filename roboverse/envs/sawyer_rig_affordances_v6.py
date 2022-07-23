@@ -517,6 +517,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
                     bodyUniqueId=self._top_drawer,
                     linkIndex=2,
                     mass=99999999,
+                    physicsClientId=self._uid,
                 )
             elif self.get_quadrant(self.get_object_pos(self._large_obj)) != drawer_hack_quadrant and not self.top_drawer_handle_can_move:
                 self.top_drawer_handle_can_move = True
@@ -524,6 +525,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
                     bodyUniqueId=self._top_drawer,
                     linkIndex=2,
                     mass=.1,
+                    physicsClientId=self._uid,
                 )
 
         # Update position and theta
