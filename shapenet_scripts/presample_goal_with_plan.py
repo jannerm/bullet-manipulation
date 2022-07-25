@@ -3,11 +3,11 @@ import argparse
 import numpy as np
 import pickle as pkl
 from tqdm import tqdm
-from matplotlib import pyplot as plt  # NOQA
+from matplotlib import pyplot as plt  
 
 import roboverse
 
-from rlkit.experimental.kuanfang.envs.drawer_pnp_push_commands import drawer_pnp_push_commands  # NOQA
+from rlkit.envs.drawer_pnp_push_commands import drawer_pnp_push_commands  
 
 ########################################
 # Args.
@@ -37,13 +37,13 @@ debug = args.debug
 timeout_k_steps_after_done = args.timeout_k_steps_after_done
 mix_timeout_k = args.mix_timeout_k
 
-for test_env_seed in args.test_env_seeds:  # NOQA
+for test_env_seed in args.test_env_seeds:  
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
     output_path = os.path.join(
         args.output_dir,
-        'td_pnp_push_scripted_goals_{}timeoutk{}_seed{}.pkl'.format("mixed" if mix_timeout_k else "", str(timeout_k_steps_after_done), str(test_env_seed)))
+        'td_pnp_push_goals_seed{}.pkl'.format(str(test_env_seed)))
     print(output_path)
     command = drawer_pnp_push_commands[test_env_seed]
 
@@ -70,18 +70,18 @@ for test_env_seed in args.test_env_seeds:  # NOQA
 
     dataset = {
         'initial_latent_state':
-        np.zeros((num_trajectories, 720), dtype=np.float),  # NOQA
+        np.zeros((num_trajectories, 720), dtype=np.float),  
         'latent_desired_goal':
-        np.zeros((num_trajectories, 720), dtype=np.float),  # NOQA
+        np.zeros((num_trajectories, 720), dtype=np.float),  
         'state_desired_goal':
-        np.zeros((num_trajectories, obs_dim), dtype=np.float),  # NOQA
+        np.zeros((num_trajectories, obs_dim), dtype=np.float),  
         'image_desired_goal':
-        np.zeros((num_trajectories, imlength), dtype=np.float),  # NOQA
+        np.zeros((num_trajectories, imlength), dtype=np.float),  
         'initial_image_observation':
-        np.zeros((num_trajectories, imlength), dtype=np.float),  # NOQA
+        np.zeros((num_trajectories, imlength), dtype=np.float),  
         'image_plan':
         np.zeros((num_trajectories, num_subgoals, imlength),
-                 dtype=np.float),  # NOQA
+                 dtype=np.float),  
     }
 
     if mix_timeout_k:

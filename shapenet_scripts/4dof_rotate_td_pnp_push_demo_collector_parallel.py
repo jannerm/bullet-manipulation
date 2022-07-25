@@ -91,6 +91,7 @@ def collect(id):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--name", type=str)
+    parser.add_argument("--save_path", type=str)
     parser.add_argument("--num_trajectories", type=int, default=4000)
     parser.add_argument("--num_trajectories_per_demo", type=int, default=200)
     parser.add_argument("--num_threads", type=int, default=8)
@@ -103,8 +104,7 @@ if __name__ == '__main__':
                         default=0, help="Set to zero for no video saving")
 
     args = parser.parse_args()
-    prefix = f"/media/ashvin/data1/patrickhaoy/data/{args.name}/"
-    #prefix = "/2tb/home/patrickhaoy/data/test/" #"/2tb/home/patrickhaoy/data/affordances/combined_new/" #prefix = "/home/ashvin/data/sasha/demos"
+    prefix = os.path.join(args.save_path, args.name)
 
     if not os.path.exists(prefix):
         os.makedirs(prefix)
