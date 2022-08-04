@@ -118,14 +118,16 @@ if __name__ == '__main__':
     video_save_path = prefix + args.name + "_video"
 
     kwargs = {
-        # 'fixed_drawer_yaw': 24.18556394023222,
-        # 'fixed_drawer_pos': np.array([0.50850424, 0.11416014, -0.34]),
         'demo_num_ts': args.num_timesteps,
         'expert_policy_std': .05,
-        'test_env_command': drawer_pnp_push_commands[args.test_env_seed],
-        'use_test_env_command_sequence': False,
-        'test_env': True,
     }
+    if args.test_env_seed != -1:
+        kwargs.extend({
+            'test_env_command': drawer_pnp_push_commands[args.test_env_seed],
+            'use_test_env_command_sequence': False,
+            'test_env': True,
+        })
+        
     if args.downsample:
         kwargs['downsample'] = True
         kwargs['env_obs_img_dim'] = 196

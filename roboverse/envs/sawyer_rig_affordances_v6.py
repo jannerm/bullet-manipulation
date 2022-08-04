@@ -100,6 +100,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
                 self.test_env_seed = list(self.test_env_commands.keys())[0]
             else:
                 self.test_env_seed = None
+        self.random_init_gripper_pos = kwargs.pop('random_init_gripper_pos', False)
 
         ## Camera Angle and Objects
         self.configs = kwargs.pop('configs',
@@ -1005,6 +1006,13 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
                 self.test_env_command['init_theta'])
         else:
             init_theta = self.default_theta
+        
+        if self.random_init_gripper_pos:
+            init_pos = [
+                np.random.uniform(gripper_bounding_x[0], gripper_bounding_x[1]),
+                np.random.uniform(gripper_bounding_y[0], gripper_bounding_y[1]),
+                np.random.uniform(-.25, gripper_bounding_z[1]),
+            ]
 
         bullet.position_control(self._sawyer,
                                 self._end_effector,
