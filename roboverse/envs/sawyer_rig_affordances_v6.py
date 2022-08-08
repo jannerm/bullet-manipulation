@@ -77,6 +77,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         self.gripper_rot_thresh = 10
         self.default_theta = bullet.deg_to_quat([180, 0, 0])
         self._ddeg_scale = 5
+        self.lift_gripper_action = np.array([0, 0, 1, 0, -1])
 
         ## Fixed Env Settings (Normally Shouldn't Change)
         self._transpose_image = transpose_image

@@ -28,7 +28,7 @@ env = rv.make(
     downsample=False,
     #configs=drawer_pnp_push_env_configs[1],
     #fixed_task='move_obj_pnp',
-    random_init_gripper_pos=True
+    # random_init_gripper_pos=True
 )
 
 save_video = True
