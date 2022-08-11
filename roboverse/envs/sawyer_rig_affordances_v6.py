@@ -26,9 +26,9 @@ gripper_bounding_x = [.5, .8]
 gripper_bounding_y = [-.17, .17]
 gripper_bounding_z = [-0.35, -0.1]
 
-X1 = .575
+X1 = .59
 X2 = .775
-Y = .0975
+Y = .09
 quadrants = [
     [X1, Y],
     [X1, -Y],
@@ -1622,7 +1622,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
 
         gripper_yaw_aligned = np.linalg.norm(goal_ee_yaw - ee_yaw) > 5
         gripper_pos_xy_aligned = np.linalg.norm(
-            ee_early_stage_goal_pos[:2] - ee_pos[:2]) < .04
+            ee_early_stage_goal_pos[:2] - ee_pos[:2]) < .05
         gripper_pos_z_aligned = np.linalg.norm(
             ee_early_stage_goal_pos[2] - ee_pos[2]) < .0375
         gripper_above = ee_pos[2] >= -0.105
