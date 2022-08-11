@@ -56,7 +56,8 @@ for i in range(num_traj):
             # exit()
             observations[i*ts + t, :] = img
         action, done = env.get_demo_action(first_timestep=(t == 0), return_done=True)
-        # action = np.array([-1, 0, -.1, 0, -1])
+        # sign = 1 if i % 2 == 0 else -1
+        # action = np.array([0, 0, 0, sign, -1])
         done = False
         next_observation, reward, _, info = env.step(action)
         if done and not is_done:

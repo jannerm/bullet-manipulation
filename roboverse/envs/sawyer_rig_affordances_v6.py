@@ -462,14 +462,14 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             raise RuntimeError('Unrecognized action: {}'.format(action))
 
         # Don't rotate gripper if its turned too far
-        # curr_angle = self.get_end_effector_theta()[2]
-        # if 0 < curr_angle and curr_angle < 90:
-        #     pass
-        # elif -45 < curr_angle and curr_angle < 0:
-        #     delta_yaw[0] = max(0, delta_yaw[0]) 
-        # #elif -90 < curr_angle and curr_angle < -45
-        # else:
-        #     delta_yaw[0] = min(0, delta_yaw[0])
+        curr_angle = self.get_end_effector_theta()[2]
+        if -90 < curr_angle and curr_angle < 90:
+            pass
+        elif -135 < curr_angle and curr_angle < -90:
+            delta_yaw[0] = max(0, delta_yaw[0]) 
+        #elif -90 < curr_angle and curr_angle < -45
+        else:
+            delta_yaw[0] = min(0, delta_yaw[0])
 
 
         # Don't move downwards if gripper too low
@@ -1008,10 +1008,12 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             init_pos = np.array(self._pos_init)
 
         if self.test_env and 'init_theta' in self.test_env_command:
-            init_theta = bullet.deg_to_quat(
-                self.test_env_command['init_theta'])
+            init_theta = bullet.deg_to_quat(self.test_env_command['init_theta'], physicsClientId=self._uid)
         else:
             init_theta = self.default_theta
+        
+        init_theta_deg = bullet.quat_to_deg(init_theta, physicsClientId=self._uid)
+        assert init_theta_deg[0] == 180 and init_theta_deg[1] == 0 and -90 <= init_theta_deg[2] and init_theta_deg[2] <= 90 
         
         if self.random_init_gripper_pos:
             init_pos = [
@@ -1416,9 +1418,9 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             np.array([np.sin((self.drawer_yaw+180) * np.pi / 180), -
                      np.cos((self.drawer_yaw+180) * np.pi / 180), 0])
 
-        if 0 <= self.drawer_yaw < 90:
+        if 0 <= self.drawer_yaw <= 90:
             goal_ee_yaw = self.drawer_yaw
-        elif 90 <= self.drawer_yaw < 270:
+        elif 90 < self.drawer_yaw < 270:
             goal_ee_yaw = self.drawer_yaw - 180
         else:
             goal_ee_yaw = self.drawer_yaw - 360
@@ -1427,7 +1429,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         gripper_pos_xy_aligned = np.linalg.norm(
             ee_early_stage_goal_pos[:2] - ee_pos[:2]) < .01
         gripper_pos_z_aligned = np.linalg.norm(
-            ee_early_stage_goal_pos[2] - ee_pos[2]) < .0175
+            ee_early_stage_goal_pos[2] - ee_pos[2]) < .035
         gripper_above = ee_pos[2] >= -0.105
         if not self.gripper_has_been_above and gripper_above:
             self.gripper_has_been_above = True
