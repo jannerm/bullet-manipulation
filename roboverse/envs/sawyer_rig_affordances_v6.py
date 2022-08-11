@@ -18,28 +18,31 @@ from PIL import Image
 import pkgutil
 
 # Constants
-td_close_coeff = 0.15134
-td_open_coeff = 0.2695
-td_offset_coeff = 0.0125
+td_close_coeff = 0.1480 #0.15134
+td_open_coeff = 0.2365 #0.2695
+td_offset_coeff = 0.03 #0.0125
 
 gripper_bounding_x = [.5, .8]
 gripper_bounding_y = [-.17, .17]
 gripper_bounding_z = [-0.35, -0.1]
 
+X1 = .575
+X2 = .775
+Y = .0975
 quadrants = [
-    [.525, .1675],
-    [.525, -.1675],
-    [.775, -.1675],
-    [.775, .1675],
+    [X1, Y],
+    [X1, -Y],
+    [X2, -Y],
+    [X2, Y],
 ]
 
-slide_offset = .11
+slide_offset = .08 #.11
 goal_slide_offset = .025
 slide_quadrants = [
     [0.5 + slide_offset, 0.2 - slide_offset],
     [0.5 + slide_offset, slide_offset - 0.1989],
-    [0.84 - slide_offset, slide_offset - 0.1989],
-    [0.84 - slide_offset, 0.2 - slide_offset],
+    [0.84 - slide_offset + .05, slide_offset - 0.1989],
+    [0.84 - slide_offset + .05, 0.2 - slide_offset],
 ]
 goal_slide_quadrants = [
     [0.5 + slide_offset - goal_slide_offset,
@@ -123,8 +126,10 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
                                       }
                                   })
         self._view_matrix_obs = bullet.get_view_matrix(
+            # target_pos=[0.7, 0, -0.25], distance=0.5,
             target_pos=[0.7, 0, -0.25], distance=0.5,
-            yaw=self.configs['camera_angle']['yaw'], pitch=self.configs['camera_angle']['pitch'], roll=0, up_axis_index=2)
+            yaw=0, pitch=-30, roll=0, up_axis_index=2)
+            # yaw=self.configs['camera_angle']['yaw'], pitch=self.configs['camera_angle']['pitch'], roll=0, up_axis_index=2)
 
         self.fixed_drawer_yaw = kwargs.pop('fixed_drawer_yaw', None)
         self.fixed_drawer_quadrant = kwargs.pop('fixed_drawer_quadrant', None)
@@ -273,16 +278,16 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         )
 
         # Tray acts as stopper for drawer closing
-        tray_pos = self.get_drawer_handle_future_pos(-.05)
-        self._tray = bullet.objects.tray_heavy(
-            quat=quat, pos=tray_pos, scale=0.001, physicsClientId=self._uid)
+        # tray_pos = self.get_drawer_handle_future_pos(-.05)
+        # self._tray = bullet.objects.tray_heavy(
+        #     quat=quat, pos=tray_pos, scale=0.001, physicsClientId=self._uid)
 
         if self.test_env:
             if not self.test_env_command['drawer_open']:
-                close_drawer(self._top_drawer, 200, physicsClientId=self._uid)
+                close_drawer(self._top_drawer, 50, physicsClientId=self._uid)
         else:
             if is_close_drawer:
-                close_drawer(self._top_drawer, 200, physicsClientId=self._uid)
+                close_drawer(self._top_drawer, 50, physicsClientId=self._uid)
 
         self._load_table_large_objs()
         self._load_table_small_objs(is_close_drawer)
@@ -1363,6 +1368,12 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         }
         action, done = task_dict[self.curr_task]()
 
+        if self.curr_task == 'move_drawer':
+            sign = .5 if self.drawer_skill == 'open' else .1
+            lift_direction = [sign * -np.sin((self.drawer_yaw+180) * np.pi / 180), sign * np.cos((self.drawer_yaw+180) * np.pi / 180), 0]
+        else:
+            lift_direction = [0, 0]
+
         if first_timestep:
             self.trajectory_done = False
             self.gripper_has_been_above = False
@@ -1377,11 +1388,11 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         if offset < self.gripper_action_num_ts:
             action = self.gripper_action
         elif offset >= self.gripper_action_num_ts and offset < self.gripper_action_num_ts + 10:
-            action = np.array([0, 0, 1, 0, -1])
+            action = np.array([lift_direction[0], lift_direction[1], 1, 0, -1])
             if self.trajectory_done == False:
                 self.trajectory_done = True
         elif self.trajectory_done:
-            action = np.array([0, 0, 1, 0, -1])
+            action = np.array([lift_direction[0], lift_direction[1], 1, 0, -1])
         else:
             action = np.append(action, [self.grip])
             action = np.random.normal(action, self.expert_policy_std)
@@ -1399,8 +1410,8 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         ee_yaw = self.get_end_effector_theta()[2]
 
         drawer_handle_pos = self.get_td_handle_pos()
-        #drawer_frame_pos = get_drawer_frame_pos(self._top_drawer, physicsClientId=self._uid)
-        #print((drawer_handle_pos - drawer_frame_pos)/np.array([np.sin((self.drawer_yaw+180) * np.pi / 180) , -np.cos((self.drawer_yaw+180) * np.pi / 180), 0]))
+        # drawer_frame_pos = get_drawer_frame_pos(self._top_drawer, physicsClientId=self._uid)
+        # print((drawer_handle_pos - drawer_frame_pos)/np.array([np.sin((self.drawer_yaw+180) * np.pi / 180) , -np.cos((self.drawer_yaw+180) * np.pi / 180), 0]))
         ee_early_stage_goal_pos = drawer_handle_pos - td_offset_coeff * \
             np.array([np.sin((self.drawer_yaw+180) * np.pi / 180), -
                      np.cos((self.drawer_yaw+180) * np.pi / 180), 0])
@@ -1583,7 +1594,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
 
         return action, done
 
-    def move_obj_slide(self, print_stages=False):
+    def move_obj_slide(self, print_stages=True):
         ee_pos = self.get_end_effector_pos()
         ee_yaw = self.get_end_effector_theta()[2]
         obj_pos = self.get_object_pos(self.obj_slide)
@@ -1603,13 +1614,13 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         #     goal_ee_yaw = direction - 180
         # else:
         #     goal_ee_yaw = direction - 360
-        ee_early_stage_goal_pos = obj_pos - 0.11 * \
+        ee_early_stage_goal_pos = obj_pos - 0.08 * \
             np.array([np.sin(direction * np.pi / 180), -
                      np.cos(direction * np.pi / 180), 0])
 
         gripper_yaw_aligned = np.linalg.norm(goal_ee_yaw - ee_yaw) > 5
         gripper_pos_xy_aligned = np.linalg.norm(
-            ee_early_stage_goal_pos[:2] - ee_pos[:2]) < .005
+            ee_early_stage_goal_pos[:2] - ee_pos[:2]) < .04
         gripper_pos_z_aligned = np.linalg.norm(
             ee_early_stage_goal_pos[2] - ee_pos[2]) < .0375
         gripper_above = ee_pos[2] >= -0.105

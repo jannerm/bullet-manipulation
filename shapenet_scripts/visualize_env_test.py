@@ -19,7 +19,7 @@ env = rv.make(
     #reset_gripper_interval=1,
     env_obs_img_dim=196, 
     test_env=True, 
-    test_env_command=drawer_pnp_push_commands[14],
+    test_env_command=drawer_pnp_push_commands[51],
     # use_test_env_command_sequence=False,
     demo_num_ts=ts,
     # fixed_drawer_yaw=171.86987153482346,
@@ -56,6 +56,7 @@ for i in range(num_traj):
             # exit()
             observations[i*ts + t, :] = img
         action, done = env.get_demo_action(first_timestep=(t == 0), return_done=True)
+        # action = np.array([-1, 0, -.1, 0, -1])
         done = False
         next_observation, reward, _, info = env.step(action)
         if done and not is_done:

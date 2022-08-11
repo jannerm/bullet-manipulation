@@ -21,47 +21,66 @@
        <mass value=".1"/>
        <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
     </inertial>
+
     <visual>
       <!-- right -->
-      <origin rpy="0 0 0" xyz="0 -.315 0"/>
+      <origin rpy=".75 0 0" xyz="0 -.26 0"/>
       <geometry>
         <box size=".65 .01 .2"/>
       </geometry>
       <material name="mainColor"/>
     </visual>
+    <collision>
+      <!-- right -->
+      <origin rpy=".75 0 0" xyz="0 -.26 0"/>
+      <geometry>
+        <box size="1 .01 .2"/>
+      </geometry>
+    </collision>
+
     <visual>
       <!-- left -->
-      <origin rpy="0 0 0" xyz="0 .315 0"/>
+      <origin rpy="-.75 0 0" xyz="0 .26 0"/>
       <geometry>
         <box size=".65 .01 .2"/>
       </geometry>
       <material name="mainColor"/>
     </visual>
+    <collision>
+      <!-- left -->
+      <origin rpy="-.75 0 0" xyz="0 .26 0"/>
+      <geometry>
+        <box size="1 .01 .2"/>
+      </geometry>
+    </collision>
+
     <visual>
       <!-- back -->
-      <origin rpy="0 0 0" xyz="-.325 0 0"/>
+      <origin rpy="0 -.75 0" xyz="-.25 0 0"/>
       <geometry>
         <box size=".01 .65 .2"/>
       </geometry>
       <material name="mainColor"/>
     </visual>
     <collision>
-      <!-- right -->
-      <origin rpy="0 0 0" xyz="0 -.45 0"/>
-      <geometry>
-        <box size="1 .01 .2"/>
-      </geometry>
-    </collision>
-    <collision>
-      <!-- left -->
-      <origin rpy="0 0 0" xyz="0 .45 0"/>
-      <geometry>
-        <box size="1 .01 .2"/>
-      </geometry>
-    </collision>
-    <collision>
       <!-- back -->
-      <origin rpy="0 0 0" xyz="-.45 0 0"/>
+      <origin rpy="0 -.75 0" xyz="-.25 0 0"/>
+      <geometry>
+        <box size=".01 .65 .2"/>
+      </geometry>
+    </collision>
+    
+    <visual>
+      <!-- front -->
+      <origin rpy="0 .75 0" xyz=".25 0 0"/>
+      <geometry>
+        <box size=".01 .65 .2"/>
+      </geometry>
+      <material name="mainColor"/>
+    </visual>
+    <collision>
+      <!-- front -->
+      <origin rpy="0 .75 0" xyz=".25 0 0"/>
       <geometry>
         <box size=".01 1 .2"/>
       </geometry>
