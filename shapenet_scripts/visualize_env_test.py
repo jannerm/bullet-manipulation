@@ -7,12 +7,12 @@ import skvideo.io
 from rlkit.experimental.kuanfang.envs.drawer_pnp_push_commands import drawer_pnp_push_commands
 from roboverse.envs.configs.drawer_pnp_push_env_configs import drawer_pnp_push_env_configs
 
-ts = 100
-num_traj = 100
+ts = 75
+num_traj = 75
 
 #obs_img_dim=196, 
 env = rv.make(
-    "SawyerRigAffordances-v6", 
+    "SawyerResetFreeDrawerPnpPush-v0", 
     gui=True, 
     expl=True, 
     reset_interval=10, 

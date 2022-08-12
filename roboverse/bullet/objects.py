@@ -129,6 +129,11 @@ cylinder = loader(ASSET_PATH, os.path.join(obj_dir, "cylinder", "cylinder.urdf")
               quat=[0, 0, 0, 1],
               scale=0.03) #0.05
 
+cylinder_light = loader(ASSET_PATH, os.path.join(obj_dir, "cylinder", "cylinder_light.urdf"),
+              pos=[.75, -.4, -.3],
+              quat=[0, 0, 0, 1],
+              scale=0.03) #0.05
+
 cylinder_tall = loader(ASSET_PATH, os.path.join(obj_dir, "cylinder", "cylinder_tall.urdf"),
               pos=[.75, -.4, -.3],
               quat=[0, 0, 0, 1],
@@ -177,6 +182,12 @@ wall_narrow_r = loader(ASSET_PATH, os.path.join(obj_dir, "wall", "wall_narrow_r.
               deg=[0, 0, 0],
               scale=0.8)
 
+wall_slanted = loader(ASSET_PATH, os.path.join(obj_dir, "wall", "wall_slanted.urdf"),
+              pos=[.68, 0, -.3],
+              rgba=[1, 1, 1, 1],
+              deg=[0, 0, 0],
+              scale=0.8)
+
 box = loader(ASSET_PATH, os.path.join(obj_dir, "box", "box.urdf"),
                 # pos=[0.85, 0, -.35],
                 pos=[0.8, 0.075, -.35],
@@ -215,6 +226,15 @@ drawer_lightblue_base_longhandle = loader_randomize_color(ASSET_PATH, os.path.jo
               pos=drawer_pos + np.array([0, 0, 0.12]),
               scale=0.125)
 drawer_lightblue_base_longhandle_rgba = loader_randomize_color_custom(ASSET_PATH, os.path.join(obj_dir, "drawer", "drawer_lightblue_base_longhandle_rgba.urdf"),
+              pos=drawer_pos + np.array([0, 0, 0.12]),
+              rgba=[
+                [.1, .25, .6, 1.],
+                [.68, .85, .90, 1.],
+                [.5, .5, .5, 1.],
+                [.59, .29, 0.0, 1.],
+              ],
+              scale=0.125)
+drawer_lightblue_base_longhandle_rgba_v2 = loader_randomize_color_custom(ASSET_PATH, os.path.join(obj_dir, "drawer", "drawer_lightblue_base_longhandle_rgba_v2.urdf"),
               pos=drawer_pos + np.array([0, 0, 0.12]),
               rgba=[
                 [.1, .25, .6, 1.],

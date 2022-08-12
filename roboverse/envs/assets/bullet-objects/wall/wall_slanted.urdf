@@ -21,49 +21,52 @@
        <mass value=".1"/>
        <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
     </inertial>
+
     <visual>
       <!-- right -->
-      <origin rpy="0 0 0" xyz="0 -.315 0"/>
+      <origin rpy=".75 0 0" xyz="0 -.32 0"/>
       <geometry>
-        <box size=".65 .01 .2"/>
-      </geometry>
-      <material name="mainColor"/>
-    </visual>
-    <visual>
-      <!-- left -->
-      <origin rpy="0 0 0" xyz="0 .315 0"/>
-      <geometry>
-        <box size=".65 .01 .2"/>
-      </geometry>
-      <material name="mainColor"/>
-    </visual>
-    <visual>
-      <!-- back -->
-      <origin rpy="0 0 0" xyz="-.325 0 0"/>
-      <geometry>
-        <box size=".01 .65 .2"/>
+        <box size="0.8 .01 .2"/>
       </geometry>
       <material name="mainColor"/>
     </visual>
     <collision>
       <!-- right -->
-      <origin rpy="0 0 0" xyz="0 -.45 0"/>
+      <origin rpy=".75 0 0" xyz="0 -.32 0"/>
       <geometry>
-        <box size="1 .01 .2"/>
+        <box size="0.8 .01 .2"/>
       </geometry>
     </collision>
+
+    <visual>
+      <!-- left -->
+      <origin rpy="-.75 0 0" xyz="0 .32 0"/>
+      <geometry>
+        <box size="0.8 .01 .2"/>
+      </geometry>
+      <material name="mainColor"/>
+    </visual>
     <collision>
       <!-- left -->
-      <origin rpy="0 0 0" xyz="0 .45 0"/>
+      <origin rpy="-.75 0 0" xyz="0 .32 0"/>
       <geometry>
-        <box size="1 .01 .2"/>
+        <box size="0.8 .01 .2"/>
       </geometry>
     </collision>
+
+    <visual>
+      <!-- back -->
+      <origin rpy="0 -.75 0" xyz="-.32 0 0"/>
+      <geometry>
+        <box size=".01 0.8 .2"/>
+      </geometry>
+      <material name="mainColor"/>
+    </visual>
     <collision>
       <!-- back -->
-      <origin rpy="0 0 0" xyz="-.45 0 0"/>
+      <origin rpy="0 -.75 0" xyz="-.32 0 0"/>
       <geometry>
-        <box size=".01 1 .2"/>
+        <box size=".01 0.8 .2"/>
       </geometry>
     </collision>
   </link>
@@ -74,3 +77,4 @@
   </joint>
 
 </robot>
+
