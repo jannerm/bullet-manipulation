@@ -24,15 +24,15 @@
 
     <visual>
       <!-- right -->
-      <origin rpy=".75 0 0" xyz="0 -.26 0"/>
+      <origin rpy=".75 0 0" xyz="0 -.32 0"/>
       <geometry>
-        <box size=".65 .01 .2"/>
+        <box size="1 .01 .2"/>
       </geometry>
       <material name="mainColor"/>
     </visual>
     <collision>
       <!-- right -->
-      <origin rpy=".75 0 0" xyz="0 -.26 0"/>
+      <origin rpy=".75 0 0" xyz="0 -.32 0"/>
       <geometry>
         <box size="1 .01 .2"/>
       </geometry>
@@ -40,15 +40,15 @@
 
     <visual>
       <!-- left -->
-      <origin rpy="-.75 0 0" xyz="0 .26 0"/>
+      <origin rpy="-.75 0 0" xyz="0 .32 0"/>
       <geometry>
-        <box size=".65 .01 .2"/>
+        <box size="1 .01 .2"/>
       </geometry>
       <material name="mainColor"/>
     </visual>
     <collision>
       <!-- left -->
-      <origin rpy="-.75 0 0" xyz="0 .26 0"/>
+      <origin rpy="-.75 0 0" xyz="0 .32 0"/>
       <geometry>
         <box size="1 .01 .2"/>
       </geometry>
@@ -56,31 +56,15 @@
 
     <visual>
       <!-- back -->
-      <origin rpy="0 -.75 0" xyz="-.25 0 0"/>
+      <origin rpy="0 -.75 0" xyz="-.32 0 0"/>
       <geometry>
-        <box size=".01 .65 .2"/>
+        <box size=".01 1 .2"/>
       </geometry>
       <material name="mainColor"/>
     </visual>
     <collision>
       <!-- back -->
-      <origin rpy="0 -.75 0" xyz="-.25 0 0"/>
-      <geometry>
-        <box size=".01 .65 .2"/>
-      </geometry>
-    </collision>
-    
-    <visual>
-      <!-- front -->
-      <origin rpy="0 .75 0" xyz=".25 0 0"/>
-      <geometry>
-        <box size=".01 .65 .2"/>
-      </geometry>
-      <material name="mainColor"/>
-    </visual>
-    <collision>
-      <!-- front -->
-      <origin rpy="0 .75 0" xyz=".25 0 0"/>
+      <origin rpy="0 -.75 0" xyz="-.32 0 0"/>
       <geometry>
         <box size=".01 1 .2"/>
       </geometry>

@@ -7,7 +7,7 @@ import skvideo.io
 from rlkit.experimental.kuanfang.envs.drawer_pnp_push_commands import drawer_pnp_push_commands
 from roboverse.envs.configs.drawer_pnp_push_env_configs import drawer_pnp_push_env_configs
 
-ts = 75
+ts = 100
 num_traj = 100
 
 #obs_img_dim=196, 
@@ -35,7 +35,7 @@ save_video = True
 
 if save_video:
     video_save_path = '/media/ashvin/data1/patrickhaoy/data/test/'
-    num_traj = 100 #2
+    num_traj = 100 #4 #2
     observations = np.zeros((num_traj*ts, 196, 196, 3))
 
 
@@ -57,7 +57,7 @@ for i in range(num_traj):
             observations[i*ts + t, :] = img
         action, done = env.get_demo_action(first_timestep=(t == 0), return_done=True)
         # sign = 1 if i % 2 == 0 else -1
-        # action = np.array([0, 0, 0, sign, -1])
+        # action = np.array([0, 0, 0, -1, -1])
         done = False
         next_observation, reward, _, info = env.step(action)
         if done and not is_done:

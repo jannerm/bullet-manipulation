@@ -6,7 +6,7 @@
 
   <link name="base_link">
     <contact>
-      <lateral_friction value="0.1"/>
+      <lateral_friction value="0.5"/>
       <rolling_friction value="1000.0"/>
       <spinning_friction value="1000.0"/>
       <inertia_scaling value="1.0"/>
