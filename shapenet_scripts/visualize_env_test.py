@@ -15,11 +15,11 @@ env = rv.make(
     "SawyerRigAffordances-v6", 
     gui=True, 
     expl=True, 
-    reset_interval=2, 
+    reset_interval=10, 
     #reset_gripper_interval=1,
     env_obs_img_dim=196, 
-    test_env=True, 
-    test_env_command=drawer_pnp_push_commands[51],
+    # test_env=True, 
+    # test_env_command=drawer_pnp_push_commands[51],
     # use_test_env_command_sequence=False,
     demo_num_ts=ts,
     # fixed_drawer_yaw=171.86987153482346,
@@ -57,7 +57,7 @@ for i in range(num_traj):
             observations[i*ts + t, :] = img
         action, done = env.get_demo_action(first_timestep=(t == 0), return_done=True)
         # sign = 1 if i % 2 == 0 else -1
-        # action = np.array([0, 0, 0, -1, -1])
+        # action = np.array([1, -1, 0, 0, -1])
         done = False
         next_observation, reward, _, info = env.step(action)
         if done and not is_done:
