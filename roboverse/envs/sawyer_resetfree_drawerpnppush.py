@@ -309,10 +309,11 @@ class SawyerResetFreeDrawerPnpPush(SawyerBaseEnv):
                 large_object_quadrant_opts)
 
         pos = CONFIGS['large_obj_quadrant_to_pos'][self.large_object_quadrant]
-        pos += np.random.uniform(
-            low=[-LARGE_OBJ_SPAWN_RADIUS, -LARGE_OBJ_SPAWN_RADIUS, 0], 
-            high=[LARGE_OBJ_SPAWN_RADIUS, LARGE_OBJ_SPAWN_RADIUS, 0], 
-        )
+        if not self.test_env:
+            pos += np.random.uniform(
+                low=[-LARGE_OBJ_SPAWN_RADIUS, -LARGE_OBJ_SPAWN_RADIUS, 0], 
+                high=[LARGE_OBJ_SPAWN_RADIUS, LARGE_OBJ_SPAWN_RADIUS, 0], 
+            )
         self._large_obj = bullet.objects.cylinder_light(
             pos=pos,
             quat=deg_to_quat([0, 0, 0]),
