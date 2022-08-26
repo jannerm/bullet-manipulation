@@ -180,8 +180,8 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         self._max_force = 100
         self._action_scale = 0.05
         self._pos_init = [0.6, -0.15, -0.2]
-        self._pos_low = [0.5, -0.2, -.36]
-        self._pos_high = [0.85, 0.2, -0.1]
+        self._pos_low = [0.45, -0.25, -.36]
+        self._pos_high = [0.85, 0.25, -0.1]
 
     def _set_spaces(self):
         act_dim = self.DoF + 1
@@ -1019,7 +1019,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             init_theta = bullet.deg_to_quat([
                 180,
                 0,
-                np.random.uniform(-135, 135)
+                np.random.uniform(-180, 180)
             ])
 
         bullet.position_control(self._sawyer,
