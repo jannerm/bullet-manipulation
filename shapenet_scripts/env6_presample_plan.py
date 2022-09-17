@@ -51,7 +51,7 @@ for test_env_seed in args.test_env_seeds:  # NOQA
         'test_env_command': command,
         'downsample': True,
         'env_obs_img_dim': 196,
-        'random_init_gripper_pos': True,
+        'random_init_gripper_pos': False, #True,
         'random_init_gripper_yaw': False,
     }
     env = roboverse.make('SawyerRigAffordances-v6',
