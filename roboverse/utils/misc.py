@@ -1,9 +1,10 @@
-import os
 import datetime
-import numpy as np
+import math
+import os
 import pickle
 from distutils.util import strtobool
-import math
+
+import numpy as np
 
 
 def timestamp(divider='-', datetime_divider='T'):
@@ -31,6 +32,48 @@ def true_angle_diff(theta):
     print("abs(theta)", abs(theta))
     print("abs(theta - 2 * np.pi)", abs(theta - 2 * np.pi))
     return min(abs(theta), abs(theta - 2 * np.pi))
+
+def copysign(a, b):
+    a = np.array(a).repeat(b.shape[0])
+    return np.abs(a) * np.sign(b)
+
+
+def quat_to_deg(q):
+    q = np.array(q)
+    q = q[None]
+
+    return quat_to_deg_batch(q)[0]
+
+
+def quat_to_deg_batch(q):
+    qx, qy, qz, qw = [0], [1], [2], [3]
+    # roll (x-axis rotation)
+    sinr_cosp = 2.0 * (q[:, qw] * q[:, qx] + q[:, qy] * q[:, qz])
+    cosr_cosp = q[:, qw] * q[:, qw] - q[:, qx] * \
+                q[:, qx] - q[:, qy] * q[:, qy] + q[:, qz] * q[:, qz]
+    # roll = np.arctan2(sinr_cosp, cosr_cosp) % (2 * np.pi)
+    roll = np.arctan2(sinr_cosp, cosr_cosp)
+
+    # pitch (y-axis rotation)
+    sinp = 2.0 * (q[:, qw] * q[:, qy] - q[:, qz] * q[:, qx])
+    # pitch = np.where(np.abs(sinp) >= 1, copysign(
+    #     np.pi / 2.0, sinp), np.arcsin(sinp)) % (2 * np.pi)
+    pitch = np.where(np.abs(sinp) >= 1, copysign(
+        np.pi / 2.0, sinp), np.arcsin(sinp))
+
+    # yaw (z-axis rotation)
+    siny_cosp = 2.0 * (q[:, qw] * q[:, qz] + q[:, qx] * q[:, qy])
+    cosy_cosp = q[:, qw] * q[:, qw] + q[:, qx] * \
+                q[:, qx] - q[:, qy] * q[:, qy] - q[:, qz] * q[:, qz]
+    # yaw = np.arctan2(siny_cosp, cosy_cosp) % (2 * np.pi)
+    yaw = np.arctan2(siny_cosp, cosy_cosp)
+
+    return np.concatenate([roll, pitch, yaw], axis=-1) * 180 / np.pi
+
+
+def first_nonzero(arr, axis, invalid_val=-1):
+    mask = arr != 0
+    return np.where(mask.any(axis=axis), mask.argmax(axis=axis), invalid_val)
 
 class DemoPool:
 

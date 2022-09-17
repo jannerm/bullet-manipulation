@@ -5,7 +5,8 @@ from gym.spaces import Box, Dict
 from collections import OrderedDict
 from roboverse.bullet.control import get_object_position
 from roboverse.envs.sawyer_base import SawyerBaseEnv
-from roboverse.bullet.misc import load_obj, deg_to_quat, quat_to_deg, get_bbox
+from roboverse.bullet.misc import load_obj, deg_to_quat, get_bbox	
+from roboverse.utils.misc import quat_to_deg, quat_to_deg_batch, first_nonzero
 from bullet_objects import loader, metadata
 import os.path as osp
 import importlib.util
@@ -482,8 +483,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             self._sawyer, self._end_effector, 'pos', physicsClientId=self._uid)
         curr_angle = bullet.get_link_state(
             self._sawyer, self._end_effector, 'theta', physicsClientId=self._uid)
-        default_angle = quat_to_deg(
-            self.default_theta, physicsClientId=self._uid)
+        default_angle = quat_to_deg(self.default_theta)
 
         # Keep necesary degrees of theta fixed
         angle = np.append(default_angle[:2], [curr_angle[2]])
@@ -569,165 +569,172 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             'skill_id': skill_id
         }
 
-    def get_success_metric(self, curr_state, goal_state, success_list=None, key=None):
-        success = 0
+    def get_success_metric(self, curr_state, goal_state, key=None):
+        success = np.zeros((curr_state.shape[0], 1), dtype=int)
         if key == "overall":
-            curr_pos = curr_state[8:11]
-            goal_pos = goal_state[8:11]
-            curr_pos_0 = curr_state[11:14]
-            goal_pos_0 = goal_state[11:14]
-            curr_pos_1 = curr_state[14:17]
-            goal_pos_1 = goal_state[14:17]
-            curr_pos_2 = curr_state[17:20]
-            goal_pos_2 = goal_state[17:20]
-            curr_pos_3 = curr_state[20:23]
-            goal_pos_3 = goal_state[20:23]
-            curr_pos_extra = curr_state[23:32]
-            goal_pos_extra = goal_state[23:32]
-            success = int(self.drawer_done(curr_pos, goal_pos))\
-                and int(self.obj_pnp_done(curr_pos_0, goal_pos_0, curr_pos_extra, goal_pos_extra)) \
-                and int(self.obj_pnp_done(curr_pos_1, goal_pos_1, curr_pos_extra, goal_pos_extra)) \
-                and int(self.obj_pnp_done(curr_pos_2, goal_pos_2, curr_pos_extra, goal_pos_extra)) \
-                and int(self.obj_slide_done(curr_pos_3, goal_pos_3))
+            curr_pos = curr_state[:, 8:11]
+            goal_pos = goal_state[:, 8:11]
+            curr_pos_0 = curr_state[:, 11:14]
+            goal_pos_0 = goal_state[:, 11:14]
+            curr_pos_1 = curr_state[:, 14:17]
+            goal_pos_1 = goal_state[:, 14:17]
+            curr_pos_2 = curr_state[:, 17:20]
+            goal_pos_2 = goal_state[:, 17:20]
+            curr_pos_3 = curr_state[:, 20:23]
+            goal_pos_3 = goal_state[:, 20:23]
+            curr_pos_extra = curr_state[:, 23:32]
+            goal_pos_extra = goal_state[:, 23:32]
+            success = np.logical_and.reduce((
+                self.drawer_done(curr_pos, goal_pos),
+                self.obj_pnp_done(curr_pos_0, goal_pos_0, curr_pos_extra, goal_pos_extra),
+                self.obj_pnp_done(curr_pos_1, goal_pos_1, curr_pos_extra, goal_pos_extra),
+                self.obj_pnp_done(curr_pos_2, goal_pos_2, curr_pos_extra, goal_pos_extra),
+                self.obj_slide_done(curr_pos_3, goal_pos_3))).astype(int)
         elif key == 'top_drawer':
-            curr_pos = curr_state[8:11]
-            goal_pos = goal_state[8:11]
-            success = int(self.drawer_done(curr_pos, goal_pos))
+            curr_pos = curr_state[:, 8:11]
+            goal_pos = goal_state[:, 8:11]
+            success = self.drawer_done(curr_pos, goal_pos).astype(int)
         elif key == 'obj_pnp':
-            curr_pos_0 = curr_state[11:14]
-            goal_pos_0 = goal_state[11:14]
-            curr_pos_1 = curr_state[14:17]
-            goal_pos_1 = goal_state[14:17]
-            curr_pos_2 = curr_state[17:20]
-            goal_pos_2 = goal_state[17:20]
-            curr_pos_extra = curr_state[23:32]
-            goal_pos_extra = goal_state[23:32]
-            success = int(self.obj_pnp_done(curr_pos_0, goal_pos_0, curr_pos_extra, goal_pos_extra)) \
-                and int(self.obj_pnp_done(curr_pos_1, goal_pos_1, curr_pos_extra, goal_pos_extra)) \
-                and int(self.obj_pnp_done(curr_pos_2, goal_pos_2, curr_pos_extra, goal_pos_extra))
+            curr_pos_0 = curr_state[:, 11:14]
+            goal_pos_0 = goal_state[:, 11:14]
+            curr_pos_1 = curr_state[:, 14:17]
+            goal_pos_1 = goal_state[:, 14:17]
+            curr_pos_2 = curr_state[:, 17:20]
+            goal_pos_2 = goal_state[:, 17:20]
+            curr_pos_extra = curr_state[:, 23:32]
+            goal_pos_extra = goal_state[:, 23:32]
+            success = np.logical_and.reduce((
+                self.obj_pnp_done(curr_pos_0, goal_pos_0, curr_pos_extra, goal_pos_extra),
+                self.obj_pnp_done(curr_pos_1, goal_pos_1, curr_pos_extra, goal_pos_extra),
+                self.obj_pnp_done(curr_pos_2, goal_pos_2, curr_pos_extra, goal_pos_extra))).astype(int)
         elif key == 'obj_pnp_0':
-            curr_pos_0 = curr_state[11:14]
-            goal_pos_0 = goal_state[11:14]
-            curr_pos_extra = curr_state[23:32]
-            goal_pos_extra = goal_state[23:32]
-            success = int(self.obj_pnp_done(
-                curr_pos_0, goal_pos_0, curr_pos_extra, goal_pos_extra))
+            curr_pos_0 = curr_state[:, 11:14]
+            goal_pos_0 = goal_state[:, 11:14]
+            curr_pos_extra = curr_state[:, 23:32]
+            goal_pos_extra = goal_state[:, 23:32]
+            success = self.obj_pnp_done(
+                curr_pos_0, goal_pos_0, curr_pos_extra, goal_pos_extra).astype(int)
         elif key == 'obj_pnp_1':
-            curr_pos_1 = curr_state[14:17]
-            goal_pos_1 = goal_state[14:17]
-            curr_pos_extra = curr_state[23:32]
-            goal_pos_extra = goal_state[23:32]
-            success = int(self.obj_pnp_done(
-                curr_pos_1, goal_pos_1, curr_pos_extra, goal_pos_extra))
+            curr_pos_1 = curr_state[:, 14:17]
+            goal_pos_1 = goal_state[:, 14:17]
+            curr_pos_extra = curr_state[:, 23:32]
+            goal_pos_extra = goal_state[:, 23:32]
+            success = self.obj_pnp_done(
+                curr_pos_1, goal_pos_1, curr_pos_extra, goal_pos_extra).astype(int)
         elif key == 'obj_pnp_2':
-            curr_pos_2 = curr_state[17:20]
-            goal_pos_2 = goal_state[17:20]
-            curr_pos_extra = curr_state[23:32]
-            goal_pos_extra = goal_state[23:32]
-            success = int(self.obj_pnp_done(
-                curr_pos_2, goal_pos_2, curr_pos_extra, goal_pos_extra))
+            curr_pos_2 = curr_state[:, 17:20]
+            goal_pos_2 = goal_state[:, 17:20]
+            curr_pos_extra = curr_state[:, 23:32]
+            goal_pos_extra = goal_state[:, 23:32]
+            success = self.obj_pnp_done(
+                curr_pos_2, goal_pos_2, curr_pos_extra, goal_pos_extra).astype(int)
         elif key == 'obj_slide':
-            curr_pos = curr_state[20:23]
-            goal_pos = goal_state[20:23]
-            success = int(self.obj_slide_done(curr_pos, goal_pos))
+            curr_pos = curr_state[:, 20:23]
+            goal_pos = goal_state[:, 20:23]
+            success = self.obj_slide_done(curr_pos, goal_pos).astype(int)
         else:
-            pos = curr_state[0:3]
-            goal_pos = goal_state[0:3]
-            deg = quat_to_deg(curr_state[3:7])
-            goal_deg = quat_to_deg(goal_state[3:7])
+            pos = curr_state[:, 0:3]
+            goal_pos = goal_state[:, 0:3]
+
+            deg = quat_to_deg_batch(curr_state[:, 3:7])
+            goal_deg = quat_to_deg_batch(goal_state[:, 3:7])
 
             if key == 'gripper_position':
-                success = int(np.linalg.norm(pos - goal_pos)
-                              < self.gripper_pos_thresh)
+                success = (np.linalg.norm(pos - goal_pos, axis=1, keepdims=True)
+                           < self.gripper_pos_thresh).astype(int)
             elif key == 'gripper_rotation_roll':
-                success = int(self.norm_deg(
-                    deg[0], goal_deg[0]) < self.gripper_rot_thresh)
+                success = (self.norm_deg(deg[:, [0]], goal_deg[:, [0]]) < self.gripper_rot_thresh).astype(int)
             elif key == 'gripper_rotation_pitch':
-                success = int(self.norm_deg(
-                    deg[1], goal_deg[1]) < self.gripper_rot_thresh)
+                success = (self.norm_deg(
+                    deg[:, [1]], goal_deg[:, [1]]) < self.gripper_rot_thresh).astype(int)
             elif key == 'gripper_rotation_yaw':
-                success = int(self.norm_deg(
-                    deg[2], goal_deg[2]) < self.gripper_rot_thresh)
+                success = (self.norm_deg(
+                    deg[:, [2]], goal_deg[:, [2]]) < self.gripper_rot_thresh).astype(int)
             elif key == 'gripper_rotation':
-                success = int(np.sqrt(self.norm_deg(deg[0], goal_deg[0])**2 + self.norm_deg(
-                    deg[1], goal_deg[1])**2 + self.norm_deg(deg[2], goal_deg[2])**2) < self.gripper_rot_thresh)
+                success = (np.sqrt(self.norm_deg(deg[:, [0]], goal_deg[:, [0]])**2 + self.norm_deg(
+                    deg[:, [1]], goal_deg[:, [1]])**2 + self.norm_deg(deg[:, [2]], goal_deg[:, [2]])**2) < self.gripper_rot_thresh).astype(int)
             elif key == 'gripper':
-                success = int(np.linalg.norm(pos - goal_pos) < self.gripper_pos_thresh) and int(np.sqrt(self.norm_deg(
-                    deg[0], goal_deg[0])**2 + self.norm_deg(deg[1], goal_deg[1])**2 + self.norm_deg(deg[2], goal_deg[2])**2) < self.gripper_rot_thresh)
-        if success_list is not None:
-            success_list.append(success)
+                success = np.logical_and(
+                    np.linalg.norm(pos - goal_pos, axis=1, keepdims=True) < self.gripper_pos_thresh,
+                    np.sqrt(self.norm_deg(deg[:, [0]], goal_deg[:, [0]])**2 + self.norm_deg(deg[:, [1]], goal_deg[:, [1]])**2 + self.norm_deg(deg[:, [2]], goal_deg[:, [2]])**2) < self.gripper_rot_thresh
+                ).astype(int)
+        # if success_list is not None:
+        #     success_list.extend(success[:, 0].tolist())
+
         return success
 
-    def get_distance_metric(self, curr_state, goal_state, distance_list=None, key=None):
-        distance = float("inf")
+    def get_distance_metric(self, curr_state, goal_state, key=None):
+        distance = np.full((curr_state.shape[0], 1), np.inf, dtype=float)
         if key == 'top_drawer':
-            curr_pos = curr_state[8:11]
-            goal_pos = goal_state[8:11]
-            distance = np.linalg.norm(curr_pos-goal_pos)
+            curr_pos = curr_state[:, 8:11]
+            goal_pos = goal_state[:, 8:11]
+            distance = np.linalg.norm(curr_pos - goal_pos, axis=1, keepdims=True)
         elif key == 'obj_pnp':
-            curr_pos_0 = curr_state[11:14]
-            goal_pos_0 = goal_state[11:14]
-            curr_pos_1 = curr_state[14:17]
-            goal_pos_1 = goal_state[14:17]
-            curr_pos_2 = curr_state[17:20]
-            goal_pos_2 = goal_state[17:20]
-            distance = np.linalg.norm(curr_pos_0 - goal_pos_0) \
-                and np.linalg.norm(curr_pos_1 - goal_pos_1) \
-                and np.linalg.norm(curr_pos_2 - goal_pos_2)
+            curr_pos_0 = curr_state[:, 11:14]
+            goal_pos_0 = goal_state[:, 11:14]
+            curr_pos_1 = curr_state[:, 14:17]
+            goal_pos_1 = goal_state[:, 14:17]
+            curr_pos_2 = curr_state[:, 17:20]
+            goal_pos_2 = goal_state[:, 17:20]
+            distance = np.linalg.norm(curr_pos_0 - goal_pos_0, axis=1, keepdims=True) + \
+                       np.linalg.norm(curr_pos_1 - goal_pos_1, axis=1, keepdims=True) + \
+                       np.linalg.norm(curr_pos_2 - goal_pos_2, axis=1, keepdims=True)
         elif key == 'obj_pnp_0':
-            curr_pos_0 = curr_state[11:14]
-            goal_pos_0 = goal_state[11:14]
-            distance = np.linalg.norm(curr_pos_0 - goal_pos_0)
+            curr_pos_0 = curr_state[:, 11:14]
+            goal_pos_0 = goal_state[:, 11:14]
+            distance = np.linalg.norm(curr_pos_0 - goal_pos_0, axis=1, keepdims=True)
         elif key == 'obj_pnp_1':
-            curr_pos_1 = curr_state[14:17]
-            goal_pos_1 = goal_state[14:17]
-            distance = np.linalg.norm(curr_pos_1 - goal_pos_1)
+            curr_pos_1 = curr_state[:, 14:17]
+            goal_pos_1 = goal_state[:, 14:17]
+            distance = np.linalg.norm(curr_pos_1 - goal_pos_1, axis=1, keepdims=True)
         elif key == 'obj_pnp_2':
-            curr_pos_2 = curr_state[17:20]
-            goal_pos_2 = goal_state[17:20]
-            distance = np.linalg.norm(curr_pos_2 - goal_pos_2)
+            curr_pos_2 = curr_state[:, 17:20]
+            goal_pos_2 = goal_state[:, 17:20]
+            distance = np.linalg.norm(curr_pos_2 - goal_pos_2, axis=1, keepdims=True)
         elif key == 'obj_slide':
-            curr_pos = curr_state[20:23]
-            goal_pos = goal_state[20:23]
-            distance = np.linalg.norm(curr_pos - goal_pos)
+            curr_pos = curr_state[:, 20:23]
+            goal_pos = goal_state[:, 20:23]
+            distance = np.linalg.norm(curr_pos - goal_pos, axis=1, keepdims=True)
         else:
-            pos = curr_state[0:3]
-            goal_pos = goal_state[0:3]
-            deg = quat_to_deg(curr_state[3:7])
-            goal_deg = quat_to_deg(goal_state[3:7])
+            pos = curr_state[:, 0:3]
+            goal_pos = goal_state[:, 0:3]
+            deg = quat_to_deg_batch(curr_state[:, 3:7])
+            goal_deg = quat_to_deg_batch(goal_state[:, 3:7])
 
             if key == 'gripper_position':
-                distance = np.linalg.norm(pos - goal_pos)
+                distance = np.linalg.norm(pos - goal_pos, axis=1, keepdims=True)
             elif key == 'gripper_rotation_roll':
-                distance = self.norm_deg(deg[0], goal_deg[0])
+                distance = self.norm_deg(deg[:, [0]], goal_deg[:, [0]])
             elif key == 'gripper_rotation_pitch':
-                distance = self.norm_deg(deg[1], goal_deg[1])
+                distance = self.norm_deg(deg[:, [1]], goal_deg[:, [1]])
             elif key == 'gripper_rotation_yaw':
-                distance = self.norm_deg(deg[2], goal_deg[2])
+                distance = self.norm_deg(deg[:, [2]], goal_deg[:, [2]])
             elif key == 'gripper_rotation':
-                distance = np.sqrt(self.norm_deg(deg[0], goal_deg[0])**2 + self.norm_deg(
-                    deg[1], goal_deg[1])**2 + self.norm_deg(deg[2], goal_deg[2])**2)
-        if distance_list is not None:
-            distance_list.append(distance)
+                distance = np.sqrt(self.norm_deg(deg[:, [0]], goal_deg[:, [0]])**2 + self.norm_deg(
+                    deg[:, [1]], goal_deg[:, [1]])**2 + self.norm_deg(deg[:, [2]], goal_deg[:, [2]])**2)
+        # if distance_list is not None:
+        #     distance_list.extend(distance[:, 0].tolist())
+
         return distance
 
     def norm_deg(self, deg1, deg2):
-        return min(np.linalg.norm((360 + deg1 - deg2) % 360), np.linalg.norm((360 + deg2 - deg1) % 360))
+        return np.minimum(np.linalg.norm((360 + deg1 - deg2) % 360, axis=1, keepdims=True),
+                          np.linalg.norm((360 + deg2 - deg1) % 360, axis=1, keepdims=True))
 
-    def get_gripper_deg(self, curr_state, roll_list=None, pitch_list=None, yaw_list=None):
-        quat = curr_state[3:7]
-        deg = quat_to_deg(quat)
-        if roll_list is not None:
-            roll_list.append(deg[0])
-        if pitch_list is not None:
-            pitch_list.append(deg[1])
-        if yaw_list is not None:
-            yaw_list.append(deg[2])
+    def get_gripper_deg(self, curr_state):
+        quat = curr_state[:, 3:7]
+        deg = quat_to_deg_batch(quat)
+        # if roll_list is not None:
+        #     roll_list.extend(deg[:, 0].tolist())
+        # if pitch_list is not None:
+        #     pitch_list.extend(deg[:, 1].tolist())
+        # if yaw_list is not None:
+        #     yaw_list.append(deg[:, 2].tolist())
 
         return deg
 
     def get_contextual_diagnostics(self, paths, contexts):
-        #from roboverse.utils.diagnostics import create_stats_ordered_dict
+        # from roboverse.utils.diagnostics import create_stats_ordered_dict
         from multiworld.envs.env_util import create_stats_ordered_dict
         diagnostics = OrderedDict()
         state_key = "state_observation"
@@ -757,112 +764,163 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
                          "gripper_rotation_yaw",
                          "gripper_rotation"]
 
-        dict_of_success_lists = {}
-        for k in success_keys:
-            dict_of_success_lists[k] = []
+        dict_of_success_arrays = {}
+        # for k in success_keys:
+        #     dict_of_success_arrays[k] = []
 
-        dict_of_distance_lists = {}
-        for k in distance_keys:
-            dict_of_distance_lists[k] = []
+        dict_of_distance_arrays = {}
+        # for k in distance_keys:
+        #     dict_of_distance_lists[k] = []
 
-        dict_of_length_lists_1 = {}
-        for k in success_keys:
-            dict_of_length_lists_1[k] = []
+        dict_of_length_arrays_1 = {}
+        # for k in success_keys:
+        #     dict_of_length_lists_1[k] = []
 
-        dict_of_length_lists_2 = {}
-        for k in success_keys:
-            dict_of_length_lists_2[k] = []
-
-        # ---------------------------------------------------------
-        for i in range(len(paths)):
-            curr_obs = paths[i]["observations"][-1][state_key]
-            goal_obs = contexts[i][goal_key]
-            for k in success_keys:
-                self.get_success_metric(
-                    curr_obs, goal_obs, success_list=dict_of_success_lists[k], key=k)
-            for k in distance_keys:
-                self.get_distance_metric(
-                    curr_obs, goal_obs, distance_list=dict_of_distance_lists[k], key=k)
-
-        for k in success_keys:
-            diagnostics.update(create_stats_ordered_dict(
-                goal_key + f"/final/{k}_success", dict_of_success_lists[k]))
-        for k in distance_keys:
-            diagnostics.update(create_stats_ordered_dict(
-                goal_key + f"/final/{k}_distance", dict_of_distance_lists[k]))
+        dict_of_length_arrays_2 = {}
+        # for k in success_keys:
+        #     dict_of_length_lists_2[k] = []
 
         # ---------------------------------------------------------
+
+        # import time
+        # start_time = time.time()
+        # for i in range(len(paths)):
+        #     for t in range(len(paths[i]["observations"])):
+        #         curr_obs = self.process(paths[i]["observations"][t][state_key])
+        #         goal_obs = self.process(contexts[i][goal_key])
+        #         for k in success_keys:
+        #             self.get_success_metric(
+        #                 self.process(curr_obs),
+        #                 self.process(goal_obs),
+        #                 key=k)
+        #         for k in distance_keys:
+        #             self.get_distance_metric(
+        #                 curr_obs,
+        #                 goal_obs,
+        #                 key=k)
+        # end_time = time.time()
+        # print("Time of original implementation: {} sec".format(end_time - start_time))
+
+        num_paths = len(paths)
+        path_length = len(paths[0]["observations"])
+        # start_time = time.time()
+        curr_obses, goal_obses = [], []
         for i in range(len(paths)):
+            path_curr_obses, path_goal_obses = [], []
             for t in range(len(paths[i]["observations"])):
                 curr_obs = paths[i]["observations"][t][state_key]
                 goal_obs = contexts[i][goal_key]
-                for k in success_keys:
-                    self.get_success_metric(
-                        curr_obs,
-                        goal_obs,
-                        success_list=dict_of_success_lists[k],
-                        key=k)
-                for k in distance_keys:
-                    self.get_distance_metric(
-                        curr_obs,
-                        goal_obs,
-                        distance_list=dict_of_distance_lists[k],
-                        key=k)
+                path_curr_obses.append(curr_obs)
+                path_goal_obses.append(goal_obs)
+            curr_obses.append(path_curr_obses)
+            goal_obses.append(path_goal_obses)
+        curr_obses, goal_obses = \
+            np.array(curr_obses).reshape([-1, curr_obs.shape[0]]), \
+            np.array(goal_obses).reshape([-1, goal_obs.shape[0]])
+        for k in success_keys:
+            dict_of_success_array_k = self.get_success_metric(
+                curr_obses, goal_obses, key=k)
+            dict_of_success_arrays[k] = dict_of_success_array_k.reshape([num_paths, path_length])
+        for k in distance_keys:
+            dict_of_distance_array_k = self.get_distance_metric(
+                curr_obses, goal_obses, key=k)
+            dict_of_distance_arrays[k] = dict_of_distance_array_k.reshape([num_paths, path_length])
+        # end_time = time.time()
+        # print("Time of batch implementation: {} sec".format(end_time - start_time))
 
         for k in success_keys:
             diagnostics.update(create_stats_ordered_dict(
-                goal_key + f"/{k}_success", dict_of_success_lists[k]))
+                goal_key + f"/final/{k}_success", dict_of_success_arrays[k][:, -1]))
         for k in distance_keys:
             diagnostics.update(create_stats_ordered_dict(
-                goal_key + f"/{k}_distance", dict_of_distance_lists[k]))
+                goal_key + f"/final/{k}_distance", dict_of_distance_arrays[k][:, -1]))
 
         # ---------------------------------------------------------
-        gripper_rotation_roll_list = []
-        gripper_rotation_pitch_list = []
-        gripper_rotation_yaw_list = []
-        for i in range(len(paths)):
-            for t in range(len(paths[i]["observations"])):
-                curr_obs = paths[i]["observations"][t][state_key]
-                self.get_gripper_deg(curr_obs, roll_list=gripper_rotation_roll_list,
-                                     pitch_list=gripper_rotation_pitch_list, yaw_list=gripper_rotation_yaw_list)
+        # for i in range(len(paths)):
+        #     for t in range(len(paths[i]["observations"])):
+        #         curr_obs = self.process(paths[i]["observations"][t][state_key])
+        #         goal_obs = self.process(contexts[i][goal_key])
+        #         for k in success_keys:
+        #             self.get_success_metric(
+        #                 self.process(curr_obs),
+        #                 self.process(goal_obs),
+        #                 success_list=dict_of_success_lists[k],
+        #                 key=k)
+        #         for k in distance_keys:
+        #             self.get_distance_metric(
+        #                 curr_obs,
+        #                 goal_obs,
+        #                 distance_list=dict_of_distance_lists[k],
+        #                 key=k)
 
-        diagnostics.update(create_stats_ordered_dict(
-            state_key + "/gripper_rotation_roll", gripper_rotation_roll_list))
-        diagnostics.update(create_stats_ordered_dict(
-            state_key + "/gripper_rotation_pitch", gripper_rotation_pitch_list))
-        diagnostics.update(create_stats_ordered_dict(
-            state_key + "/gripper_rotation_yaw", gripper_rotation_yaw_list))
+        for k in success_keys:
+            diagnostics.update(create_stats_ordered_dict(
+                goal_key + f"/{k}_success", dict_of_success_arrays[k]))
+        for k in distance_keys:
+            diagnostics.update(create_stats_ordered_dict(
+                goal_key + f"/{k}_distance", dict_of_distance_arrays[k]))
 
         # ---------------------------------------------------------
+        # gripper_rotation_roll_list = []
+        # gripper_rotation_pitch_list = []
+        # gripper_rotation_yaw_list = []
+        # for i in range(len(paths)):
+        #     for t in range(len(paths[i]["observations"])):
+        #         curr_obs = paths[i]["observations"][t][state_key]
+        #         self.get_gripper_deg(curr_obs, roll_list=gripper_rotation_roll_list,
+        #                              pitch_list=gripper_rotation_pitch_list, yaw_list=gripper_rotation_yaw_list)
+
+        degs = self.get_gripper_deg(curr_obses)
+        gripper_rotation_roll_array, gripper_rotation_pitch_array, gripper_rotation_yaw_array = \
+            degs[:, 0].reshape([num_paths, path_length]), \
+            degs[:, 1].reshape([num_paths, path_length]), \
+            degs[:, 2].reshape([num_paths, path_length])
+
+        diagnostics.update(create_stats_ordered_dict(
+            state_key + "/gripper_rotation_roll", gripper_rotation_roll_array))
+        diagnostics.update(create_stats_ordered_dict(
+            state_key + "/gripper_rotation_pitch", gripper_rotation_pitch_array))
+        diagnostics.update(create_stats_ordered_dict(
+            state_key + "/gripper_rotation_yaw", gripper_rotation_yaw_array))
+
+        # ---------------------------------------------------------
+        # for k in success_keys:
+        #     for i in range(len(paths)):
+        #         success = False
+        #         goal_obs = self.process(contexts[i][goal_key])
+        #         for t in range(len(paths[i]["observations"])):
+        #             curr_obs = self.process(paths[i]["observations"][t][state_key])
+        #             success = self.get_success_metric(
+        #                 curr_obs,
+        #                 goal_obs,
+        #                 success_list=None,
+        #                 key=k)
+        #             if success:
+        #                 break
+        #
+        #         dict_of_length_lists_1[k].append(t)
+        #
+        #         if success:
+        #             dict_of_length_lists_2[k].append(t)
+        #
+        #     if len(dict_of_length_lists_2[k]) == 0:
+        #         dict_of_length_lists_2[k] = [int(1e3 - 1)]
+
+        # Reference: https://stackoverflow.com/questions/47269390/how-to-find-first-non-zero-value-in-every-column-of-a-numpy-array
         for k in success_keys:
-            for i in range(len(paths)):
-                success = False
-                goal_obs = contexts[i][goal_key]
-                for t in range(len(paths[i]["observations"])):
-                    curr_obs = paths[i]["observations"][t][state_key]
-                    success = self.get_success_metric(
-                        curr_obs,
-                        goal_obs,
-                        success_list=None,
-                        key=k)
-                    if success:
-                        break
+            first_success_t = first_nonzero(
+                dict_of_success_arrays[k], axis=1, invalid_val=-1)
+            dict_of_length_arrays_1[k] = np.where(
+                first_success_t != -1, first_success_t, path_length - 1)
+            dict_of_length_arrays_2[k] = np.where(
+                first_success_t != -1, first_success_t, int(1e3 - 1))
 
-                dict_of_length_lists_1[k].append(t)
-
-                if success:
-                    dict_of_length_lists_2[k].append(t)
-
-            if len(dict_of_length_lists_2[k]) == 0:
-                dict_of_length_lists_2[k] = [int(1e3 - 1)]
-
-        for k in success_keys:
             diagnostics.update(create_stats_ordered_dict(
                 goal_key + f"/{k}_length_inclusive",
-                dict_of_length_lists_1[k]))
+                dict_of_length_arrays_1[k]))
             diagnostics.update(create_stats_ordered_dict(
                 goal_key + f"/{k}_length_exclusive",
-                dict_of_length_lists_2[k]))
+                dict_of_length_arrays_2[k]))
 
         return diagnostics
 
@@ -884,13 +942,14 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         return image
 
     def get_reward(self, info=None, print_stats=False):
-        curr_state = self.get_observation()['state_achieved_goal']
-        td_success = self.get_success_metric(
-            curr_state, self.goal_state, key='top_drawer')
-        obj_pnp_success = self.get_success_metric(
-            curr_state, self.goal_state, key='obj_pnp')
-        obj_slide_success = self.get_success_metric(
-            curr_state, self.goal_state, key='obj_slide')
+        curr_state = self.process(self.get_observation()['state_achieved_goal'])
+        goal_state = self.process(self.goal_state)
+        td_success = float(np.squeeze(self.get_success_metric(
+            curr_state, goal_state, key='top_drawer')))
+        obj_pnp_success = float(np.squeeze(self.get_success_metric(
+            curr_state, goal_state, key='obj_pnp')))
+        obj_slide_success = float(np.squeeze(self.get_success_metric(
+            curr_state, goal_state, key='obj_slide')))
         if print_stats:
             print('-----------------')
             print('Top Drawer: ', td_success)
@@ -907,19 +966,29 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
     def compute_reward(self, states, actions, next_states, contexts):
         state_observation = self.process(next_states['state_observation'])
         state_desired_goal = self.process(contexts['state_desired_goal'])
-        B = state_observation.shape[0]
-        rewards = np.zeros((B, 1))
-        for i in range(B):
-            curr_state = state_observation[i]
-            goal_state = state_desired_goal[i]
-            td_success = self.get_success_metric(
-                curr_state, goal_state, key='top_drawer')
-            obj_pnp_success = self.get_success_metric(
-                curr_state, goal_state, key='obj_pnp')
-            obj_slide_success = self.get_success_metric(
-                curr_state, goal_state, key='obj_slide')
-            success = td_success and obj_pnp_success and obj_slide_success
-            rewards[i] = success - 1
+        # B = state_observation.shape[0]
+        # rewards = np.zeros((B, 1))
+        # for i in range(B):
+        #     curr_state = state_observation[i]
+        #     goal_state = state_desired_goal[i]
+        #     td_success = self.get_success_metric(
+        #         curr_state, goal_state, key='top_drawer')
+        #     obj_pnp_success = self.get_success_metric(
+        #         curr_state, goal_state, key='obj_pnp')
+        #     obj_slide_success = self.get_success_metric(
+        #         curr_state, goal_state, key='obj_slide')
+        #     success = td_success and obj_pnp_success and obj_slide_success
+        #     rewards[i] = success - 1
+        td_success = self.get_success_metric(
+            state_observation, state_desired_goal, key='top_drawer')
+        obj_pnp_success = self.get_success_metric(
+            state_observation, state_desired_goal, key='obj_pnp')
+        obj_slide_success = self.get_success_metric(
+            state_observation, state_desired_goal, key='obj_slide')
+        success = np.logical_and.reduce((
+            td_success, obj_pnp_success, obj_slide_success))
+        rewards = (success - 1).astype(float)
+
         return rewards
 
     def sample_goals(self):
@@ -1144,34 +1213,53 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         return np.array(get_drawer_handle_pos(self._top_drawer, physicsClientId=self._uid))
 
     def drawer_done(self, curr_pos, goal_pos):
-        if curr_pos.size == 0 or goal_pos.size == 0:
-            return 0
-        else:
-            return np.linalg.norm(curr_pos - goal_pos) < self.drawer_thresh
+        # if curr_pos.size == 0 or goal_pos.size == 0:
+        #     return np.empty((curr_pos.shape[0], 1))
+        # else:
+        #     return np.linalg.norm(curr_pos - goal_pos,
+        #                           axis=1, keepdims=True) < self.drawer_thresh
+        return np.linalg.norm(curr_pos - goal_pos,
+                              axis=1, keepdims=True) < self.drawer_thresh
 
     def obj_pnp_done(self, curr_pos, goal_pos, curr_pos_extra, goal_pos_extra):
-        on_top_drawer_goal_pos = goal_pos_extra[0:3]
-        in_drawer_goal_pos = goal_pos_extra[3:6]
-        out_of_drawer_goal_pos = goal_pos_extra[6:9]
+        on_top_drawer_goal_pos = goal_pos_extra[:, 0:3]
+        in_drawer_goal_pos = goal_pos_extra[:, 3:6]
+        out_of_drawer_goal_pos = goal_pos_extra[:, 6:9]
 
         goal_not_on_top = np.linalg.norm(
-            goal_pos - on_top_drawer_goal_pos) > self.obj_thresh
+            goal_pos - on_top_drawer_goal_pos, axis=1, keepdims=True) > self.obj_thresh
         goal_not_in = np.linalg.norm(
-            goal_pos - in_drawer_goal_pos) > self.obj_thresh
-        if goal_not_on_top and goal_not_in:
-            not_on_top = np.linalg.norm(
-                curr_pos - on_top_drawer_goal_pos) > self.obj_thresh
-            not_in = np.linalg.norm(
-                curr_pos - in_drawer_goal_pos) > self.obj_thresh
-            return not_on_top and not_in and np.linalg.norm(curr_pos[2] - goal_pos[2]) < 0.01
-        else:
-            return np.linalg.norm(curr_pos - goal_pos) < self.obj_thresh and np.linalg.norm(curr_pos[2] - goal_pos[2]) < 0.01
+            goal_pos - in_drawer_goal_pos, axis=1, keepdims=True) > self.obj_thresh
+
+        not_on_top = np.linalg.norm(
+            curr_pos - on_top_drawer_goal_pos, axis=1, keepdims=True) > self.obj_thresh
+        not_in = np.linalg.norm(
+            curr_pos - in_drawer_goal_pos, axis=1, keepdims=True) > self.obj_thresh
+        goal_not_on_top_not_in_done = np.logical_and.reduce((
+            not_on_top, not_in, np.linalg.norm(curr_pos[:, [2]] - goal_pos[:, [2]], axis=1, keepdims=True) < 0.01))
+        other_done = np.logical_and(
+            np.linalg.norm(curr_pos - goal_pos, axis=1, keepdims=True) < self.obj_thresh,
+            np.linalg.norm(curr_pos[:, [2]] - goal_pos[:, [2]], axis=1, keepdims=True) < 0.01)
+
+        # if goal_not_on_top and goal_not_in:
+        #     not_on_top = np.linalg.norm(
+        #         curr_pos - on_top_drawer_goal_pos, axis=1, keepdims=True) > self.obj_thresh
+        #     not_in = np.linalg.norm(
+        #         curr_pos - in_drawer_goal_pos, axis=1, keepdims=True) > self.obj_thresh
+        #     return not_on_top and not_in and np.linalg.norm(curr_pos[2] - goal_pos[2]) < 0.01
+        # else:
+        #     return np.linalg.norm(curr_pos - goal_pos) < self.obj_thresh and np.linalg.norm(curr_pos[2] - goal_pos[2]) < 0.01
+
+        return np.where(np.logical_and(goal_not_on_top, goal_not_in),
+                        goal_not_on_top_not_in_done,
+                        other_done)
 
     def obj_slide_done(self, curr_pos, goal_pos):
-        if curr_pos.size == 0 or goal_pos.size == 0:
-            return 0
-        else:
-            return self.get_quadrant(curr_pos) == self.get_quadrant(goal_pos)
+        # if curr_pos.shape[1] == 0 or goal_pos.shape[1] == 0:
+        #     return np.zeros((curr_pos.shape[1], 1))
+        # else:
+        #     return self.get_quadrant(curr_pos) == self.get_quadrant(goal_pos)
+        return self.get_quadrant(curr_pos) == self.get_quadrant(goal_pos)
 
     def get_obj_pnp_goals(self, task_info=None):
         ## Top Drawer Goal ##
@@ -1257,16 +1345,44 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             [goal_quadrant[0], goal_quadrant[1], -0.3525]) if goal_quadrant else self.get_object_pos(self._large_obj)
 
     def get_quadrant(self, pos):
-        if np.linalg.norm(slide_quadrants[0][0] - pos[0]) < np.linalg.norm(slide_quadrants[2][0] - pos[0]):
-            if np.linalg.norm(slide_quadrants[0][1] - pos[1]) < np.linalg.norm(slide_quadrants[1][1] - pos[1]):
-                return 0
-            else:
-                return 1
-        else:
-            if np.linalg.norm(.17 - pos[1]) < np.linalg.norm(-.17 - pos[1]):
-                return 3
-            else:
-                return 2
+        # if np.linalg.norm(slide_quadrants[0][0] - pos[0]) < np.linalg.norm(slide_quadrants[2][0] - pos[0]):
+        #     if np.linalg.norm(slide_quadrants[0][1] - pos[1]) < np.linalg.norm(slide_quadrants[1][1] - pos[1]):
+        #         return 0
+        #     else:
+        #         return 1
+        # else:
+        #     if np.linalg.norm(.17 - pos[1]) < np.linalg.norm(-.17 - pos[1]):
+        #         return 3
+        #     else:
+        #         return 2
+        squeeze = False
+        if len(pos.shape) == 1:
+            pos = pos.reshape(1, -1)
+            squeeze = True
+
+        cond0 = np.linalg.norm(slide_quadrants[0][0] - pos[:, [0]], axis=1, keepdims=True) < \
+                np.linalg.norm(slide_quadrants[2][0] - pos[:, [0]], axis=1, keepdims=True)
+        cond1 = np.linalg.norm(slide_quadrants[0][1] - pos[:, [1]], axis=1, keepdims=True) < \
+                np.linalg.norm(slide_quadrants[1][1] - pos[:, [1]], axis=1, keepdims=True)
+        cond2 = np.linalg.norm(.17 - pos[:, [1]], axis=1, keepdims=True) < \
+                np.linalg.norm(-.17 - pos[:, [1]], axis=1, keepdims=True)
+
+        cond1_quadrant = np.where(
+            cond1,
+            np.full((pos.shape[0], 1), 0, dtype=int),
+            np.full((pos.shape[0], 1), 1, dtype=int)
+        )
+        cond2_quadrant = np.where(
+            cond2,
+            np.full((pos.shape[0], 1), 3, dtype=int),
+            np.full((pos.shape[0], 1), 2, dtype=int)
+        )
+        cond0_quadrant = np.where(cond0, cond1_quadrant, cond2_quadrant)
+
+        if squeeze:
+            cond0_quadrant = int(np.squeeze(cond0_quadrant))
+
+        return cond0_quadrant
 
     def update_obj_pnp_goal(self, task_info=None):
         self.get_obj_pnp_goals(task_info)
