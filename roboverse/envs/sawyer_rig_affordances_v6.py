@@ -79,6 +79,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         self.default_theta = bullet.deg_to_quat([180, 0, 0])
         self._ddeg_scale = 5
         self.lift_gripper_action = np.array([0, 0, 1, 0, -1])
+        self.lower_gripper_action = np.array([0, 0, -1, 0, -1])
 
         ## Fixed Env Settings (Normally Shouldn't Change)
         self._transpose_image = transpose_image
@@ -1460,6 +1461,10 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
 
     def get_object_pos(self, obj):
         return np.array(bullet.get_body_info(obj, quat_to_deg=False, physicsClientId=self._uid)['pos'])
+    
+    def get_random_large_action(self):
+        action = np.concatenate((np.random.randint(2, size=3)*2-1, np.zeros(2,)))
+        return action
 
     ### DEMO COLLECTING FUNCTIONS BEYOND THIS POINT ###
     def demo_reset(self):
