@@ -346,7 +346,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
                     object_position=pos + np.array([0, 0, .1]), rgba=self.configs['object_rgbs']['small_object'])
 
                 objects_within_gripper_range = True
-                pos, _ = get_object_position(self._small_obj)
+                pos, _ = get_object_position(self._small_obj, physicsClientId=self._uid)
                 if not (gripper_bounding_x[0] - .04 <= pos[0] and pos[0] <= gripper_bounding_x[1] + .04
                         and gripper_bounding_y[0] - .04 <= pos[1] and pos[1] <= gripper_bounding_y[1] + .04):
                     objects_within_gripper_range = False
