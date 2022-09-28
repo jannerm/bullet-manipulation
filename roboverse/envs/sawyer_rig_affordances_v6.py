@@ -72,6 +72,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         assert DoF in [4]
 
         ## Constants
+        self.obj_inverse_thresh = 0.05
         self.obj_thresh = 0.08
         self.drawer_thresh = 0.065
         self.gripper_pos_thresh = 0.08
@@ -103,10 +104,9 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
                 self.test_env_seed = list(self.test_env_commands.keys())[0]
             else:
                 self.test_env_seed = None
+            self.use_inverse_pnp_metric = self.test_env_command.pop('use_inverse_pnp_metric', False)
         self.random_init_gripper_pos = kwargs.pop('random_init_gripper_pos', False)
         self.random_init_gripper_yaw = kwargs.pop('random_init_gripper_yaw', False)
-
-        self.thresh_sweep = [0.03, 0.05, 0.08, 0.1, 0.13, 0.15, 0.18, 0.2, 0.23, 0.25]
 
         ## Camera Angle and Objects
         self.configs = kwargs.pop('configs',
@@ -572,7 +572,7 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             'skill_id': skill_id
         }
 
-    def get_success_metric(self, curr_state, goal_state, key=None, thresh=None):
+    def get_success_metric(self, curr_state, goal_state, key=None):
         success = np.zeros((curr_state.shape[0], 1), dtype=int)
         if key == "overall":
             curr_pos = curr_state[:, 8:11]
@@ -624,20 +624,6 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             goal_pos_extra = goal_state[:, 23:32]
             success = self.obj_pnp_done(
                 curr_pos_1, goal_pos_1, curr_pos_extra, goal_pos_extra).astype(int)
-        elif key == 'obj_pnp_1_thresh':
-            curr_pos_1 = curr_state[:, 14:17]
-            goal_pos_1 = goal_state[:, 14:17]
-            curr_pos_extra = curr_state[:, 23:32]
-            goal_pos_extra = goal_state[:, 23:32]
-            success = self.obj_pnp_done_thresh(
-                curr_pos_1, goal_pos_1, curr_pos_extra, goal_pos_extra, thresh=thresh).astype(int)
-        elif key == 'obj_pnp_1_not_on_drawer_thresh':
-            curr_pos_1 = curr_state[:, 14:17]
-            goal_pos_1 = goal_state[:, 14:17]
-            curr_pos_extra = curr_state[:, 23:32]
-            goal_pos_extra = goal_state[:, 23:32]
-            success = self.obj_pnp_not_on_drawer_thresh(
-                curr_pos_1, goal_pos_1, curr_pos_extra, goal_pos_extra, thresh=thresh).astype(int)
         elif key == 'obj_pnp_2':
             curr_pos_2 = curr_state[:, 17:20]
             goal_pos_2 = goal_state[:, 17:20]
@@ -769,10 +755,6 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
                         "gripper_rotation_pitch",
                         "gripper_rotation_yaw",
                         "gripper_rotation", "gripper"]
-        success_keys_thresh = [
-            "obj_pnp_1_not_on_drawer_thresh",
-            "obj_pnp_1_thresh",
-        ]
         distance_keys = ["top_drawer",
                          "obj_pnp",
                          "obj_pnp_0",
@@ -842,11 +824,6 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             dict_of_success_array_k = self.get_success_metric(
                 curr_obses, goal_obses, key=k)
             dict_of_success_arrays[k] = dict_of_success_array_k.reshape([num_paths, path_length])
-        for k in success_keys_thresh:
-            for thresh in self.thresh_sweep:
-                dict_of_success_array_k = self.get_success_metric(
-                    curr_obses, goal_obses, key=k, thresh=thresh)
-                dict_of_success_arrays[f"{k}{thresh}"] = dict_of_success_array_k.reshape([num_paths, path_length])
         for k in distance_keys:
             dict_of_distance_array_k = self.get_distance_metric(
                 curr_obses, goal_obses, key=k)
@@ -857,10 +834,6 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         for k in success_keys:
             diagnostics.update(create_stats_ordered_dict(
                 goal_key + f"/final/{k}_success", dict_of_success_arrays[k][:, -1]))
-        for k in success_keys_thresh:
-            for thresh in self.thresh_sweep:
-                diagnostics.update(create_stats_ordered_dict(
-                    goal_key + f"/final/{k}{thresh}_success", dict_of_success_arrays[f"{k}{thresh}"][:, -1]))
         for k in distance_keys:
             diagnostics.update(create_stats_ordered_dict(
                 goal_key + f"/final/{k}_distance", dict_of_distance_arrays[k][:, -1]))
@@ -886,10 +859,6 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         for k in success_keys:
             diagnostics.update(create_stats_ordered_dict(
                 goal_key + f"/{k}_success", dict_of_success_arrays[k]))
-        for k in success_keys_thresh:
-            for thresh in self.thresh_sweep:
-                diagnostics.update(create_stats_ordered_dict(
-                    goal_key + f"/{k}{thresh}_success", dict_of_success_arrays[f"{k}{thresh}"]))
         for k in distance_keys:
             diagnostics.update(create_stats_ordered_dict(
                 goal_key + f"/{k}_distance", dict_of_distance_arrays[k]))
@@ -955,21 +924,6 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             diagnostics.update(create_stats_ordered_dict(
                 goal_key + f"/{k}_length_exclusive",
                 dict_of_length_arrays_2[k]))
-        for k in success_keys_thresh:
-            for thresh in self.thresh_sweep:
-                first_success_t = first_nonzero(
-                    dict_of_success_arrays[f"{k}{thresh}"], axis=1, invalid_val=-1)
-                dict_of_length_arrays_1[f"{k}{thresh}"] = np.where(
-                    first_success_t != -1, first_success_t, path_length - 1)
-                dict_of_length_arrays_2[f"{k}{thresh}"] = np.where(
-                    first_success_t != -1, first_success_t, int(1e3 - 1))
-
-                diagnostics.update(create_stats_ordered_dict(
-                    goal_key + f"/{k}_length_inclusive",
-                    dict_of_length_arrays_1[f"{k}{thresh}"]))
-                diagnostics.update(create_stats_ordered_dict(
-                    goal_key + f"/{k}_length_exclusive",
-                    dict_of_length_arrays_2[f"{k}{thresh}"]))
 
         return diagnostics
 
@@ -1275,33 +1229,29 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
         in_drawer_goal_pos = goal_pos_extra[:, 3:6]
         out_of_drawer_goal_pos = goal_pos_extra[:, 6:9]
 
-        goal_not_on_top = np.linalg.norm(
-            goal_pos - on_top_drawer_goal_pos, axis=1, keepdims=True) > self.obj_thresh
-        goal_not_in = np.linalg.norm(
-            goal_pos - in_drawer_goal_pos, axis=1, keepdims=True) > self.obj_thresh
+        if self.use_inverse_pnp_metric:
+            success = np.linalg.norm(curr_pos - on_top_drawer_goal_pos, axis=1, keepdims=True) > self.obj_inverse_thresh
+        else:
+            goal_not_on_top = np.linalg.norm(
+                goal_pos - on_top_drawer_goal_pos, axis=1, keepdims=True) > self.obj_thresh
+            goal_not_in = np.linalg.norm(
+                goal_pos - in_drawer_goal_pos, axis=1, keepdims=True) > self.obj_thresh
 
-        not_on_top = np.linalg.norm(
-            curr_pos - on_top_drawer_goal_pos, axis=1, keepdims=True) > self.obj_thresh
-        not_in = np.linalg.norm(
-            curr_pos - in_drawer_goal_pos, axis=1, keepdims=True) > self.obj_thresh
-        goal_not_on_top_not_in_done = np.logical_and.reduce((
-            not_on_top, not_in, np.linalg.norm(curr_pos[:, [2]] - goal_pos[:, [2]], axis=1, keepdims=True) < 0.01))
-        other_done = np.logical_and(
-            np.linalg.norm(curr_pos - goal_pos, axis=1, keepdims=True) < self.obj_thresh,
-            np.linalg.norm(curr_pos[:, [2]] - goal_pos[:, [2]], axis=1, keepdims=True) < 0.01)
+            not_on_top = np.linalg.norm(
+                curr_pos - on_top_drawer_goal_pos, axis=1, keepdims=True) > self.obj_thresh
+            not_in = np.linalg.norm(
+                curr_pos - in_drawer_goal_pos, axis=1, keepdims=True) > self.obj_thresh
+            goal_not_on_top_not_in_done = np.logical_and.reduce((
+                not_on_top, not_in, np.linalg.norm(curr_pos[:, [2]] - goal_pos[:, [2]], axis=1, keepdims=True) < 0.01))
+            other_done = np.logical_and(
+                np.linalg.norm(curr_pos - goal_pos, axis=1, keepdims=True) < self.obj_thresh,
+                np.linalg.norm(curr_pos[:, [2]] - goal_pos[:, [2]], axis=1, keepdims=True) < 0.01)
 
-        # if goal_not_on_top and goal_not_in:
-        #     not_on_top = np.linalg.norm(
-        #         curr_pos - on_top_drawer_goal_pos, axis=1, keepdims=True) > self.obj_thresh
-        #     not_in = np.linalg.norm(
-        #         curr_pos - in_drawer_goal_pos, axis=1, keepdims=True) > self.obj_thresh
-        #     return not_on_top and not_in and np.linalg.norm(curr_pos[2] - goal_pos[2]) < 0.01
-        # else:
-        #     return np.linalg.norm(curr_pos - goal_pos) < self.obj_thresh and np.linalg.norm(curr_pos[2] - goal_pos[2]) < 0.01
+            success = np.where(np.logical_and(goal_not_on_top, goal_not_in),
+                            goal_not_on_top_not_in_done,
+                            other_done)
 
-        return np.where(np.logical_and(goal_not_on_top, goal_not_in),
-                        goal_not_on_top_not_in_done,
-                        other_done)
+        return success 
 
     def obj_pnp_not_on_drawer_thresh(self, curr_pos, goal_pos, curr_pos_extra, goal_pos_extra, thresh):
         on_top_drawer_goal_pos = goal_pos_extra[:, 0:3]
