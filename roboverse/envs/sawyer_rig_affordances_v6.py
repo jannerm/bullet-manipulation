@@ -105,6 +105,8 @@ class SawyerRigAffordancesV6(SawyerBaseEnv):
             else:
                 self.test_env_seed = None
             self.use_inverse_pnp_metric = self.test_env_command.pop('use_inverse_pnp_metric', False)
+        else:
+            self.use_inverse_pnp_metric = False
         self.random_init_gripper_pos = kwargs.pop('random_init_gripper_pos', False)
         self.random_init_gripper_yaw = kwargs.pop('random_init_gripper_yaw', False)
 

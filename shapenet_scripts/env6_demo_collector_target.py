@@ -103,7 +103,7 @@ def collect(id):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--save_path", type=str, default='/media/ashvin/data1/patrickhaoy/data/env6_td_pnp_push_mixed_tasks_2')
+    parser.add_argument("--save_path", type=str, default='/media/ashvin/data1/patrickhaoy/data/env6_td_pnp_push_mixed_tasks')
     parser.add_argument("--num_trajectories_per_task_per_setting", type=int, default=200)
     parser.add_argument("--num_threads", type=int, default=8)
     parser.add_argument("--num_timesteps", type=int, default=75)
@@ -126,7 +126,7 @@ if __name__ == '__main__':
     }
 
     #TASKS = ['open_drawer', 'close_drawer', 'move_obj_slide', 'move_obj_pnp']
-    TASKS = [f'mixed_{i}' for i in range(16)] #['mixed_0', 'mixed_1'] #, 'mixed_2', 'mixed_3']
+    TASKS = [f'mixed_{i}' for i in range(20)] #['mixed_0', 'mixed_1'] #, 'mixed_2', 'mixed_3']
 
     pool = Pool(args.num_threads)
     ids = [id for id in range(len(TASKS))]
