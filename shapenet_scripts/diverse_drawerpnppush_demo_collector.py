@@ -11,7 +11,7 @@ import argparse
 from multiprocess import Pool
 import gc
 
-NUM_TIMESTEPS=75
+NUM_TIMESTEPS=100
 
 def collect(id):
     state_env = roboverse.make(
@@ -95,9 +95,10 @@ def collect(id):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--save_path", type=str, default='/media/ashvin/data1/patrickhaoy/data/test')
-    parser.add_argument("--num_trajectories", type=int, default=2)
-    parser.add_argument("--num_trajectories_per_demo", type=int, default=2)
+    parser.add_argument("--num_trajectories", type=int, default=1)
+    parser.add_argument("--num_trajectories_per_demo", type=int, default=1)
     parser.add_argument("--num_threads", type=int, default=1)
+    parser.add_argument('--debug', action='store_true')
 
     args = parser.parse_args()
     assert args.num_trajectories % args.num_trajectories_per_demo == 0
@@ -114,6 +115,7 @@ if __name__ == '__main__':
         'env_obs_img_dim': 196,
         'random_init_gripper_pos': True,
         'random_init_gripper_yaw': True,
+        'use_target_config': args.debug,
     }
 
     pool = Pool(args.num_threads)

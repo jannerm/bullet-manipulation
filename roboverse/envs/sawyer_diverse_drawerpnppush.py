@@ -92,6 +92,14 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
         self._projection_matrix_obs = bullet.get_projection_matrix(
             self.obs_img_dim, self.obs_img_dim)
 
+        self.drawer_z = -.34
+        self.large_obj_z = -.3525
+        self.table_z = -1.
+        self.wall_z = -.3
+        self.on_top_drawer_goal_z = -0.26951111
+        self.in_drawer_goal_z = -0.3290406
+        self.out_of_drawer_goal_z = -0.34
+
         ## Test Env
         self.test_env = test_env
         self.test_env_command = kwargs.pop('test_env_command', None)
@@ -112,11 +120,14 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
         self.random_init_gripper_yaw_discrete = kwargs.pop('random_init_gripper_yaw_discrete', False)
         assert not (self.random_init_gripper_yaw and self.random_init_gripper_yaw_discrete)
 
-        ## Camera Angle and Objects
+        ## Env Config
         self.camera_yaw_low = kwargs.pop('camera_yaw_low', 80)
         self.camera_yaw_high = kwargs.pop('camera_yaw_high', 100)
         self.camera_pitch_low = kwargs.pop('camera_pitch_low', -35)
-        self.camera_pitch_high = kwargs.pop('camera_pith_high', -19)
+        self.camera_pitch_high = kwargs.pop('camera_pitch_high', -19)
+        self.table_pos_offset_low = kwargs.pop('table_pos_offset_low', [-.05, -.05, -.035])
+        self.table_pos_offset_high = kwargs.pop('table_pos_offset_high', [.01, .05, .1])
+        self.use_target_config = kwargs.pop('use_target_config', False)
         self._load_new_env_config()
 
         self.fixed_drawer_yaw = kwargs.pop('fixed_drawer_yaw', None)
@@ -196,27 +207,44 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
         ])
 
     def _load_new_env_config(self):
-        rand_yaw = np.random.uniform(self.camera_yaw_low, self.camera_yaw_high)
-        rand_pitch = np.random.uniform(self.camera_pitch_low, self.camera_pitch_high)
-        rand_rgbs = np.hstack((np.random.uniform(0, 1, (8, 3)), np.ones((8, 1))))
+        if self.use_target_config:
+            yaw = 90
+            pitch = -27
+            rgbs = np.array([
+                [.93, .294, .169, 1.],
+                [.5, 1., 0., 1],
+                [0.0, .502, .502, 1.],
+                [.1, .25, .6, 1.],
+                [.68, .85, .90, 1.],
+                [.5, .5, .5, 1.],
+                [.59, .29, 0.0, 1.],
+                [.92, .85, .7, 1],
+            ])
+            table_pos_offset = np.zeros((3,))
+        else:
+            yaw = np.random.uniform(self.camera_yaw_low, self.camera_yaw_high)
+            pitch = np.random.uniform(self.camera_pitch_low, self.camera_pitch_high)
+            rgbs = np.hstack((np.random.uniform(0, 1, (8, 3)), np.ones((8, 1))))
+            table_pos_offset = np.random.uniform(self.table_pos_offset_low, self.table_pos_offset_high)
 
         self.configs = {
             'camera_angle': {
-                'yaw': rand_yaw,
-                'pitch': rand_pitch,
+                'yaw': yaw,
+                'pitch': pitch,
             },
             'object_rgbs': {
-                'large_object': rand_rgbs[0],
-                'small_object': rand_rgbs[1],
-                'tray': rand_rgbs[2],
+                'large_object': rgbs[0],
+                'small_object': rgbs[1],
+                'tray': rgbs[2],
                 'drawer': {
-                    'frame': rand_rgbs[3],
-                    'bottom_frame': rand_rgbs[4],
-                    'bottom': rand_rgbs[5],
-                    'handle': rand_rgbs[6],
+                    'frame': rgbs[3],
+                    'bottom_frame': rgbs[4],
+                    'bottom': rgbs[5],
+                    'handle': rgbs[6],
                 },
             },
-            'table_rgb': rand_rgbs[7],
+            'table_rgb': rgbs[7],
+            'table_pos_offset': table_pos_offset,
         }
         self._view_matrix_obs = bullet.get_view_matrix(
             target_pos=[0.7, 0, -0.25], distance=0.5,
@@ -227,10 +255,12 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
         self._sensors = {}
 
         self._sawyer = bullet.objects.drawer_sawyer(physicsClientId=self._uid)
+        table_pos = np.array([.75, -.2, self.table_z]) + self.configs['table_pos_offset']
         self._table = bullet.objects.table(
-            rgba=self.configs['table_rgb'], physicsClientId=self._uid)
+            pos=table_pos, rgba=self.configs['table_rgb'], physicsClientId=self._uid)
+        wall_pos = np.array([.68, 0, self.wall_z]) + self.configs['table_pos_offset']
         self._wall = bullet.objects.wall_narrow_r(
-            scale=1.0, physicsClientId=self._uid)
+            pos=wall_pos, scale=1.0, physicsClientId=self._uid)
 
         self.top_drawer_quadrant = random.choice([0, 1])
         if self.fixed_task == 'open_drawer':
@@ -245,19 +275,18 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
             self.drawer_yaw = self.test_env_command['drawer_yaw']
             self.top_drawer_quadrant = self.test_env_command['drawer_quadrant']
             quadrant = quadrants[self.top_drawer_quadrant]
-            drawer_frame_pos = np.array([quadrant[0], quadrant[1], -.34])
+            drawer_frame_pos = np.array([quadrant[0], quadrant[1], self.drawer_z]) + self.configs['table_pos_offset']
         else:
             self.drawer_yaw = self.fixed_drawer_yaw if self.fixed_drawer_yaw else random.uniform(
                 0, 180)
             if self.fixed_drawer_quadrant is not None:
                 quadrant = quadrants[self.fixed_drawer_quadrant]
-                drawer_frame_pos = [quadrant[0], quadrant[1], -.34]
+                drawer_frame_pos = np.array([quadrant[0], quadrant[1], self.drawer_z]) + self.configs['table_pos_offset']
             else:
                 tries = 0
                 quadrant = quadrants[self.top_drawer_quadrant]
                 while(True):
-                    drawer_frame_pos = np.array(
-                        [quadrant[0], quadrant[1], -.34])
+                    drawer_frame_pos = np.array([quadrant[0], quadrant[1], self.drawer_z]) + self.configs['table_pos_offset']
                     drawer_handle_open_goal_pos = drawer_frame_pos + td_open_coeff * \
                         np.array([np.sin(self.drawer_yaw * np.pi / 180), -
                                  np.cos(self.drawer_yaw * np.pi / 180), 0])
@@ -378,7 +407,7 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
         if self.test_env:
             self.large_object_quadrant = self.test_env_command['large_object_quadrant']
             quadrant = slide_quadrants[self.large_object_quadrant]
-            pos = np.array([quadrant[0], quadrant[1], -0.3525])
+            pos = np.array([quadrant[0], quadrant[1], self.large_obj_z]) + self.configs['table_pos_offset']
             self._large_obj = self.spawn_large_object(
                 pos, self.configs['object_rgbs']['large_object'])
         else:
@@ -413,7 +442,7 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
                     large_object_quadrant_opts)
 
                 quadrant = slide_quadrants[self.large_object_quadrant]
-                pos = np.array([quadrant[0], quadrant[1], -0.3525])
+                pos = np.array([quadrant[0], quadrant[1], self.large_obj_z]) + self.configs['table_pos_offset']
                 self._large_obj = self.spawn_large_object(
                     pos, self.configs['object_rgbs']['large_object'])
 
@@ -1300,7 +1329,8 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
         ## Top Drawer Goal ##
         self.on_top_drawer_goal = np.array(
             list(get_drawer_frame_pos(self._top_drawer, physicsClientId=self._uid)))
-        self.on_top_drawer_goal[2] = -0.26951111
+        self.on_top_drawer_goal[2] = self.on_top_drawer_goal_z
+        self.on_top_drawer_goal += self.configs['table_pos_offset']
         ## Randomly shift goal a little
         self.on_top_drawer_goal = self.on_top_drawer_goal
 
@@ -1308,7 +1338,8 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
         self.in_drawer_goal = np.array(list(get_drawer_bottom_pos(self._top_drawer, physicsClientId=self._uid))) \
             - .025 * np.array([np.sin((self.drawer_yaw+180) * np.pi / 180), -
                               np.cos((self.drawer_yaw+180) * np.pi / 180), 0])
-        self.in_drawer_goal[2] = -0.3290406
+        self.in_drawer_goal[2] = self.in_drawer_goal_z
+        self.in_drawer_goal += self.configs['table_pos_offset']
 
         ## Out of Drawer Goal ##
         if task_info is not None and task_info.get('target_position', None) is not None and task_info.get("target_location", None) == 'out':
@@ -1319,7 +1350,8 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
             while self.out_of_drawer_goal is None:
                 offset = 0.0
                 out_of_drawer_goal = np.array([random.uniform(gripper_bounding_x[0] + offset, gripper_bounding_x[1] - offset),
-                                              random.uniform(gripper_bounding_y[0] + offset, gripper_bounding_y[1] - offset), -0.34])
+                                              random.uniform(gripper_bounding_y[0] + offset, gripper_bounding_y[1] - offset), self.out_of_drawer_goal_z])
+                out_of_drawer_goal += self.configs['table_pos_offset']
                 drawer_frame_far = np.linalg.norm(
                     out_of_drawer_goal[:2] - self.on_top_drawer_goal[:2]) > 0.1
                 drawer_base_far = np.linalg.norm(
@@ -1377,7 +1409,7 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
             goal_quadrant = goal_slide_quadrants[task_info['target_quadrant']]
         self.obj_slide = self._large_obj
         self.obj_slide_goal = np.array(
-            [goal_quadrant[0], goal_quadrant[1], -0.3525]) if goal_quadrant else self.get_object_pos(self._large_obj)
+            [goal_quadrant[0], goal_quadrant[1], self.large_obj_z]) + self.configs['table_pos_offset'] if goal_quadrant else self.get_object_pos(self._large_obj)
 
     def get_quadrant(self, pos):
         # if np.linalg.norm(slide_quadrants[0][0] - pos[0]) < np.linalg.norm(slide_quadrants[2][0] - pos[0]):

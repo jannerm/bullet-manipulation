@@ -12,14 +12,14 @@ num_traj = 75
 
 #obs_img_dim=196, 
 env = rv.make(
-    "SawyerRigAffordances-v6", #"SawyerResetFreeDrawerPnpPush-v0", 
+    "SawyerDiverseDrawerPnpPush-v0", #"SawyerRigAffordances-v6", #"SawyerResetFreeDrawerPnpPush-v0", 
     gui=True, 
     expl=True, 
-    reset_interval=10, 
+    reset_interval=1, #10, 
     #reset_gripper_interval=1,
     env_obs_img_dim=196, 
-    test_env=True, 
-    test_env_command=drawer_pnp_push_commands[14],
+    # test_env=True, 
+    # test_env_command=drawer_pnp_push_commands[14],
     # use_test_env_command_sequence=False,
     demo_num_ts=ts,
     # fixed_drawer_yaw=171.86987153482346,
@@ -27,11 +27,11 @@ env = rv.make(
     expert_policy_std=.05,
     downsample=False,
     #configs=drawer_pnp_push_env_configs[1],
-    #fixed_task='move_obj_pnp',
+    # fixed_task='move_obj_slide',
     # random_init_gripper_pos=True
 )
 
-save_video = False
+save_video = True
 
 if save_video:
     video_save_path = '/media/ashvin/data1/patrickhaoy/data/test/'
@@ -57,7 +57,7 @@ for i in range(num_traj):
             observations[i*ts + t, :] = img
         action, done = env.get_demo_action(first_timestep=(t == 0), return_done=True)
         # sign = 1 if i % 2 == 0 else -1
-        action = np.array([0, -1, 0, 0, -1])
+        # action = np.array([0, -1, 0, 0, -1])
         done = False
         next_observation, reward, _, info = env.step(action)
         if done and not is_done:
