@@ -121,10 +121,10 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
         assert not (self.random_init_gripper_yaw and self.random_init_gripper_yaw_discrete)
 
         ## Env Config
-        self.camera_yaw_low = kwargs.pop('camera_yaw_low', 80)
-        self.camera_yaw_high = kwargs.pop('camera_yaw_high', 100)
-        self.camera_pitch_low = kwargs.pop('camera_pitch_low', -35)
-        self.camera_pitch_high = kwargs.pop('camera_pitch_high', -19)
+        self.camera_yaw_low = kwargs.pop('camera_yaw_low', 60)
+        self.camera_yaw_high = kwargs.pop('camera_yaw_high', 120)
+        self.camera_pitch_low = kwargs.pop('camera_pitch_low', -44)
+        self.camera_pitch_high = kwargs.pop('camera_pitch_high', -10)
         self.table_pos_offset_low = kwargs.pop('table_pos_offset_low', [-.05, -.05, -.035])
         self.table_pos_offset_high = kwargs.pop('table_pos_offset_high', [.01, .05, .1])
         self.use_target_config = kwargs.pop('use_target_config', False)
