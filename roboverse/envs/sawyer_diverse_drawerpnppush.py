@@ -1086,29 +1086,30 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
             opts = ['move_obj_slide', 'move_obj_pnp', 'move_drawer']
             if np.linalg.norm(self.obj_slide_goal - self.get_object_pos(self._large_obj)) < .0001:
                 opts.remove('move_obj_slide')
-            # Object in drawer
-            if obj_in_drawer is not None:
-                opts.remove('move_drawer')
-            # Object blocks drawer
-            obj_pos, _ = get_object_position(
-                self._small_obj, physicsClientId=self._uid)
-            large_obj_pos = self.get_object_pos(self.obj_slide)
-            for base_pos in [self.get_drawer_handle_future_pos(td_open_coeff), self.get_td_handle_pos()]:
-                for offset in [i * self.obj_thresh / 4 for i in range(4+1)]:
-                    no_obj_center = base_pos - offset * \
-                        np.array([np.sin((self.drawer_yaw+180) * np.pi / 180), -
-                                  np.cos((self.drawer_yaw+180) * np.pi / 180), 0])
-                    if np.linalg.norm(obj_pos[:2] - no_obj_center[:2]) < self.obj_thresh + .02 or np.linalg.norm(large_obj_pos[:2] - no_obj_center[:2]) < self.obj_thresh + .02:
-                        if 'move_drawer' in opts:
-                            opts.remove('move_drawer')
-                        break
-                else:
-                    continue
-                break
-            # Open drawer blocks obj
-            if np.linalg.norm(self.obj_slide_goal[:2] - self.get_td_handle_pos()[:2]) < self.obj_thresh:
-                if 'move_obj_slide' in opts:
-                    opts.remove('move_obj_slide')
+                
+            # # Object in drawer
+            # if obj_in_drawer is not None:
+            #     opts.remove('move_drawer')
+            # # Object blocks drawer
+            # obj_pos, _ = get_object_position(
+            #     self._small_obj, physicsClientId=self._uid)
+            # large_obj_pos = self.get_object_pos(self.obj_slide)
+            # for base_pos in [self.get_drawer_handle_future_pos(td_open_coeff), self.get_td_handle_pos()]:
+            #     for offset in [i * self.obj_thresh / 4 for i in range(4+1)]:
+            #         no_obj_center = base_pos - offset * \
+            #             np.array([np.sin((self.drawer_yaw+180) * np.pi / 180), -
+            #                       np.cos((self.drawer_yaw+180) * np.pi / 180), 0])
+            #         if np.linalg.norm(obj_pos[:2] - no_obj_center[:2]) < self.obj_thresh + .02 or np.linalg.norm(large_obj_pos[:2] - no_obj_center[:2]) < self.obj_thresh + .02:
+            #             if 'move_drawer' in opts:
+            #                 opts.remove('move_drawer')
+            #             break
+            #     else:
+            #         continue
+            #     break
+            # # Open drawer blocks obj
+            # if np.linalg.norm(self.obj_slide_goal[:2] - self.get_td_handle_pos()[:2]) < self.obj_thresh:
+            #     if 'move_obj_slide' in opts:
+            #         opts.remove('move_obj_slide')
 
             if self.fixed_task:
                 fixed_task = 'move_drawer' if self.fixed_task in [
