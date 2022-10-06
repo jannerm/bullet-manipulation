@@ -218,14 +218,34 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
                 [.68, .85, .90, 1.],
                 [.5, .5, .5, 1.],
                 [.59, .29, 0.0, 1.],
-                [.92, .85, .7, 1],
+                [.92, .85, .7, 1.],
+                [.67, .67, .67, 1.],
             ])
             table_pos_offset = np.zeros((3,))
         else:
             yaw = np.random.uniform(self.camera_yaw_low, self.camera_yaw_high)
             pitch = np.random.uniform(self.camera_pitch_low, self.camera_pitch_high)
-            rgbs = np.hstack((np.random.uniform(0, 1, (8, 3)), np.ones((8, 1))))
+            rgbs = np.hstack((np.random.uniform(0, 1, (9, 3)), np.ones((9, 1))))
             table_pos_offset = np.random.uniform(self.table_pos_offset_low, self.table_pos_offset_high)
+
+        ## For debugging
+        # rgbs = np.array([
+        #     [.93, .294, .169, 1.],
+        #     [.5, 1., 0., 1],
+        #     [0.0, .502, .502, 1.],
+        #     [.1, .25, .6, 1.],
+        #     [.68, .85, .90, 1.],
+        #     [.5, .5, .5, 1.],
+        #     [.59, .29, 0.0, 1.],
+        #     [.92, .85, .7, 1],
+        # ])
+        # yaw = 0.5 * self.camera_yaw_low + 0.5 * self.camera_yaw_high
+        # pitch = 0.5 * self.camera_pitch_low + 0.5 * self.camera_pitch_high
+        # table_pos_offset = 0.5 * np.array(self.table_pos_offset_low) + 0.5 * np.array(self.table_pos_offset_high)
+        
+        # yaw = 90
+        # pitch = -27
+        # table_pos_offset = np.zeros((3,))
 
         self.configs = {
             'camera_angle': {
@@ -245,6 +265,7 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
             },
             'table_rgb': rgbs[7],
             'table_pos_offset': table_pos_offset,
+            'wall_rgb': rgbs[8],
         }
         self._view_matrix_obs = bullet.get_view_matrix(
             target_pos=[0.7, 0, -0.25], distance=0.5,
@@ -259,8 +280,8 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
         self._table = bullet.objects.table(
             pos=table_pos, rgba=self.configs['table_rgb'], physicsClientId=self._uid)
         wall_pos = np.array([.68, 0, self.wall_z]) + self.configs['table_pos_offset']
-        self._wall = bullet.objects.wall_narrow_r(
-            pos=wall_pos, scale=1.0, physicsClientId=self._uid)
+        self._wall = bullet.objects.wall_narrow_r_rgba(
+            pos=wall_pos, rgba=self.configs['wall_rgb'], scale=1.0, physicsClientId=self._uid)
 
         self.top_drawer_quadrant = random.choice([0, 1])
         if self.fixed_task == 'open_drawer':

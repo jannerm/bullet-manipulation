@@ -7,13 +7,13 @@ import skvideo.io
 from rlkit.experimental.kuanfang.envs.drawer_pnp_push_commands import drawer_pnp_push_commands
 from roboverse.envs.configs.drawer_pnp_push_env_configs import drawer_pnp_push_env_configs
 
-ts = 75
+ts = 100
 num_traj = 75
 
 #obs_img_dim=196, 
 env = rv.make(
     "SawyerDiverseDrawerPnpPush-v0", #"SawyerRigAffordances-v6", #"SawyerResetFreeDrawerPnpPush-v0", 
-    gui=True, 
+    gui=False, 
     expl=True, 
     reset_interval=1, #10, 
     #reset_gripper_interval=1,
@@ -35,7 +35,7 @@ save_video = True
 
 if save_video:
     video_save_path = '/media/ashvin/data1/patrickhaoy/data/test/'
-    num_traj = 100 #4 #2
+    num_traj = 10 #4 #2
     observations = np.zeros((num_traj*ts, 196, 196, 3))
 
 

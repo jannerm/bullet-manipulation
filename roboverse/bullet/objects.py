@@ -182,6 +182,18 @@ wall_narrow_r = loader(ASSET_PATH, os.path.join(obj_dir, "wall", "wall_narrow_r.
               deg=[0, 0, 0],
               scale=0.8)
 
+wall_narrow_r = loader(ASSET_PATH, os.path.join(obj_dir, "wall", "wall_narrow_r.urdf"),
+              pos=[.68, 0, -.3],
+              rgba=[1, 1, 1, 1],
+              deg=[0, 0, 0],
+              scale=0.8)
+
+wall_narrow_r_rgba = loader_randomize_color(ASSET_PATH, os.path.join(obj_dir, "wall", "wall_narrow_r.urdf"),
+              pos=[.68, 0, -.3],
+              rgba=[1, 1, 1, 1],
+              deg=[0, 0, 0],
+              scale=0.8)
+
 wall_slanted = loader(ASSET_PATH, os.path.join(obj_dir, "wall", "wall_slanted.urdf"),
               pos=[.68, 0, -.3],
               rgba=[1, 1, 1, 1],
