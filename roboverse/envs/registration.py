@@ -119,66 +119,6 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    }
     },
     {
-        'id': 'SawyerRigAffordances-v0',
-        'entry_point': ('roboverse.envs.sawyer_rig_affordances_v0:SawyerRigAffordancesV0'),
-        'kwargs': {'max_force': 100,
-                   'action_scale': 0.05,
-                   'pos_low': [0.5,-0.2,-.36],
-                   'pos_high': [0.85,0.2,-0.1],
-                   'pos_init': [0.6, -0.15, -0.2],
-                   }
-    },
-    {
-        'id': 'SawyerRigAffordances-v1',
-        'entry_point': ('roboverse.envs.sawyer_rig_affordances_v1:SawyerRigAffordancesV1'),
-        'kwargs': {'max_force': 100,
-                   'action_scale': 0.05,
-                   'pos_low': [0.5,-0.2,-.36],
-                   'pos_high': [0.85,0.2,-0.1],
-                   'pos_init': [0.6, -0.15, -0.2],
-                   }
-    },
-    {
-        'id': 'SawyerRigAffordances-v2',
-        'entry_point': ('roboverse.envs.sawyer_rig_affordances_v2:SawyerRigAffordancesV2'),
-        'kwargs': {'max_force': 100,
-                   'action_scale': 0.05,
-                   'pos_low': [0.5,-0.2,-.36],
-                   'pos_high': [0.85,0.2,-0.1],
-                   'pos_init': [0.6, -0.15, -0.2],
-                   }
-    },
-    {
-        'id': 'SawyerRigAffordances-v3',
-        'entry_point': ('roboverse.envs.sawyer_rig_affordances_v3:SawyerRigAffordancesV3'),
-        'kwargs': {'max_force': 100,
-                   'action_scale': 0.05,
-                   'pos_low': [0.5,-0.2,-.36],
-                   'pos_high': [0.85,0.2,-0.1],
-                   'pos_init': [0.6, -0.15, -0.2],
-                   }
-    },
-    {
-        'id': 'SawyerRigAffordances-v4',
-        'entry_point': ('roboverse.envs.sawyer_rig_affordances_v4:SawyerRigAffordancesV4'),
-        'kwargs': {'max_force': 100,
-                   'action_scale': 0.05,
-                   'pos_low': [0.5,-0.2,-.36],
-                   'pos_high': [0.85,0.2,-0.1],
-                   'pos_init': [0.6, -0.15, -0.2],
-                   }
-    },
-    {
-        'id': 'SawyerRigAffordances-v5',
-        'entry_point': ('roboverse.envs.sawyer_rig_affordances_v5:SawyerRigAffordancesV5'),
-        'kwargs': {'max_force': 100,
-                   'action_scale': 0.05,
-                   'pos_low': [0.5,-0.2,-.36],
-                   'pos_high': [0.85,0.2,-0.1],
-                   'pos_init': [0.6, -0.15, -0.2],
-                   }
-    },
-    {
         'id': 'SawyerRigAffordances-v6',
         'entry_point': ('roboverse.envs.sawyer_rig_affordances_v6:SawyerRigAffordancesV6'),
         'kwargs': {'max_force': 100,
@@ -189,18 +129,8 @@ SEQUENTIAL_ENVIRONMENT_SPECS = (
                    }
     },
     {
-        'id': 'SawyerRigAffordances-v7',
-        'entry_point': ('roboverse.envs.sawyer_rig_affordances_v7:SawyerRigAffordancesV7'),
-        'kwargs': {'max_force': 100,
-                   'action_scale': 0.05,
-                   'pos_low': [0.5,-0.2,-.36],
-                   'pos_high': [0.85,0.2,-0.1],
-                   'pos_init': [0.6, -0.15, -0.2],
-                   }
-    },
-    {
-        'id': 'SawyerResetFreeDrawerPnpPush-v0',
-        'entry_point': ('roboverse.envs.sawyer_resetfree_drawerpnppush:SawyerResetFreeDrawerPnpPush'),
+        'id': 'SawyerDiverseDrawerPnpPush-v0',
+        'entry_point': ('roboverse.envs.sawyer_diverse_drawerpnppush:SawyerDiverseDrawerPnpPush'),
         'kwargs': {'max_force': 100,
                    'action_scale': 0.05,
                    'pos_low': [0.5,-0.2,-.36],
