@@ -1535,9 +1535,6 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
     ### DEMO COLLECTING FUNCTIONS BEYOND THIS POINT ###
     def demo_reset(self):
         self.timestep = 0
-        self.gripper_action = np.array(
-            [random.uniform(-1, 1), random.uniform(-1, 1), 0, 0, -1])
-        self.gripper_action_num_ts = np.random.randint(0, 16)
         self.grip = -1.
         reset_obs = self.reset()
 
@@ -1568,13 +1565,7 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
             if self.trajectory_done == False:
                 self.trajectory_done = True
 
-        if offset < self.gripper_action_num_ts:
-            action = self.gripper_action
-        elif offset >= self.gripper_action_num_ts and offset < self.gripper_action_num_ts + 10:
-            action = np.array([0, 0, 1, 0, -1])
-            if self.trajectory_done == False:
-                self.trajectory_done = True
-        elif self.trajectory_done:
+        if self.trajectory_done:
             action = np.array([0, 0, 1, 0, -1])
         else:
             action = np.append(action, [self.grip])

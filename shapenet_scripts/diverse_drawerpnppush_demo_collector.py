@@ -95,8 +95,8 @@ def collect(id):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--save_path", type=str, default='/media/ashvin/data1/patrickhaoy/data/test')
-    parser.add_argument("--num_trajectories", type=int, default=1)
-    parser.add_argument("--num_trajectories_per_demo", type=int, default=1)
+    parser.add_argument("--num_trajectories", type=int, default=2)
+    parser.add_argument("--num_trajectories_per_demo", type=int, default=2)
     parser.add_argument("--num_threads", type=int, default=1)
     parser.add_argument('--debug', action='store_true')
 
