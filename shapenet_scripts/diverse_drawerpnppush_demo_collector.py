@@ -47,35 +47,39 @@ def collect(id):
     }
 
     for j in tqdm(range(args.num_trajectories_per_demo)):
-        env.demo_reset()
-        recon_dataset['env'][j, :] = np.uint8(env.render_obs().transpose()).flatten()
-        trajectory = {
-            'observations': [],
-            'next_observations': [],
-            'actions': np.zeros((NUM_TIMESTEPS, act_dim), dtype=np.float),
-            'rewards': np.zeros((NUM_TIMESTEPS), dtype=np.float),
-            'terminals': np.zeros((NUM_TIMESTEPS), dtype=np.uint8),
-            'agent_infos': np.zeros((NUM_TIMESTEPS), dtype=np.uint8),
-            'env_infos': np.zeros((NUM_TIMESTEPS), dtype=np.uint8),
-            'skill_id': 0,
-        }
-        for i in range(NUM_TIMESTEPS):
-            img = np.uint8(env.render_obs())
-            recon_dataset['observations'][j, i, :] = img.transpose().flatten()
+        is_done = False
+        while not is_done:
+            env.demo_reset()
+            recon_dataset['env'][j, :] = np.uint8(env.render_obs().transpose()).flatten()
+            trajectory = {
+                'observations': [],
+                'next_observations': [],
+                'actions': np.zeros((NUM_TIMESTEPS, act_dim), dtype=np.float),
+                'rewards': np.zeros((NUM_TIMESTEPS), dtype=np.float),
+                'terminals': np.zeros((NUM_TIMESTEPS), dtype=np.uint8),
+                'agent_infos': np.zeros((NUM_TIMESTEPS), dtype=np.uint8),
+                'env_infos': np.zeros((NUM_TIMESTEPS), dtype=np.uint8),
+                'skill_id': 0,
+            }
+            for i in range(NUM_TIMESTEPS):
+                img = np.uint8(env.render_obs())
+                recon_dataset['observations'][j, i, :] = img.transpose().flatten()
 
-            observation = env.get_observation()
+                observation = env.get_observation()
 
-            action = env.get_demo_action(first_timestep=(i == 0))
-            next_observation, reward, done, info = env.step(action)
+                action, done = env.get_demo_action(first_timestep=(i == 0), return_done=True)
+                next_observation, reward, _, info = env.step(action)
+                if done:
+                    is_done = True
 
-            trajectory['observations'].append(observation)
-            trajectory['actions'][i, :] = action
-            trajectory['next_observations'].append(next_observation)
-            trajectory['rewards'][i] = reward
-            trajectory['skill_id'] = info['skill_id']
-            recon_dataset['skill_id'][j] = info['skill_id']
+                trajectory['observations'].append(observation)
+                trajectory['actions'][i, :] = action
+                trajectory['next_observations'].append(next_observation)
+                trajectory['rewards'][i] = reward
+                trajectory['skill_id'] = info['skill_id']
+                recon_dataset['skill_id'][j] = info['skill_id']
 
-        demo_dataset.append(trajectory)
+            demo_dataset.append(trajectory)
 
     ## Save contents    
     file = open(os.path.join(prefix, f'{id}_demos.pkl'), 'wb')
@@ -99,6 +103,7 @@ if __name__ == '__main__':
     parser.add_argument("--num_trajectories_per_demo", type=int, default=1)
     parser.add_argument("--num_threads", type=int, default=1)
     parser.add_argument('--debug', action='store_true')
+    parser.add_argument('--fix_camera_yaw_pitch', action='store_true')
 
     args = parser.parse_args()
     assert args.num_trajectories % args.num_trajectories_per_demo == 0
@@ -116,6 +121,7 @@ if __name__ == '__main__':
         'random_init_gripper_pos': True,
         'random_init_gripper_yaw': True,
         'use_target_config': args.debug,
+        'fix_camera_yaw_pitch': args.fix_camera_yaw_pitch,
     }
 
     pool = Pool(args.num_threads)

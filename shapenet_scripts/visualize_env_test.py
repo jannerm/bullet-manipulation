@@ -13,7 +13,7 @@ num_traj = 75
 #obs_img_dim=196, 
 env = rv.make(
     "SawyerDiverseDrawerPnpPush-v0", #"SawyerRigAffordances-v6", #"SawyerResetFreeDrawerPnpPush-v0", 
-    gui=False, 
+    gui=True, 
     expl=True, 
     reset_interval=1, #10, 
     #reset_gripper_interval=1,
@@ -31,7 +31,7 @@ env = rv.make(
     # random_init_gripper_pos=True
 )
 
-save_video = True
+save_video = False
 
 if save_video:
     video_save_path = '/media/ashvin/data1/patrickhaoy/data/test/'
@@ -58,7 +58,7 @@ for i in range(num_traj):
         action, done = env.get_demo_action(first_timestep=(t == 0), return_done=True)
         # sign = 1 if i % 2 == 0 else -1
         # action = np.array([0, -1, 0, 0, -1])
-        done = False
+        # done = False
         next_observation, reward, _, info = env.step(action)
         if done and not is_done:
             is_done = True 
@@ -67,6 +67,7 @@ for i in range(num_traj):
                 tasks_success[curr_task] = 1
             else:
                 tasks_success[curr_task] += 1
+            print("success")
     
     if curr_task not in tasks_count.keys():
         tasks_count[curr_task] = 1

@@ -128,6 +128,7 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
         self.table_pos_offset_low = kwargs.pop('table_pos_offset_low', [-.05, -.05, -.035])
         self.table_pos_offset_high = kwargs.pop('table_pos_offset_high', [.01, .05, .1])
         self.use_target_config = kwargs.pop('use_target_config', False)
+        self.fix_camera_yaw_pitch = kwargs.pop('fix_camera_yaw_pitch', False)
         self._load_new_env_config()
 
         self.fixed_drawer_yaw = kwargs.pop('fixed_drawer_yaw', None)
@@ -223,8 +224,12 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
             ])
             table_pos_offset = np.zeros((3,))
         else:
-            yaw = np.random.uniform(self.camera_yaw_low, self.camera_yaw_high)
-            pitch = np.random.uniform(self.camera_pitch_low, self.camera_pitch_high)
+            if self.fix_camera_yaw_pitch:
+                yaw = 90
+                pitch = -27
+            else:
+                yaw = np.random.uniform(self.camera_yaw_low, self.camera_yaw_high)
+                pitch = np.random.uniform(self.camera_pitch_low, self.camera_pitch_high)
             rgbs = np.hstack((np.random.uniform(0, 1, (9, 3)), np.ones((9, 1))))
             table_pos_offset = np.random.uniform(self.table_pos_offset_low, self.table_pos_offset_high)
 
@@ -538,9 +543,9 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
 
 
         # Don't move downwards if gripper too low
-        curr_pos = self.get_end_effector_pos()[2]
-        if curr_pos < -0.35:
-            delta_pos[2] = max(0, delta_pos[2])
+        # curr_pos = self.get_end_effector_pos()[2]
+        # if curr_pos < -0.35 + self.configs['table_pos_offset'][2]:
+        #     delta_pos[2] = max(0, delta_pos[2])
 
         delta_angle = [0, 0, delta_yaw[0]]
         return np.array(delta_pos), np.array(delta_angle), gripper
