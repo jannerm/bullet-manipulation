@@ -53,6 +53,13 @@ goal_slide_quadrants = [
         0.2 - slide_offset + goal_slide_offset],
 ]
 
+SCENE_TYPES = [
+    'drawer_slide_pnp',
+    'drawer_vary',
+    'slide_vary',
+    'pnp_vary'
+]
+
 
 class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
 
@@ -140,6 +147,8 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
         self._large_obj = None
         self._small_obj = None
         self.top_drawer_handle_can_move = True
+
+        self.scene_type = kwargs.pop('scene_type', 'drawer_cylinder_lego')
 
         ## Reset-free
         if self.test_env and self.use_test_env_command_sequence:
@@ -292,70 +301,80 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
             is_close_drawer = np.random.uniform() < .5
 
         ## Top Drawer
-        if self.test_env:
-            self.drawer_yaw = self.test_env_command['drawer_yaw']
-            self.top_drawer_quadrant = self.test_env_command['drawer_quadrant']
-            quadrant = quadrants[self.top_drawer_quadrant]
-            drawer_frame_pos = np.array([quadrant[0], quadrant[1], self.drawer_z]) + self.configs['table_pos_offset']
-        else:
-            self.drawer_yaw = self.fixed_drawer_yaw if self.fixed_drawer_yaw else random.uniform(
-                0, 180)
-            if self.fixed_drawer_quadrant is not None:
-                quadrant = quadrants[self.fixed_drawer_quadrant]
+        if 'drawer' in self.scene_type:
+            if self.test_env:
+                self.drawer_yaw = self.test_env_command['drawer_yaw']
+                self.top_drawer_quadrant = self.test_env_command['drawer_quadrant']
+                quadrant = quadrants[self.top_drawer_quadrant]
                 drawer_frame_pos = np.array([quadrant[0], quadrant[1], self.drawer_z]) + self.configs['table_pos_offset']
             else:
-                tries = 0
-                quadrant = quadrants[self.top_drawer_quadrant]
-                while(True):
+                self.drawer_yaw = self.fixed_drawer_yaw if self.fixed_drawer_yaw else random.uniform(
+                    0, 180)
+                if self.fixed_drawer_quadrant is not None:
+                    quadrant = quadrants[self.fixed_drawer_quadrant]
                     drawer_frame_pos = np.array([quadrant[0], quadrant[1], self.drawer_z]) + self.configs['table_pos_offset']
-                    drawer_handle_open_goal_pos = drawer_frame_pos + td_open_coeff * \
-                        np.array([np.sin(self.drawer_yaw * np.pi / 180), -
-                                 np.cos(self.drawer_yaw * np.pi / 180), 0])
-                    if gripper_bounding_x[0] <= drawer_handle_open_goal_pos[0] <= gripper_bounding_x[1] \
-                            and gripper_bounding_y[0] <= drawer_handle_open_goal_pos[1] <= gripper_bounding_y[1]:
-                        break
-                    tries += 1
-                    if (tries > 25):
-                        self.drawer_yaw = self.fixed_drawer_yaw if self.fixed_drawer_yaw else random.uniform(
-                            0, 180)
+                else:
+                    tries = 0
+                    quadrant = quadrants[self.top_drawer_quadrant]
+                    while(True):
+                        if 'vary' in self.scene_type:
+                            drawer_frame_pos = np.array([
+                                random.uniform(gripper_bounding_x[0], gripper_bounding_x[1]), 
+                                random.uniform(gripper_bounding_y[0], gripper_bounding_y[1]), 
+                                self.drawer_z
+                            ]) + self.configs['table_pos_offset']
+                        else:
+                            drawer_frame_pos = np.array([quadrant[0], quadrant[1], self.drawer_z]) + self.configs['table_pos_offset']
+                        drawer_handle_open_goal_pos = drawer_frame_pos + td_open_coeff * \
+                            np.array([np.sin(self.drawer_yaw * np.pi / 180), -
+                                    np.cos(self.drawer_yaw * np.pi / 180), 0])
+                        if gripper_bounding_x[0] <= drawer_handle_open_goal_pos[0] <= gripper_bounding_x[1] \
+                                and gripper_bounding_y[0] <= drawer_handle_open_goal_pos[1] <= gripper_bounding_y[1]:
+                            break
+                        tries += 1
+                        if (tries > 25):
+                            self.drawer_yaw = self.fixed_drawer_yaw if self.fixed_drawer_yaw else random.uniform(
+                                0, 180)
 
-        quat = deg_to_quat([0, 0, self.drawer_yaw], physicsClientId=self._uid)
+            quat = deg_to_quat([0, 0, self.drawer_yaw], physicsClientId=self._uid)
 
-        self._top_drawer = bullet.objects.drawer_lightblue_base_longhandle_rgba(
-            quat=quat, pos=drawer_frame_pos, rgba=[
-                self.configs['object_rgbs']['drawer'][k] for k in ['frame', 'bottom_frame', 'bottom', 'handle']
-            ], physicsClientId=self._uid, scale=.11)
-        self.top_drawer_handle_can_move = True
+            self._top_drawer = bullet.objects.drawer_lightblue_base_longhandle_rgba(
+                quat=quat, pos=drawer_frame_pos, rgba=[
+                    self.configs['object_rgbs']['drawer'][k] for k in ['frame', 'bottom_frame', 'bottom', 'handle']
+                ], physicsClientId=self._uid, scale=.11)
+            self.top_drawer_handle_can_move = True
 
-        open_drawer(self._top_drawer, 100, physicsClientId=self._uid)
+            open_drawer(self._top_drawer, 100, physicsClientId=self._uid)
 
-        self.init_handle_pos = get_drawer_handle_pos(
-            self._top_drawer, physicsClientId=self._uid)[1]
+            self.init_handle_pos = get_drawer_handle_pos(
+                self._top_drawer, physicsClientId=self._uid)[1]
 
-        ## Tray above top drawer
-        top_drawer_tray_pos = drawer_frame_pos + np.array([0, 0, .059])
-        self._top_drawer_tray = bullet.objects.tray_teal_rgba(
-            quat=quat,
-            rgba=self.configs['object_rgbs']['tray'],
-            pos=top_drawer_tray_pos,
-            scale=0.165,
-            physicsClientId=self._uid
-        )
+            ## Tray above top drawer
+            top_drawer_tray_pos = drawer_frame_pos + np.array([0, 0, .059])
+            self._top_drawer_tray = bullet.objects.tray_teal_rgba(
+                quat=quat,
+                rgba=self.configs['object_rgbs']['tray'],
+                pos=top_drawer_tray_pos,
+                scale=0.165,
+                physicsClientId=self._uid
+            )
 
-        # Tray acts as stopper for drawer closing
-        tray_pos = self.get_drawer_handle_future_pos(-.05)
-        self._tray = bullet.objects.tray_heavy(
-            quat=quat, pos=tray_pos, scale=0.001, physicsClientId=self._uid)
+            # Tray acts as stopper for drawer closing
+            tray_pos = self.get_drawer_handle_future_pos(-.05)
+            self._tray = bullet.objects.tray_heavy(
+                quat=quat, pos=tray_pos, scale=0.001, physicsClientId=self._uid)
 
-        if self.test_env:
-            if not self.test_env_command['drawer_open']:
-                close_drawer(self._top_drawer, 200, physicsClientId=self._uid)
-        else:
-            if is_close_drawer:
-                close_drawer(self._top_drawer, 200, physicsClientId=self._uid)
+            if self.test_env:
+                if not self.test_env_command['drawer_open']:
+                    close_drawer(self._top_drawer, 200, physicsClientId=self._uid)
+            else:
+                if is_close_drawer:
+                    close_drawer(self._top_drawer, 200, physicsClientId=self._uid)
 
-        self._load_table_large_objs()
-        self._load_table_small_objs(is_close_drawer)
+        if 'slide' in self.scene_type:
+            self._load_table_large_objs()
+        if 'pnp' in self.scene_type:
+            self._load_table_small_objs(is_close_drawer)
 
         self._workspace = bullet.Sensor(self._sawyer,
                                         xyz_min=self._pos_low, xyz_max=self._pos_high,
@@ -439,31 +458,44 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
                     p.removeBody(self._large_obj, physicsClientId=self._uid)
                 self._large_obj = None
 
-                large_object_quadrant_opts = list(
-                    set([0, 1, 2, 3]) - set([self.top_drawer_quadrant]))
-                if self.handle_more_open_than_closed():
-                    for opt in large_object_quadrant_opts:
-                        # oc = np.linalg.norm(np.array(slide_quadrants[opt]) - self.get_drawer_handle_future_pos(td_open_coeff)[:2]) < .1
-                        # cc = np.linalg.norm(np.array(slide_quadrants[opt]) - self.get_drawer_handle_future_pos(td_close_coeff)[:2]) < .1
-                        df = np.linalg.norm(np.array(slide_quadrants[opt]) - get_drawer_frame_pos(
-                            self._top_drawer, physicsClientId=self._uid)[:2]) < .15
-                        bf = np.linalg.norm(np.array(slide_quadrants[opt]) - get_drawer_bottom_pos(
-                            self._top_drawer, physicsClientId=self._uid)[:2]) < .168
-                        #so = np.linalg.norm(np.array(slide_quadrants[opt]) - self.get_object_pos(self._small_obj)[:2]) < .1
-                        if df or bf:
-                            large_object_quadrant_opts.remove(opt)
-                ## Bug where drawer in first quadrant pointing towards camera collides with large object in in fourth quadrant
-                if self.top_drawer_quadrant == 0 and self.drawer_yaw > 60 and self.drawer_yaw < 90 and 3 in large_object_quadrant_opts:
-                    large_object_quadrant_opts.remove(3)
-                if len(large_object_quadrant_opts) == 0:
+                if 'drawer' in self.scene_type:
+                    assert 'vary' not in self.scene_type
                     large_object_quadrant_opts = list(
                         set([0, 1, 2, 3]) - set([self.top_drawer_quadrant]))
-                #print("OPTS: ", large_object_quadrant_opts)
-                self.large_object_quadrant = random.choice(
-                    large_object_quadrant_opts)
+                    if self.handle_more_open_than_closed():
+                        for opt in large_object_quadrant_opts:
+                            # oc = np.linalg.norm(np.array(slide_quadrants[opt]) - self.get_drawer_handle_future_pos(td_open_coeff)[:2]) < .1
+                            # cc = np.linalg.norm(np.array(slide_quadrants[opt]) - self.get_drawer_handle_future_pos(td_close_coeff)[:2]) < .1
+                            df = np.linalg.norm(np.array(slide_quadrants[opt]) - get_drawer_frame_pos(
+                                self._top_drawer, physicsClientId=self._uid)[:2]) < .15
+                            bf = np.linalg.norm(np.array(slide_quadrants[opt]) - get_drawer_bottom_pos(
+                                self._top_drawer, physicsClientId=self._uid)[:2]) < .168
+                            #so = np.linalg.norm(np.array(slide_quadrants[opt]) - self.get_object_pos(self._small_obj)[:2]) < .1
+                            if df or bf:
+                                large_object_quadrant_opts.remove(opt)
+                    ## Bug where drawer in first quadrant pointing towards camera collides with large object in in fourth quadrant
+                    if self.top_drawer_quadrant == 0 and self.drawer_yaw > 60 and self.drawer_yaw < 90 and 3 in large_object_quadrant_opts:
+                        large_object_quadrant_opts.remove(3)
+                    if len(large_object_quadrant_opts) == 0:
+                        large_object_quadrant_opts = list(
+                            set([0, 1, 2, 3]) - set([self.top_drawer_quadrant]))
+                    #print("OPTS: ", large_object_quadrant_opts)
+                    self.large_object_quadrant = random.choice(
+                        large_object_quadrant_opts)
 
-                quadrant = slide_quadrants[self.large_object_quadrant]
-                pos = np.array([quadrant[0], quadrant[1], self.large_obj_z]) + self.configs['table_pos_offset']
+                    quadrant = slide_quadrants[self.large_object_quadrant]
+                    pos = np.array([quadrant[0], quadrant[1], self.large_obj_z]) + self.configs['table_pos_offset']
+                elif 'vary' in self.scene_type:
+                    pos = np.array([
+                                random.uniform(slide_quadrants[0][0], slide_quadrants[3][0]), 
+                                random.uniform(slide_quadrants[1][1], slide_quadrants[0][1]), 
+                                self.large_obj_z
+                            ]) + self.configs['table_pos_offset']  
+                else:
+                    large_object_quadrant_opts = list(
+                        set([0, 1, 2, 3]) - set([self.top_drawer_quadrant]))
+                    quadrant = slide_quadrants[self.large_object_quadrant]
+                    pos = np.array([quadrant[0], quadrant[1], self.large_obj_z]) + self.configs['table_pos_offset']
                 self._large_obj = self.spawn_large_object(
                     pos, self.configs['object_rgbs']['large_object'])
 
@@ -1077,16 +1109,27 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
             else:
                 assert False, 'not a valid task'
         else:
-            self.update_obj_pnp_goal()
-            self.update_drawer_goal()
-            self.update_obj_slide_goal()
+            opts = []
+            if 'pnp' in self.scene_type:
+                self.update_obj_pnp_goal()
+                opts.append('move_obj_pnp')
+            if 'drawer' in self.scene_type:
+                self.update_drawer_goal()
+                opts.append('move_drawer')
+            if 'slide' in self.scene_type:
+                self.update_obj_slide_goal()
+                opts.append('move_obj_slide')
+            orig_opts = opts.copy()
 
-            self.get_obj_pnp_goals()
-            obj_in_drawer = self.get_drawer_objs()[0]
-            opts = ['move_obj_slide', 'move_obj_pnp', 'move_drawer']
-            if np.linalg.norm(self.obj_slide_goal - self.get_object_pos(self._large_obj)) < .0001:
-                opts.remove('move_obj_slide')
-                
+            if 'pnp' in self.scene_type:
+                self.get_obj_pnp_goals()
+
+            if 'slide' in self.scene_type:
+                if np.linalg.norm(self.obj_slide_goal - self.get_object_pos(self._large_obj)) < .0001:
+                    opts.remove('move_obj_slide')
+
+            # Collision Checking: commented out
+            # obj_in_drawer = self.get_drawer_objs()[0]
             # # Object in drawer
             # if obj_in_drawer is not None:
             #     opts.remove('move_drawer')
@@ -1123,7 +1166,7 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
                 task = fixed_task
             else:
                 if len(opts) == 0:
-                    opts = ['move_drawer']
+                    opts = ['move_drawer'] if 'move_drawer' in orig_opts else orig_opts[0]
 
                 task = random.choice(opts)
 
@@ -1243,21 +1286,35 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
             left_tip_pos - right_tip_pos)]
         end_effector_pos = self.get_end_effector_pos()
 
-        top_drawer_pos = self.get_td_handle_pos()
+        if 'drawer' in self.scene_type:
+            top_drawer_pos = self.get_td_handle_pos()
+        else:
+            top_drawer_pos = [-1 for _ in range(3)]
+
+        if 'slide' in self.scene_type:
+            large_obj_pos = self.get_object_pos(self._large_obj)
+        else:
+            large_obj_pos = [-1 for _ in range(3)]
 
         obj0_pos = [0, 0, 0]
-        obj1_pos = self.get_object_pos(self._small_obj)
+        if 'pnp' in self.scene_type:
+            obj1_pos = self.get_object_pos(self._small_obj)
+            on_top_drawer_goal = self.on_top_drawer_goal
+            in_drawer_goal = self.in_drawer_goal
+            out_of_drawer_goal = self.out_of_drawer_goal
+        else:
+            obj1_pos = [-1 for _ in range(3)]
+            on_top_drawer_goal = [-1 for _ in range(3)]
+            in_drawer_goal = [-1 for _ in range(3)]
+            out_of_drawer_goal = [-1 for _ in range(3)]
         obj2_pos = [0, 0, 0]
-
-        large_obj_pos = self.get_object_pos(self._large_obj)
-
         #(hand_pos, hand_theta, gripper, td_pos, obj0_pos, obj1_pos, obj2_pos, large_obj_pos, on_top_drawer_goal, in_drawer_goal, out_of_drawer_goal)
         #(3, 4, 1, 3, 3, 3, 3, 3, 3, 3, 3)
         observation = np.concatenate((
             end_effector_pos, hand_theta, gripper_tips_distance,
             top_drawer_pos,
             obj0_pos, obj1_pos, obj2_pos, large_obj_pos,
-            self.on_top_drawer_goal, self.in_drawer_goal, self.out_of_drawer_goal,
+            on_top_drawer_goal, in_drawer_goal, out_of_drawer_goal,
         ))
 
         obs_dict = dict(
@@ -1370,9 +1427,8 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
             self.out_of_drawer_goal = None
             tries = 0
             while self.out_of_drawer_goal is None:
-                offset = 0.0
-                out_of_drawer_goal = np.array([random.uniform(gripper_bounding_x[0] + offset, gripper_bounding_x[1] - offset),
-                                              random.uniform(gripper_bounding_y[0] + offset, gripper_bounding_y[1] - offset), self.out_of_drawer_goal_z])
+                out_of_drawer_goal = np.array([random.uniform(gripper_bounding_x[0], gripper_bounding_x[1]),
+                                              random.uniform(gripper_bounding_y[0], gripper_bounding_y[1]), self.out_of_drawer_goal_z])
                 out_of_drawer_goal += self.configs['table_pos_offset']
                 drawer_frame_far = np.linalg.norm(
                     out_of_drawer_goal[:2] - self.on_top_drawer_goal[:2]) > 0.1
@@ -1388,8 +1444,8 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
                 else:
                     tries += 1
                     if tries > 25:
-                        self.out_of_drawer_goal = np.array([random.uniform(gripper_bounding_x[0] + offset, gripper_bounding_x[1] - offset), random.uniform(
-                            gripper_bounding_y[0] + offset, gripper_bounding_y[1] - offset), -0.34])
+                        self.out_of_drawer_goal = np.array([random.uniform(gripper_bounding_x[0], gripper_bounding_x[1]), random.uniform(
+                            gripper_bounding_y[0], gripper_bounding_y[1]), -0.34])
         self.out_of_drawer_goal[2] = -0.35201056
         #print(self.out_of_drawer_goal)
 
@@ -1407,31 +1463,39 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
         return obj_in_drawer, obj_on_drawer
 
     def update_obj_slide_goal(self, task_info=None):
-        if task_info is None:
-            self.large_object_quadrant = self.get_quadrant(
-                self.get_object_pos(self._large_obj))
-            opts = [(self.large_object_quadrant - 1) %
-                    4, (self.large_object_quadrant + 1) % 4]
-            opts = [opt for opt in opts if self.top_drawer_quadrant != opt]
-            if self.handle_more_open_than_closed():
-                if (self.drawer_yaw >= 22 and self.drawer_yaw <= 68) or (self.drawer_yaw >= 112 and self.drawer_yaw <= 158):
-                    opts = []
-                for opt in opts:
-                    #print(opt, np.linalg.norm(goal_slide_quadrants[opt][:2] - self.get_td_handle_pos()[:2]))
-                    if np.linalg.norm(goal_slide_quadrants[opt][:2] - self.get_td_handle_pos()[:2]) < .14:
-                        opts.remove(opt)
-            #print("GOALS: ", opts)
-            if len(opts) == 0:
-                # opts = [(self.large_object_quadrant - 1) % 4, (self.large_object_quadrant + 1) % 4]
-                # opts = [opt for opt in opts if self.top_drawer_quadrant != opt]
-                goal_quadrant = None
-            else:
-                goal_quadrant = goal_slide_quadrants[random.choice(opts)]
-        else:
-            goal_quadrant = goal_slide_quadrants[task_info['target_quadrant']]
         self.obj_slide = self._large_obj
-        self.obj_slide_goal = np.array(
-            [goal_quadrant[0], goal_quadrant[1], self.large_obj_z]) + self.configs['table_pos_offset'] if goal_quadrant else self.get_object_pos(self._large_obj)
+        if 'drawer' in self.scene_type or 'vary' not in self.scene_type:
+            if task_info is None:
+                self.large_object_quadrant = self.get_quadrant(
+                    self.get_object_pos(self._large_obj))
+                opts = [(self.large_object_quadrant - 1) %
+                        4, (self.large_object_quadrant + 1) % 4]
+                opts = [opt for opt in opts if self.top_drawer_quadrant != opt]
+                if self.handle_more_open_than_closed():
+                    if (self.drawer_yaw >= 22 and self.drawer_yaw <= 68) or (self.drawer_yaw >= 112 and self.drawer_yaw <= 158):
+                        opts = []
+                    for opt in opts:
+                        #print(opt, np.linalg.norm(goal_slide_quadrants[opt][:2] - self.get_td_handle_pos()[:2]))
+                        if np.linalg.norm(goal_slide_quadrants[opt][:2] - self.get_td_handle_pos()[:2]) < .14:
+                            opts.remove(opt)
+                #print("GOALS: ", opts)
+                if len(opts) == 0:
+                    # opts = [(self.large_object_quadrant - 1) % 4, (self.large_object_quadrant + 1) % 4]
+                    # opts = [opt for opt in opts if self.top_drawer_quadrant != opt]
+                    goal_quadrant = None
+                else:
+                    goal_quadrant = goal_slide_quadrants[random.choice(opts)]
+            else:
+                goal_quadrant = goal_slide_quadrants[task_info['target_quadrant']]
+            
+            self.obj_slide_goal = np.array(
+                [goal_quadrant[0], goal_quadrant[1], self.large_obj_z]) + self.configs['table_pos_offset'] if goal_quadrant else self.get_object_pos(self._large_obj)
+        else:
+            self.obj_slide_goal = np.array([
+                random.uniform(goal_slide_quadrants[0][0], goal_slide_quadrants[3][0]), 
+                random.uniform(goal_slide_quadrants[1][1], goal_slide_quadrants[0][1]), 
+                self.large_obj_z
+            ]) + self.configs['table_pos_offset']  
 
     def get_quadrant(self, pos):
         # if np.linalg.norm(slide_quadrants[0][0] - pos[0]) < np.linalg.norm(slide_quadrants[2][0] - pos[0]):
@@ -1536,14 +1600,35 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
 
     def update_goal_state(self):
         ## We save a bunch of zeros at the end to remain consistent with previous environments with had up to 3 objects
-        obj_goal_state = [0 for _ in range(3)] + list(self.obj_pnp_goal) + [0 for _ in range(3)]
+        if 'drawer' in self.scene_type:
+            td_goal = self.td_goal
+        else:
+            td_goal = [-1 for _ in range(3)]
+
+        if 'slide' in self.scene_type:
+            obj_slide_goal = self.obj_slide_goal
+        else:
+            obj_slide_goal = [-1 for _ in range(3)]
+
+        if 'pnp' in self.scene_type:
+            obj_pnp_goal = self.obj_pnp_goal
+            on_top_drawer_goal = self.on_top_drawer_goal
+            in_drawer_goal = self.in_drawer_goal
+            out_of_drawer_goal = self.out_of_drawer_goal
+        else:
+            obj_pnp_goal = [-1 for _ in range(3)]
+            on_top_drawer_goal = [-1 for _ in range(3)]
+            in_drawer_goal = [-1 for _ in range(3)]
+            out_of_drawer_goal = [-1 for _ in range(3)]
+        
+        obj_goal_state = [0 for _ in range(3)] + list(obj_pnp_goal) + [0 for _ in range(3)]
         self.goal_state = np.concatenate(
             [
                 [0 for _ in range(8)],
-                self.td_goal,
+                td_goal,
                 obj_goal_state,
-                self.obj_slide_goal,
-                self.on_top_drawer_goal, self.in_drawer_goal, self.out_of_drawer_goal,
+                obj_slide_goal,
+                on_top_drawer_goal, in_drawer_goal, out_of_drawer_goal,
             ]
         )
 
