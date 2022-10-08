@@ -127,7 +127,7 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
         self.camera_pitch_high = kwargs.pop('camera_pitch_high', -10)
         self.table_pos_offset_low = kwargs.pop('table_pos_offset_low', [-.05, -.05, -.035])
         self.table_pos_offset_high = kwargs.pop('table_pos_offset_high', [.01, .05, .1])
-        self.use_target_config = kwargs.pop('use_target_config', False)
+        self.use_target_config = self.test_env or kwargs.pop('use_target_config', False)
         self.fix_camera_yaw_pitch = kwargs.pop('fix_camera_yaw_pitch', False)
         self._load_new_env_config()
 
