@@ -22,17 +22,20 @@ def collect(id):
 
     # FOR TESTING, TURN COLORS OFF
     imsize = state_env.obs_img_dim
+    num_channels = 3 + args.render_depth + args.render_segmentation
 
     renderer_kwargs=dict(
             create_image_format='HWC',
             output_image_format='CWH',
             width=imsize,
             height=imsize,
-            flatten_image=True,)
+            flatten_image=True,
+            num_channels=num_channels)
 
     renderer = EnvRenderer(init_camera=None, **renderer_kwargs)
     env = InsertImageEnv(state_env, renderer=renderer)
-    imlength = env.obs_img_dim * env.obs_img_dim * 3
+
+    imlength = env.obs_img_dim * env.obs_img_dim * num_channels
 
     success = 0
     returns = 0
@@ -104,6 +107,8 @@ if __name__ == '__main__':
     parser.add_argument("--num_threads", type=int, default=1)
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--fix_camera_yaw_pitch', action='store_true')
+    parser.add_argument('--render_depth', action='store_true')
+    parser.add_argument('--render_segmentation', action='store_true')
 
     args = parser.parse_args()
     assert args.num_trajectories % args.num_trajectories_per_demo == 0
@@ -122,6 +127,8 @@ if __name__ == '__main__':
         'random_init_gripper_yaw': True,
         'use_target_config': args.debug,
         'fix_camera_yaw_pitch': args.fix_camera_yaw_pitch,
+        'render_depth': args.render_depth,
+        'render_segmentation': args.render_segmentation,
     }
 
     pool = Pool(args.num_threads)

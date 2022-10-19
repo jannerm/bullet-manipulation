@@ -174,6 +174,8 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
         # Rendering
         self.downsample = kwargs.pop('downsample', False)
         self.env_obs_img_dim = kwargs.pop('env_obs_img_dim', self.obs_img_dim)
+        self.render_depth = kwargs.pop('render_depth', False)
+        self.render_segmentation = kwargs.pop('render_segmentation', False)
 
         # Magic Grasp
         self.grasp_constraint = None
@@ -1003,12 +1005,35 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
             self._projection_matrix_obs, shadow=0, gaussian_width=0, physicsClientId=self._uid)
 
         if self.downsample:
-            im = Image.fromarray(np.uint8(img), 'RGB').resize(
+            img = Image.fromarray(np.uint8(img), 'RGB').resize(
                 self.image_shape, resample=Image.ANTIALIAS)
-            img = np.array(im)
+            img = np.uint8(np.array(img))
+
+            if self.render_depth:
+                depth = Image.fromarray(depth, 'F').resize(
+                    self.image_shape, resample=Image.ANTIALIAS)
+                depth = np.array(depth)
+                depth = np.clip(depth, a_min=0, a_max=1)
+
+            if self.render_segmentation:
+                segmentation = Image.fromarray(segmentation, 'I').resize(
+                    self.image_shape, resample=Image.ANTIALIAS)
+                segmentation = np.array(segmentation)
+
+        render_list = [np.uint8(img)]
+        if self.render_depth:
+            depth = np.uint8(depth * 255.0)[:, :, None]
+            render_list.append(depth)
+        if self.render_segmentation:
+            ## TODO(patrick): we can only do this because we have 9 objects and (9-1) * 31 < 255.
+            segmentation = np.uint8((segmentation + 1) * 31)[:, :, None]
+            render_list.append(segmentation)
+
+        obs = np.concatenate(render_list, axis=2)
         if self._transpose_image:
-            img = np.transpose(img, (2, 0, 1))
-        return img
+            obs = np.transpose(obs, (2, 0, 1))
+
+        return obs
 
     def get_image(self, width, height):
         image = np.float32(self.render_obs())

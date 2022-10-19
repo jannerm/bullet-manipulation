@@ -31,8 +31,8 @@ max_steps_per_stage = args.max_steps_per_stage
 subgoal_interval = args.subgoal_interval
 num_subgoals = args.num_subgoals
 debug = args.debug
-timeout_k_steps_after_done = 5
-mix_timeout_k = True
+timeout_k_steps_after_done = 20
+mix_timeout_k = False
 
 for test_env_seed in args.test_env_seeds:  # NOQA
     if not os.path.exists(args.output_dir):
