@@ -119,6 +119,8 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
         self.random_init_gripper_yaw = kwargs.pop('random_init_gripper_yaw', False)
         self.random_init_gripper_yaw_discrete = kwargs.pop('random_init_gripper_yaw_discrete', False)
         assert not (self.random_init_gripper_yaw and self.random_init_gripper_yaw_discrete)
+        self.random_drawer_open_close = kwargs.pop('random_drawer_open_close', False)
+        self.random_large_obj_quadrant = kwargs.pop('random_large_obj_quadrant', False)
 
         ## Env Config
         self.camera_yaw_low = kwargs.pop('camera_yaw_low', 60)
@@ -352,7 +354,7 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
         self._tray = bullet.objects.tray_heavy(
             quat=quat, pos=tray_pos, scale=0.001, physicsClientId=self._uid)
 
-        if self.test_env:
+        if self.test_env and not self.random_drawer_open_close:
             if not self.test_env_command['drawer_open']:
                 close_drawer(self._top_drawer, 200, physicsClientId=self._uid)
         else:
@@ -431,7 +433,24 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
     def _load_table_large_objs(self):
         ## Large Object
         if self.test_env:
-            self.large_object_quadrant = self.test_env_command['large_object_quadrant']
+            if self.random_large_obj_quadrant:
+                large_object_quadrant_opts = list(
+                    set([0, 1, 2, 3]) - set([self.top_drawer_quadrant]))
+                if self.handle_more_open_than_closed():
+                    for opt in large_object_quadrant_opts:
+                        # oc = np.linalg.norm(np.array(slide_quadrants[opt]) - self.get_drawer_handle_future_pos(td_open_coeff)[:2]) < .1
+                        # cc = np.linalg.norm(np.array(slide_quadrants[opt]) - self.get_drawer_handle_future_pos(td_close_coeff)[:2]) < .1
+                        df = np.linalg.norm(np.array(slide_quadrants[opt]) - get_drawer_frame_pos(
+                            self._top_drawer, physicsClientId=self._uid)[:2]) < .15
+                        bf = np.linalg.norm(np.array(slide_quadrants[opt]) - get_drawer_bottom_pos(
+                            self._top_drawer, physicsClientId=self._uid)[:2]) < .168
+                        #so = np.linalg.norm(np.array(slide_quadrants[opt]) - self.get_object_pos(self._small_obj)[:2]) < .1
+                        if df or bf:
+                            large_object_quadrant_opts.remove(opt)
+                self.large_object_quadrant = random.choice(
+                    large_object_quadrant_opts)
+            else:
+                self.large_object_quadrant = self.test_env_command['large_object_quadrant']
             quadrant = slide_quadrants[self.large_object_quadrant]
             pos = np.array([quadrant[0], quadrant[1], self.large_obj_z]) + self.configs['table_pos_offset']
             self._large_obj = self.spawn_large_object(
