@@ -41,29 +41,34 @@ def collect(id):
     demo_dataset = []
 
     recon_dataset = {
-        'observations': np.zeros((args.num_trajectories_per_demo, NUM_TIMESTEPS, imlength), dtype=np.uint8),
-        'env': np.zeros((args.num_trajectories_per_demo, imlength), dtype=np.uint8),
-        'skill_id': np.zeros((args.num_trajectories_per_demo, ), dtype=np.uint8)
+        'observations': np.zeros((args.num_trajectories_per_demo//args.reset_interval, NUM_TIMESTEPS*args.reset_interval, imlength), dtype=np.uint8),
+        'env': np.zeros((args.num_trajectories_per_demo//args.reset_interval, imlength), dtype=np.uint8),
+        'skill_id': np.zeros((args.num_trajectories_per_demo//args.reset_interval, ), dtype=np.uint8)
     }
 
     for j in tqdm(range(args.num_trajectories_per_demo)):
+        offset = j % args.reset_interval * NUM_TIMESTEPS
+        traj_j = j // args.reset_interval
+
         # is_done = False
         # while not is_done:
         env.demo_reset()
-        recon_dataset['env'][j, :] = np.uint8(env.render_obs().transpose()).flatten()
-        trajectory = {
-            'observations': [],
-            'next_observations': [],
-            'actions': np.zeros((NUM_TIMESTEPS, act_dim), dtype=np.float),
-            'rewards': np.zeros((NUM_TIMESTEPS), dtype=np.float),
-            'terminals': np.zeros((NUM_TIMESTEPS), dtype=np.uint8),
-            'agent_infos': np.zeros((NUM_TIMESTEPS), dtype=np.uint8),
-            'env_infos': np.zeros((NUM_TIMESTEPS), dtype=np.uint8),
-            'skill_id': -1,
-        }
+        if j % args.reset_interval == 0:
+            recon_dataset['env'][traj_j, :] = np.uint8(env.render_obs().transpose()).flatten()
+            trajectory = {
+                'observations': [],
+                'next_observations': [],
+                'actions': np.zeros((NUM_TIMESTEPS*args.reset_interval, act_dim), dtype=np.float),
+                'rewards': np.zeros((NUM_TIMESTEPS*args.reset_interval), dtype=np.float),
+                'terminals': np.zeros((NUM_TIMESTEPS*args.reset_interval), dtype=np.uint8),
+                'agent_infos': np.zeros((NUM_TIMESTEPS*args.reset_interval), dtype=np.uint8),
+                'env_infos': np.zeros((NUM_TIMESTEPS*args.reset_interval), dtype=np.uint8),
+                'skill_id': 0,
+            }
         for i in range(NUM_TIMESTEPS):
+            i_offset = i + offset
             img = np.uint8(env.render_obs())
-            recon_dataset['observations'][j, i, :] = img.transpose().flatten()
+            recon_dataset['observations'][traj_j, i_offset, :] = img.transpose().flatten()
 
             observation = env.get_observation()
 
@@ -73,11 +78,11 @@ def collect(id):
             #     is_done = True
 
             trajectory['observations'].append(observation)
-            trajectory['actions'][i, :] = action
+            trajectory['actions'][i_offset, :] = action
             trajectory['next_observations'].append(next_observation)
-            trajectory['rewards'][i] = reward
+            trajectory['rewards'][i_offset] = reward
             trajectory['skill_id'] = -1
-            recon_dataset['skill_id'][j] = -1
+            recon_dataset['skill_id'][traj_j] = -1
 
         demo_dataset.append(trajectory)
 
@@ -104,9 +109,11 @@ if __name__ == '__main__':
     parser.add_argument("--num_threads", type=int, default=1)
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--fix_camera_yaw_pitch', action='store_true')
+    parser.add_argument('--reset_interval', type=int, default=1)
 
     args = parser.parse_args()
     assert args.num_trajectories % args.num_trajectories_per_demo == 0
+    assert args.num_trajectories_per_demo % args.reset_interval == 0
     prefix = args.save_path
 
     if not os.path.exists(prefix):
@@ -121,6 +128,7 @@ if __name__ == '__main__':
         'random_init_gripper_yaw': False,
         'use_target_config': args.debug,
         'fix_camera_yaw_pitch': args.fix_camera_yaw_pitch,
+        'reset_interval': args.reset_interval,
     }
 
     pool = Pool(args.num_threads)

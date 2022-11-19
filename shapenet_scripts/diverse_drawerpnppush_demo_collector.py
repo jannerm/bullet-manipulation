@@ -41,44 +41,52 @@ def collect(id):
     demo_dataset = []
 
     recon_dataset = {
-        'observations': np.zeros((args.num_trajectories_per_demo, NUM_TIMESTEPS, imlength), dtype=np.uint8),
-        'env': np.zeros((args.num_trajectories_per_demo, imlength), dtype=np.uint8),
-        'skill_id': np.zeros((args.num_trajectories_per_demo, ), dtype=np.uint8)
+        'observations': np.zeros((args.num_trajectories_per_demo//args.reset_interval, NUM_TIMESTEPS*args.reset_interval, imlength), dtype=np.uint8),
+        'env': np.zeros((args.num_trajectories_per_demo//args.reset_interval, imlength), dtype=np.uint8),
+        'skill_id': np.zeros((args.num_trajectories_per_demo//args.reset_interval, ), dtype=np.uint8)
     }
 
     for j in tqdm(range(args.num_trajectories_per_demo)):
-        is_done = False
-        while not is_done:
-            env.demo_reset()
-            recon_dataset['env'][j, :] = np.uint8(env.render_obs().transpose()).flatten()
+        offset = j % args.reset_interval * NUM_TIMESTEPS 
+        traj_j = j // args.reset_interval
+
+        # is_done = False
+        # while not is_done:
+        env.demo_reset()
+        if j % args.reset_interval == 0:
+            recon_dataset['env'][traj_j, :] = np.uint8(env.render_obs().transpose()).flatten()
             trajectory = {
                 'observations': [],
                 'next_observations': [],
-                'actions': np.zeros((NUM_TIMESTEPS, act_dim), dtype=np.float),
-                'rewards': np.zeros((NUM_TIMESTEPS), dtype=np.float),
-                'terminals': np.zeros((NUM_TIMESTEPS), dtype=np.uint8),
-                'agent_infos': np.zeros((NUM_TIMESTEPS), dtype=np.uint8),
-                'env_infos': np.zeros((NUM_TIMESTEPS), dtype=np.uint8),
+                'actions': np.zeros((NUM_TIMESTEPS*args.reset_interval, act_dim), dtype=np.float),
+                'rewards': np.zeros((NUM_TIMESTEPS*args.reset_interval), dtype=np.float),
+                'terminals': np.zeros((NUM_TIMESTEPS*args.reset_interval), dtype=np.uint8),
+                'agent_infos': np.zeros((NUM_TIMESTEPS*args.reset_interval), dtype=np.uint8),
+                'env_infos': np.zeros((NUM_TIMESTEPS*args.reset_interval), dtype=np.uint8),
                 'skill_id': 0,
             }
-            for i in range(NUM_TIMESTEPS):
-                img = np.uint8(env.render_obs())
-                recon_dataset['observations'][j, i, :] = img.transpose().flatten()
+        for i in range(NUM_TIMESTEPS):
+            i_offset = i + offset
+            img = np.uint8(env.render_obs())
+            recon_dataset['observations'][traj_j, i_offset, :] = img.transpose().flatten()
 
-                observation = env.get_observation()
+            observation = env.get_observation()
 
-                action, done = env.get_demo_action(first_timestep=(i == 0), return_done=True)
-                next_observation, reward, _, info = env.step(action)
-                if done:
-                    is_done = True
+            action, done = env.get_demo_action(first_timestep=(i == 0), return_done=True)
+            next_observation, reward, _, info = env.step(action)
+            if done:
+                is_done = True
 
-                trajectory['observations'].append(observation)
-                trajectory['actions'][i, :] = action
-                trajectory['next_observations'].append(next_observation)
-                trajectory['rewards'][i] = reward
-                trajectory['skill_id'] = info['skill_id']
-                recon_dataset['skill_id'][j] = info['skill_id']
+            trajectory['observations'].append(observation)
+            trajectory['actions'][i_offset, :] = action
+            trajectory['next_observations'].append(next_observation)
+            trajectory['rewards'][i_offset] = reward
 
+            ## TODO(patrick): not correct if reset_interval > 1
+            trajectory['skill_id'] = info['skill_id']
+            recon_dataset['skill_id'][traj_j] = info['skill_id']
+
+        if j % args.reset_interval == args.reset_interval - 1:
             demo_dataset.append(trajectory)
 
     ## Save contents    
@@ -104,9 +112,11 @@ if __name__ == '__main__':
     parser.add_argument("--num_threads", type=int, default=1)
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--fix_camera_yaw_pitch', action='store_true')
+    parser.add_argument('--reset_interval', type=int, default=1)
 
     args = parser.parse_args()
     assert args.num_trajectories % args.num_trajectories_per_demo == 0
+    assert args.num_trajectories_per_demo % args.reset_interval == 0
     prefix = args.save_path
 
     if not os.path.exists(prefix):
@@ -114,7 +124,7 @@ if __name__ == '__main__':
 
     kwargs = {
         'demo_num_ts': NUM_TIMESTEPS,
-        'reset_interval': 1,
+        'reset_interval': args.reset_interval,
         'expert_policy_std': .05,
         'downsample': True,
         'env_obs_img_dim': 196,
