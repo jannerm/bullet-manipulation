@@ -129,7 +129,7 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
         self.camera_pitch_high = kwargs.pop('camera_pitch_high', -10)
         self.table_pos_offset_low = kwargs.pop('table_pos_offset_low', [-.05, -.05, -.035])
         self.table_pos_offset_high = kwargs.pop('table_pos_offset_high', [.01, .05, .1])
-        self.use_target_config = self.test_env or kwargs.pop('use_target_config', False)
+        self.use_target_config = kwargs.pop('use_target_config', False) or self.test_env
         self.fix_camera_yaw_pitch = kwargs.pop('fix_camera_yaw_pitch', False)
         self._load_new_env_config()
 
@@ -660,6 +660,34 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
         return {
             'skill_id': skill_id
         }
+    
+    def successful_interaction(self, init_pos, final_pos):
+        return np.linalg.norm(init_pos - final_pos,
+                              axis=1, keepdims=True) > 0.01
+
+    def get_interaction_metric(self, init_state, final_state):
+        top_drawer_init_state = init_state[:, 8:11]
+        top_drawer_final_state = final_state[:, 8:11]
+        top_drawer_interacted = self.successful_interaction(top_drawer_init_state, top_drawer_final_state).astype(int)
+        
+        pnp_init_state = init_state[:, 14:17]
+        pnp_final_state = final_state[:, 14:17]
+        pnp_interacted = self.successful_interaction(pnp_init_state, pnp_final_state).astype(int)
+        
+        slide_init_state = init_state[:, 20:23]
+        slide_final_state = final_state[:, 20:23]
+        slide_interacted = self.successful_interaction(slide_init_state, slide_final_state).astype(int)
+
+        top_drawer_slide_interacted = np.logical_or(top_drawer_interacted, slide_interacted).astype(int)
+        interacted = np.logical_or(np.logical_or(top_drawer_interacted, pnp_interacted), slide_interacted).astype(int)
+
+        return {
+            "top_drawer": top_drawer_interacted,
+            "pnp": pnp_interacted,
+            "slide": slide_interacted,
+            "top_drawer_slide": top_drawer_slide_interacted,
+            "overall": interacted,
+        }
 
     def get_success_metric(self, curr_state, goal_state, key=None):
         success = np.zeros((curr_state.shape[0], 1), dtype=int)
@@ -926,6 +954,14 @@ class SawyerDiverseDrawerPnpPush(SawyerBaseEnv):
         for k in distance_keys:
             diagnostics.update(create_stats_ordered_dict(
                 goal_key + f"/final/{k}_distance", dict_of_distance_arrays[k][:, -1]))
+
+        init_states = curr_obses.reshape([num_paths, path_length, -1])[:,0]
+        final_states = curr_obses.reshape([num_paths, path_length, -1])[:,-1]
+        interaction_dict = self.get_interaction_metric(init_states, final_states)
+        for (k, interaction_success) in interaction_dict.items():
+            diagnostics.update(create_stats_ordered_dict(
+                goal_key + f"/{k}/interaction_success", interaction_success
+            ))
 
         # ---------------------------------------------------------
         # for i in range(len(paths)):

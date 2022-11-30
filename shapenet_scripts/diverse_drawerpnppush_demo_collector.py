@@ -104,6 +104,7 @@ if __name__ == '__main__':
     parser.add_argument("--num_threads", type=int, default=1)
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--fix_camera_yaw_pitch', action='store_true')
+    parser.add_argument('--fix_test_env_seed', action='store_true')
 
     args = parser.parse_args()
     assert args.num_trajectories % args.num_trajectories_per_demo == 0
@@ -123,6 +124,12 @@ if __name__ == '__main__':
         'use_target_config': args.debug,
         'fix_camera_yaw_pitch': args.fix_camera_yaw_pitch,
     }
+
+    if args.fix_test_env_seed:
+        from rlkit.experimental.kuanfang.envs.drawer_pnp_push_commands import drawer_pnp_push_commands
+        kwargs['test_env'] = True
+        kwargs['test_env_command'] = drawer_pnp_push_commands[14]
+        kwargs['use_test_env_command_sequence'] = False
 
     pool = Pool(args.num_threads)
     ids = [id for id in range(args.num_trajectories // args.num_trajectories_per_demo)]
