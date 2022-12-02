@@ -10,9 +10,20 @@ import math
 import argparse
 from multiprocess import Pool
 import gc
+from roboverse.envs.configs.drawer_pnp_push_env_configs import drawer_pnp_push_env_configs
 
 def collect(id):
-    state_env = roboverse.make('SawyerDrawerPnpPush-v0', expl=True, reset_interval=args.reset_interval, **kwargs)
+    task_id = id % len(TASKS)
+    task = TASKS[task_id]
+    config_id = id // len(TASKS)
+    config = drawer_pnp_push_env_configs[config_id]
+    state_env = roboverse.make(
+        'SawyerDrawerPnpPush-v0', 
+        expl=True, 
+        reset_interval=2,
+        configs=config,
+        **kwargs
+    )
 
     # FOR TESTING, TURN COLORS OFF
     imsize = state_env.obs_img_dim
@@ -35,12 +46,12 @@ def collect(id):
     demo_dataset = []
 
     recon_dataset = {
-        'observations': np.zeros((args.num_trajectories_per_demo, args.num_timesteps, imlength), dtype=np.uint8),
-        'env': np.zeros((args.num_trajectories_per_demo, imlength), dtype=np.uint8),
-        'skill_id': np.zeros((args.num_trajectories_per_demo, ), dtype=np.uint8)
+        'observations': np.zeros((args.num_trajectories_per_task_per_setting, args.num_timesteps, imlength), dtype=np.uint8),
+        'env': np.zeros((args.num_trajectories_per_task_per_setting, imlength), dtype=np.uint8),
+        'skill_id': np.zeros((args.num_trajectories_per_task_per_setting, ), dtype=np.uint8)
     }
 
-    for j in tqdm(range(args.num_trajectories_per_demo)):
+    for j in tqdm(range(args.num_trajectories_per_task_per_setting)):
         env.demo_reset()
         recon_dataset['env'][j, :] = np.uint8(env.render_obs().transpose()).flatten()
         trajectory = {
@@ -71,20 +82,21 @@ def collect(id):
 
         demo_dataset.append(trajectory)
 
-        if ((j + 1) % args.num_trajectories_per_demo) == 0:
-            curr_name = demo_data_save_path + '_{0}.pkl'.format(id+args.demo_offset)
-            file = open(curr_name, 'wb')
-            pkl.dump(demo_dataset, file)
-            file.close()
+    ## Save contents
+    object_rgbs_id, camera_angle_id = config['object_rgbs']['id'], config['camera_angle']['id']
+    setting_name = f'scene{object_rgbs_id}_view{camera_angle_id}_{task}' 
+    
+    file = open(prefix + f'{setting_name}_demos.pkl', 'wb')
+    pkl.dump(demo_dataset, file)
+    file.close()
+    del demo_dataset
+    gc.collect()
+    demo_dataset = []
 
-            del demo_dataset
-            gc.collect()
-            demo_dataset = []
-
-            np.save(prefix + args.name + "_images_{0}.npy".format(id + args.demo_offset), recon_dataset)
-            del recon_dataset
-            gc.collect()
-            recon_dataset = []
+    np.save(prefix + f'{setting_name}_images.npy', recon_dataset)
+    del recon_dataset
+    gc.collect()
+    recon_dataset = []
 
     env.close()
 
@@ -92,16 +104,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--name", type=str)
     parser.add_argument("--save_path", type=str)
-    parser.add_argument("--num_trajectories", type=int, default=4000)
-    parser.add_argument("--num_trajectories_per_demo", type=int, default=200)
+    parser.add_argument("--num_trajectories_per_task_per_setting", type=int, default=200)
     parser.add_argument("--num_threads", type=int, default=8)
     parser.add_argument("--num_timesteps", type=int, default=75)
-    parser.add_argument("--reset_interval", type=int, default=4)
-    parser.add_argument("--downsample", action='store_true')
-    parser.add_argument("--demo_offset", type=int, default=0)
-    parser.add_argument("--subset", type=str, default='train')
-    parser.add_argument("--video_save_frequency", type=int,
-                        default=0, help="Set to zero for no video saving")
 
     args = parser.parse_args()
     prefix = os.path.join(args.save_path, args.name)
@@ -109,22 +114,17 @@ if __name__ == '__main__':
     if not os.path.exists(prefix):
         os.makedirs(prefix)
 
-    demo_data_save_path = prefix + args.name + "_demos"
-    recon_data_save_path = prefix + args.name + "_images"
-    video_save_path = prefix + args.name + "_video"
-
     kwargs = {
         'demo_num_ts': args.num_timesteps,
         'expert_policy_std': .05,
+        'downsample': True,
+        'env_obs_img_dim': 196,
     }
-    if args.downsample:
-        kwargs['downsample'] = True
-        kwargs['env_obs_img_dim'] = 196
 
-    assert args.num_trajectories % args.num_trajectories_per_demo == 0
+    TASKS = ['mixed_0', 'mixed_1', 'mixed_2', 'mixed_3']
 
     pool = Pool(args.num_threads)
-    ids = [id for id in range(args.num_trajectories // args.num_trajectories_per_demo)]
+    ids = [id for id in range(len(drawer_pnp_push_env_configs) * len(TASKS))]
     results = pool.map(collect, ids)
     pool.close()
     pool.join()

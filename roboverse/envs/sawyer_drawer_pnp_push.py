@@ -291,6 +291,7 @@ class SawyerDrawerPnpPush(SawyerBaseEnv):
         self._end_effector = bullet.get_index_by_attribute(
             self._sawyer, 'link_name', 'gripper_site', physicsClientId=self._uid)
 
+        # Task 14/38: Remove collision physics between cylinder and drawer handle
         if self.test_env and self.test_env_command.get("no_collision_handle_and_cylinder", False):
             for idx in [2, 3, 4]:
                 p.setCollisionFilterPair(
@@ -370,10 +371,13 @@ class SawyerDrawerPnpPush(SawyerBaseEnv):
                     set([0, 1, 2, 3]) - set([self.top_drawer_quadrant]))
                 if self.handle_more_open_than_closed():
                     for opt in large_object_quadrant_opts:
+                        # oc = np.linalg.norm(np.array(slide_quadrants[opt]) - self.get_drawer_handle_future_pos(td_open_coeff)[:2]) < .1
+                        # cc = np.linalg.norm(np.array(slide_quadrants[opt]) - self.get_drawer_handle_future_pos(td_close_coeff)[:2]) < .1
                         df = np.linalg.norm(np.array(slide_quadrants[opt]) - get_drawer_frame_pos(
                             self._top_drawer, physicsClientId=self._uid)[:2]) < .15
                         bf = np.linalg.norm(np.array(slide_quadrants[opt]) - get_drawer_bottom_pos(
                             self._top_drawer, physicsClientId=self._uid)[:2]) < .168
+                        #so = np.linalg.norm(np.array(slide_quadrants[opt]) - self.get_object_pos(self._small_obj)[:2]) < .1
                         if df or bf:
                             large_object_quadrant_opts.remove(opt)
                 ## Bug where drawer in first quadrant pointing towards camera collides with large object in in fourth quadrant
@@ -382,6 +386,7 @@ class SawyerDrawerPnpPush(SawyerBaseEnv):
                 if len(large_object_quadrant_opts) == 0:
                     large_object_quadrant_opts = list(
                         set([0, 1, 2, 3]) - set([self.top_drawer_quadrant]))
+                #print("OPTS: ", large_object_quadrant_opts)
                 self.large_object_quadrant = random.choice(
                     large_object_quadrant_opts)
 
@@ -1175,6 +1180,7 @@ class SawyerDrawerPnpPush(SawyerBaseEnv):
                         self.out_of_drawer_goal = np.array([random.uniform(gripper_bounding_x[0] + offset, gripper_bounding_x[1] - offset), random.uniform(
                             gripper_bounding_y[0] + offset, gripper_bounding_y[1] - offset), -0.34])
         self.out_of_drawer_goal[2] = -0.35201056
+        #print(self.out_of_drawer_goal)
 
     def get_drawer_objs(self):
         obj_in_drawer = None
@@ -1200,9 +1206,13 @@ class SawyerDrawerPnpPush(SawyerBaseEnv):
                 if (self.drawer_yaw >= 22 and self.drawer_yaw <= 68) or (self.drawer_yaw >= 112 and self.drawer_yaw <= 158):
                     opts = []
                 for opt in opts:
+                    #print(opt, np.linalg.norm(goal_slide_quadrants[opt][:2] - self.get_td_handle_pos()[:2]))
                     if np.linalg.norm(goal_slide_quadrants[opt][:2] - self.get_td_handle_pos()[:2]) < .14:
                         opts.remove(opt)
+            #print("GOALS: ", opts)
             if len(opts) == 0:
+                # opts = [(self.large_object_quadrant - 1) % 4, (self.large_object_quadrant + 1) % 4]
+                # opts = [opt for opt in opts if self.top_drawer_quadrant != opt]
                 goal_quadrant = None
             else:
                 goal_quadrant = goal_slide_quadrants[random.choice(opts)]
@@ -1362,6 +1372,8 @@ class SawyerDrawerPnpPush(SawyerBaseEnv):
         ee_yaw = self.get_end_effector_theta()[2]
 
         drawer_handle_pos = self.get_td_handle_pos()
+        #drawer_frame_pos = get_drawer_frame_pos(self._top_drawer, physicsClientId=self._uid)
+        #print((drawer_handle_pos - drawer_frame_pos)/np.array([np.sin((self.drawer_yaw+180) * np.pi / 180) , -np.cos((self.drawer_yaw+180) * np.pi / 180), 0]))
         ee_early_stage_goal_pos = drawer_handle_pos - td_offset_coeff * \
             np.array([np.sin((self.drawer_yaw+180) * np.pi / 180), -
                      np.cos((self.drawer_yaw+180) * np.pi / 180), 0])
@@ -1419,8 +1431,10 @@ class SawyerDrawerPnpPush(SawyerBaseEnv):
             if not self.gripper_in_right_position:
                 self.gripper_in_right_position = True
             xy_action = self.td_goal - drawer_handle_pos
-            s = 12 
+            s = 12  # 12 if self.drawer_skill == 'open' else 12
             action = s*np.array([xy_action[0], xy_action[1], 0, 0])
+            # if self.drawer_skill == 'open':
+            #     action *= 1.0
 
         if done:
             action = np.array([0, 0, 1, 0])
@@ -1456,6 +1470,18 @@ class SawyerDrawerPnpPush(SawyerBaseEnv):
             goal_ee_yaw = self.goal_ee_yaw - 180
         else:
             goal_ee_yaw = self.goal_ee_yaw - 360
+        # goal_ee_yaw_opts = [self.goal_ee_yaw, self.goal_ee_yaw - 180, self.goal_ee_yaw + 180]
+        # goal_ee_yaw = min(goal_ee_yaw_opts, key=lambda x : np.linalg.norm(x - ee_yaw))
+        # if np.linalg.norm(self.goal_ee_yaw - ee_yaw) < np.linalg.norm(self.goal_ee_yaw - 180 + ee_yaw):
+        #     goal_ee_yaw = self.goal_ee_yaw
+        # else:
+        #     goal_ee_yaw = self.goal_ee_yaw - 180
+        # if 0 <= self.goal_ee_yaw < 90:
+        #     goal_ee_yaw = self.goal_ee_yaw - 90
+        # elif 90 <= self.goal_ee_yaw < 270:
+        #     goal_ee_yaw = self.goal_ee_yaw - 90
+        # else:
+        #     goal_ee_yaw = self.goal_ee_yaw - 360 + 90
         gripper_yaw_aligned = np.linalg.norm(goal_ee_yaw - ee_yaw) > 10
 
         if not aligned and not above:
@@ -1525,6 +1551,9 @@ class SawyerDrawerPnpPush(SawyerBaseEnv):
             action = np.array([0., 0., 0., 0.])
             self.grip = -1
 
+        # print(aligned, above, done, enclosed, self.grip)
+        # print(target_pos, ee_pos, goal)
+
         return action, done
 
     def move_obj_slide(self, print_stages=False):
@@ -1541,6 +1570,12 @@ class SawyerDrawerPnpPush(SawyerBaseEnv):
         goal_ee_yaw = min(goal_ee_yaw_opts,
                           key=lambda x: np.linalg.norm(x - ee_yaw))
 
+        # if 0 <= direction < 90:
+        #     goal_ee_yaw = direction
+        # elif 90 <= direction < 270:
+        #     goal_ee_yaw = direction - 180
+        # else:
+        #     goal_ee_yaw = direction - 360
         ee_early_stage_goal_pos = obj_pos - 0.11 * \
             np.array([np.sin(direction * np.pi / 180), -
                      np.cos(direction * np.pi / 180), 0])
@@ -1570,7 +1605,7 @@ class SawyerDrawerPnpPush(SawyerBaseEnv):
         elif (not self.gripper_in_right_position and gripper_yaw_aligned) or (not self.gripper_in_right_position and not gripper_pos_xy_aligned):
             # Stage 2: align gripper yaw
             action = np.zeros((4,))
-            if gripper_yaw_aligned:  
+            if gripper_yaw_aligned:  # not self.gripper_in_right_position and gripper_yaw_aligned:
                 if print_stages:
                     print('Stage 2')
                 if goal_ee_yaw > ee_yaw:
@@ -1578,14 +1613,15 @@ class SawyerDrawerPnpPush(SawyerBaseEnv):
                 else:
                     action[3] = -1
             # Stage 3: align gripper position with handle position
-            if not self.gripper_in_right_position and not gripper_pos_xy_aligned: 
+            if not self.gripper_in_right_position and not gripper_pos_xy_aligned:  # not self.gripper_in_right_position and
                 if print_stages:
                     print('Stage 3')
                 xy_action = (ee_early_stage_goal_pos - ee_pos) * 6 * 2
                 action[0] = xy_action[0]
                 action[1] = xy_action[1]
+                #print(action, np.linalg.norm(ee_early_stage_goal_pos[:2] - ee_pos[:2]))
         # Stage 4: lower gripper around handle
-        elif gripper_pos_xy_aligned and not gripper_pos_z_aligned:
+        elif gripper_pos_xy_aligned and not gripper_pos_z_aligned:  # not self.gripper_in_right_position and
             if print_stages:
                 print('Stage 4')
             xy_action = (ee_early_stage_goal_pos - ee_pos) * 6 * 2
